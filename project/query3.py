@@ -1,16 +1,18 @@
+import pandas as pd
 from dash import html, dcc, dash_table
 import dash_bootstrap_components as dbc
 import csv
 from dash.dependencies import Output, Input
-
+import plotly.express as px
 
 INPUT_DATA = 'v3'
+
 
 # precisamos add a lógica de filtrar os elementos e outras interatividades: https://dash.plotly.com/datatable/interactivity
 # Precisamos ocultar o "org_list" e de alguma forma, disponibilizar ao usuário, se necessário. P.ex: apenas ao clicar ? por houver (pop-up), exportar como um arquivo csv ?
 # quais gráficos fazer ?
 
-# constructs the layout for View 3
+#constructs the layout for View 3
 def register_layout_query(dfs):
     # visualização 3
     q3 = [
@@ -48,19 +50,14 @@ def register_layout_query(dfs):
                         'scrollZoom': True
                     }
                 ),
-                html.Button('Export csv org-list', id='export-button'),
-                html.Div(id='output-container')
             ]
         )
     ]
 
-    
     return q3
 
-
-# updates the query-3-table data based on user interaction
+# register all the callbacks in one place
 def register_callback_query(app, dfs):
-    
     @app.callback(
         Output('query-3-table', "data"),
         Input('query-3-table', "sort_by"),
@@ -83,18 +80,17 @@ def register_callback_query(app, dfs):
         return df.to_dict('records')
 
     @app.callback(
-        Output('output-container', 'children'),
-        Input('export-button', 'n_clicks')
+        Output('query-3-graph', 'figure'),
+        Input('query-3-table', 'data')
     )
+    def update_graph(data):
+        df = dfs[INPUT_DATA]
+        df['n_orgs'] = df['n_orgs'].astype(int)
+        df['cve_id'] = df['cve_id'].astype(str)
 
-    def export_data(n_clicks):
-        if n_clicks:
-            data = dfs[INPUT_DATA]['org_list'].tolist()
+        fig = px.bar(df, x='cve_id', y='n_orgs', title='Number of Organizations by CVE')
 
-            with open('org_list.csv', 'w', newline='') as file:
-                writer = csv.writer(file)
-                writer.writerow(['org_list'])
-                for row in data:
-                    writer.writerow([row])
-                return 'Data exported successfully'
-            return ''
+        return fig
+
+
+
