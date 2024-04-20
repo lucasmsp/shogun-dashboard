@@ -7,7 +7,6 @@ import plotly.express as px
 
 INPUT_DATA = 'v3'
 
-
 # precisamos add a lógica de filtrar os elementos e outras interatividades: https://dash.plotly.com/datatable/interactivity
 # Precisamos ocultar o "org_list" e de alguma forma, disponibilizar ao usuário, se necessário. P.ex: apenas ao clicar ? por houver (pop-up), exportar como um arquivo csv ?
 # quais gráficos fazer ?
