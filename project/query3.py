@@ -77,7 +77,6 @@ def register_layout_query(dfs):
 
     return q3
 
-
 # register all the callbacks in one place
 def register_callback_query(app, dfs):
     @app.callback(
