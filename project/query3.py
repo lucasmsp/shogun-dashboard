@@ -1,13 +1,8 @@
-import pandas as pd
 from dash import html, dcc, dash_table
 import plotly.express as px
 import dash_bootstrap_components as dbc
-from dash.dependencies import Output, Input
-from plotly.subplots import make_subplots
-import plotly.graph_objects as go
 from dash import Dash, dcc, html, Input, Output
-import plotly.graph_objects as go
-import numpy as np
+
 
 INPUT_DATA = 'v3'
 
@@ -23,6 +18,7 @@ def register_layout_query(dfs):
         dbc.Row(
             children=[
                 html.H1(children="View 3 - More details by CVE", className='wrapper'),
+                # contém uma tabela iterativa Dash
                 dbc.Row(
                     # Renders an interactive table component
                     dash_table.DataTable(
@@ -32,7 +28,9 @@ def register_layout_query(dfs):
                             {"name": i, "id": i, "selectable": True, "deletable": True} for i in
                             sorted(dfs[INPUT_DATA].columns)
                         ],
+                        # permite que a tabela seja editável
                         editable=True,
+                        # permite filtragem da tabela
                         filter_action="native",
                         hidden_columns=['org_list'],
                         sort_action='custom',
@@ -51,6 +49,7 @@ def register_layout_query(dfs):
                     style={'margin-top': '32px'}
 
                 ),
+                # quebra de linha no layout
                 html.Br(),
                 # dcc.Graph(
                 #     id="query-3-graph",
@@ -70,6 +69,7 @@ def register_layout_query(dfs):
                     value="cvss",
                     clearable=False,
                 ),
+                # cria um gráfico vazio com o ID graph
                 dcc.Graph(id="graph"),
             ]
         )
@@ -106,6 +106,7 @@ def register_callback_query(app, dfs):
 
     def update_bar_chart(selected_value):
         df = dfs[INPUT_DATA]
+        # define paleta de cores
         colors = px.colors.qualitative.Set1
         fig = px.bar(df, x="cve_id", y=selected_value, title=f"{selected_value.capitalize()} by CVE", color="n_orgs", color_discrete_sequence=colors)
 
