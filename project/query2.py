@@ -14,6 +14,8 @@ INPUT_DATA_V2b = 'v2b'
 # precisamos add a lógica de filtrar os elementos e outras interatividades: https://dash.plotly.com/datatable/interactivity
 # Precisamos ocultar o "org_list" e de alguma forma, disponibilizar ao usuário, se necessário. P.ex: por houver (pop-up), exportar como um arquivo csv ?
 # quais gráficos fazer (se for mais de um grafico, fazer como dividir os graficos na mesma linha)?
+# colocar título nos graficos
+# arrumar nomes das colunas nas tabelas
 
 def display_dropdown(cell_value):
     dropdown_options = [{'label': value, 'value': value} for value in cell_value.split(',')]
@@ -276,13 +278,22 @@ def register_callback_query(app, dfs):
 
         if cpe_version_query:
             df = df[df['cpe_version'].isin(cpe_version_query)]
+        
+
 
         df = df.sort_values(by=['cvss_rank'], ascending=True)
+        # df = df.
         fig = px.bar(df, x='cvss_rank', hover_data="ip_str")
 
+        # df = df.groupby(['cvss_rank'])
         if color:
             df = df.sort_values(by=['cvss_rank', color], ascending=True)
-            fig = px.bar(df, x='cvss_rank', color=color, hover_data="ip_str")
+            if color == 'cve_id':
+                temp = df.groupby("cvss_rank").agg(LIST_IP=("ip_str", set), N_IPS=("ip_str", "count")).reset_index()
+                temp['LIST_IP'] = temp['LIST_IP'].str.join(', ')
+                fig = px.bar(temp, x='cvss_rank', y="N_IPS", hover_data="LIST_IP")
+            else:
+                fig = px.bar(df, x='cvss_rank', color=color, hover_data=["ip_str", "cve_id"])
 
 
 
@@ -294,11 +305,9 @@ def register_callback_query(app, dfs):
         Input('query-2b-table', "sort_by")
     )
     def update_table2b(sort_by):
+        # título
 
         df = dfs[INPUT_DATA_V2b]
-        df['cpe_list'] = df['cpe_list'].str.join(', ')
-        df['ip_list'] = df['ip_list'].str.join(', ')
-        df['cve_list'] = df['cve_list'].str.join(', ')
 
         if len(sort_by):
             df = df.sort_values(
@@ -309,5 +318,6 @@ def register_callback_query(app, dfs):
                 ],
                 inplace=True
             )
+        # org_clean, ip, epss_major, epss_rank_major, cpe, cve 
 
         return df.to_dict('records')
