@@ -14,6 +14,10 @@ dfs = {
     'v3': pd.read_parquet('df_v3.parquet')
 }
 
+dfs['v2b']['cpe_list'] = dfs['v2b']['cpe_list'].str.join(', ')
+dfs['v2b']['ip_list'] = dfs['v2b']['ip_list'].str.join(', ')
+dfs['v2b']['cve_list'] = dfs['v2b']['cve_list'].str.join(', ')
+
 external_stylesheets = [
     {
         "href": (

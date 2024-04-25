@@ -41,7 +41,7 @@ def register_layout_query(dfs):
                     clearable=False
                 ),
                 dcc.Graph(
-                    id="guery-1-graph",
+                    id="query-1-graph",
                     config={
                         'displayModeBar': False,
                         'scrollZoom': True
@@ -78,7 +78,7 @@ def register_callback_query(app, dfs):
         return df.to_dict('records')
     
     @app.callback(
-        Output("guery-1-graph", "figure"), 
+        Output("query-1-graph", "figure"), 
         Input("query-1-dropdown", "value")
     )
     def update_bar_chart(metric):
