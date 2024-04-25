@@ -85,7 +85,7 @@ def register_callback_query(app, dfs):
     def update_styles(sort_by):
         return[{
             'if': {'column_id': i['column_id']},
-            'background_color': '#D2F3FF'
+            'background_color': 'white'
         } for i in sort_by]
 
     @app.callback(
@@ -102,7 +102,7 @@ def register_callback_query(app, dfs):
         # limita o dataframe às primeiras 10 linhas
         dff = dff.head(15)
 
-        colors = ['#FBF301' if i in derived_virtual_selected_rows else '#0074D9'
+        colors = ['red' if i in derived_virtual_selected_rows else '#0074D9'
                   for i in range(len(dff))]
 
         return[
@@ -118,6 +118,7 @@ def register_callback_query(app, dfs):
                             "marker": {
                                 "color": colors,
                                 "size": 10,
+                                "opacity": 0.8,
                                 "line": {"width": 0.5, "color": "white"}
                             },
                         }
