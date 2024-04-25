@@ -3,7 +3,7 @@ from dash import html, dcc, dash_table
 import plotly.express as px
 import dash_bootstrap_components as dbc
 from dash import Dash, dcc, html, Input, Output
-
+import plotly.graph_objs as go
 INPUT_DATA = 'v3'
 
 # Precisamos ocultar o "org_list" e de alguma forma, disponibilizar ao usuário, se necessário. P.ex: apenas ao clicar ? por houver (pop-up), exportar como um arquivo csv ?
@@ -11,12 +11,6 @@ INPUT_DATA = 'v3'
 
 #constructs the layout for View 3
 def register_layout_query(dfs):
-    count_cvss = dfs[INPUT_DATA].groupby('cve_id')['cvss'].count()
-    count_cvss_df = count_cvss.reset_index()
-    count_cvss_df = count_cvss_df.rename(columns={'cvss': 'cvss_count'})
-    dfs[INPUT_DATA] = pd.merge(dfs[INPUT_DATA], count_cvss_df, on='cve_id', how='left')
-
-    dfs[INPUT_DATA]['cvss_count'] = dfs[INPUT_DATA]['cvss_count'].fillna(0)
 
     # visualização 3
     q3 = [
@@ -58,12 +52,7 @@ def register_layout_query(dfs):
             ]
         )
     ]
-    # count_cvss = dfs[INPUT_DATA].groupby('cve_id')['cvss'].count()
-    # count_cvss_df = count_cvss.reset_index()
-    # count_cvss_df = count_cvss_df.rename(columns={'cvss': 'cvss_count'})
-    # dfs[INPUT_DATA] = pd.merge(dfs[INPUT_DATA], count_cvss_df, on='cve_id', how='left')
-    #
-    # dfs[INPUT_DATA]['cvss_count'] = dfs[INPUT_DATA]['cvss_count'].fillna(0)
+
     return q3
 
 
@@ -110,6 +99,9 @@ def register_callback_query(app, dfs):
 
         dff = dfs[INPUT_DATA] if rows is None else pd.DataFrame(rows)
 
+        # limita o dataframe às primeiras 10 linhas
+        dff = dff.head(15)
+
         colors = ['#FBF301' if i in derived_virtual_selected_rows else '#0074D9'
                   for i in range(len(dff))]
 
@@ -121,8 +113,13 @@ def register_callback_query(app, dfs):
                         {
                             "x": dff["cve_id"],
                             "y": dff[column],
-                            "type": "bar",
-                            "marker": {"color": colors},
+                            # "type": "barh",
+                            "mode": "markers",
+                            "marker": {
+                                "color": colors,
+                                "size": 10,
+                                "line": {"width": 0.5, "color": "white"}
+                            },
                         }
                     ],
                     "layout": {
@@ -131,13 +128,11 @@ def register_callback_query(app, dfs):
                             "automargin": True,
                             "title": {"text": column}
                         },
-                        "height": 250,
+                        "height": 200,
                         "margin": {"t": 10, "l": 10, "r": 10},
                     },
                 },
             )
             for column in ["cvss", "cvss_rank", "cvss_version", "epss_rank", "n_ips", "n_orgs"] if column in dff
         ]
-
-
 
