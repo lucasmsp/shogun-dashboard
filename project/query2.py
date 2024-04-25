@@ -1,9 +1,11 @@
-from dash import html, dcc, dash_table
+from dash import html, dcc, dash_table, callback_context
 import dash_bootstrap_components as dbc
 
-from dash.dependencies import Output, Input
+from dash.dependencies import Output, Input, State
 import pandas as pd
 import plotly.express as px
+
+import re
 
 
 INPUT_DATA_V2a = 'v2a'
@@ -17,9 +19,21 @@ INPUT_DATA_V2b = 'v2b'
 # colocar título nos graficos
 # arrumar nomes das colunas nas tabelas
 
-def display_dropdown(cell_value):
-    dropdown_options = [{'label': value, 'value': value} for value in cell_value.split(',')]
-    return dcc.Dropdown(options=dropdown_options, value=cell_value)
+# def display_dropdown(cell_value):
+#     dropdown_options = [{'label': value, 'value': value} for value in cell_value.split(',')]
+#     return dcc.Dropdown(options=dropdown_options, value=cell_value)
+
+def cell_callback(row):
+    return html.Div([
+        html.Button(f'Mostrar lista {row}', id=f'button_{row}'),
+        dbc.Modal(
+            id=f'modal_{row}',
+            children=[
+                html.Div(id=f'modal_content_{row}')
+            ],
+            is_open=False
+        )
+    ])
 
 def register_layout_query(dfs):
     # visualização 2a
@@ -122,8 +136,62 @@ def register_layout_query(dfs):
         ], style={'padding': 10, 'flex': 1})
     ], style={'display': 'flex', 'flexDirection': 'row'})
 
+    filters_2b = html.Div([
+        html.Div(children=[
+            html.Center([
+                dcc.Input(
+                    id="search-bar-org-2b", 
+                    type="search", 
+                    placeholder="Search by organization...",
+                    style={
+                        "width": "90%",
+                        "margin": "15px"
+                    }
+                )
+            ]),
+            html.Center([
+                dcc.Input(
+                    id="search-bar-ip-2b", 
+                    type="search", 
+                    placeholder="Search by IP...",
+                    style={
+                        "width": "90%",
+                        "margin": "15px"
+                    }
+                )
+            ]),
+        ], style={'padding': 10, 'flex': 1}),
 
-    columns_order = [
+        html.Div(children=[
+
+            html.Center([
+                dcc.Input(
+                    id="search-bar-cpe-2b", 
+                    type="search", 
+                    placeholder="Search by CPE...",
+                    style={
+                        "width": "90%",
+                        "margin": "15px"
+                    }
+                )
+            ]),
+
+            html.Center([
+                dcc.Input(
+                    id="search-bar-cve-2b", 
+                    type="search", 
+                    placeholder="Search by CVE...",
+                    style={
+                        "width": "90%",
+                        "margin": "15px"
+                    }
+                )
+            ]),
+        ], style={'padding': 10, 'flex': 1})
+    ], style={'display': 'flex', 'flexDirection': 'row'})
+
+
+    columns_order_2a = [
         "org_clean",
         "ip_str",
         "cve_id",
@@ -132,6 +200,14 @@ def register_layout_query(dfs):
         "cpe_product",
         "cvss_rank",
         "epss_rank",
+    ]
+    columns_order_2b = [
+        "org_clean", 
+        "ip_list", 
+        "epss_major", 
+        "epss_rank_major", 
+        "cpe_list", 
+        "cve_list" 
     ]
 
     q2 = [
@@ -143,7 +219,7 @@ def register_layout_query(dfs):
             dash_table.DataTable(
                 id='query-2a-table',
                 columns=[
-                    {"name": col, "id": col} for col in columns_order
+                    {"name": i, "id": i} for i in columns_order_2a
                 ],
                 sort_action='custom',
                 sort_mode='multi',
@@ -182,16 +258,17 @@ def register_layout_query(dfs):
         html.Br(),
 
         html.H2(children="List of vulnerable products for each org/IP", className='wrapper'),
+        filters_2b,
         dbc.Row(
             dash_table.DataTable(
 
                 id='query-2b-table',
                 columns=[
-                    {"name": i, "id": i} for i in sorted(dfs[INPUT_DATA_V2b].columns)
+                    {"name": i, "id": i} for i in columns_order_2b
                 ],
-                sort_action='custom',
-                sort_mode='multi',
-                sort_by=[],
+                # sort_action='custom',
+                # sort_mode='multi',
+                # sort_by=[],
                 page_current=0,
                 page_size=10,
                 style_data={
@@ -279,45 +356,97 @@ def register_callback_query(app, dfs):
         if cpe_version_query:
             df = df[df['cpe_version'].isin(cpe_version_query)]
         
-
-
         df = df.sort_values(by=['cvss_rank'], ascending=True)
-        # df = df.
-        fig = px.bar(df, x='cvss_rank', hover_data="ip_str")
+        severity_mapping = {
+            "low": 1,
+            "medium": 2,
+            "high": 3,
+            "critical": 4
+        }
 
+        df['severity'] = df['cvss_rank'].map(severity_mapping)
+        df = df.sort_values(by='severity', ascending=True)
+
+        # df = df.groupby('cvss_rank').sum()
+        # print(df)
+        # temp = df.groupby("cvss_rank").agg(LIST_IP=("ip_str", set), N_IPS=("ip_str", "count")).reset_index()
+        # temp['LIST_IP'] = temp['LIST_IP'].str.join(', ')
+        fig = px.bar(df, x='cvss_rank', hover_data=["ip_str", "cve_id"], barmode='stack')
         # df = df.groupby(['cvss_rank'])
         if color:
-            df = df.sort_values(by=['cvss_rank', color], ascending=True)
+            df = df.sort_values(by=['severity', color], ascending=True)
             if color == 'cve_id':
-                temp = df.groupby("cvss_rank").agg(LIST_IP=("ip_str", set), N_IPS=("ip_str", "count")).reset_index()
-                temp['LIST_IP'] = temp['LIST_IP'].str.join(', ')
-                fig = px.bar(temp, x='cvss_rank', y="N_IPS", hover_data="LIST_IP")
+                # df = df.groupby("cvss_rank").agg(LIST_IP=("ip_str", set), N_IPS=("ip_str", "count")).reset_index()
+                # df['LIST_IP'] = df['LIST_IP'].str.join(', ')
+                fig = px.bar(df, x='cvss_rank', color=color, hover_data=["ip_str", "cve_id"], barmode='stack')
             else:
-                fig = px.bar(df, x='cvss_rank', color=color, hover_data=["ip_str", "cve_id"])
+                fig = px.bar(df, x='cvss_rank', color=color, hover_data=["ip_str", "cve_id"], barmode='stack')
 
 
 
         return fig
     
+    def contar_virgulas_str(texto):
+        return str(len(re.findall(r",", texto)) + 1)
+    
+    def contar_virgulas(texto):
+        return len(re.findall(r",", texto)) + 1
+    
 
     @app.callback(
         Output('query-2b-table', "data"),
-        Input('query-2b-table', "sort_by")
+        [
+            Input("search-bar-org-2b", 'value'),
+            Input("search-bar-ip-2b", 'value'),
+            Input("search-bar-cpe-2b", 'value'),
+            Input("search-bar-cve-2b", 'value'),
+        ]
     )
-    def update_table2b(sort_by):
+    def update_table2b(org_query, ip_query, cpe_query, cve_query):
         # título
 
         df = dfs[INPUT_DATA_V2b]
+        df["n_ips"] = df["ip_list"].apply(contar_virgulas)
+        if org_query:
+            df = df[df['org_clean'].str.contains(org_query, case=False)]
+        if ip_query:
+            df = df[df['ip_list'].str.contains(ip_query, case=False)]
+        if cpe_query:
+            df = df[df['cpe_list'].str.contains(cpe_query, case=False)]
+        if cve_query:
+            df = df[df['cve_list'].str.contains(cve_query, case=False)]
 
-        if len(sort_by):
-            df = df.sort_values(
-                [col['column_id'] for col in sort_by],
-                ascending=[
-                    col['direction'] == 'asc'
-                    for col in sort_by
-                ],
-                inplace=True
-            )
+        # if len(sort_by):
+        #     print(sort_by)
+        #     print(df)
+        #     df = df.sort_values(
+        #         [col['column_id'] for col in sort_by],
+        #         ascending=[
+        #             col['direction'] == 'asc'
+        #             for col in sort_by
+        #         ],
+        #         inplace=True
+        #     )
+        #     print(df)
+
         # org_clean, ip, epss_major, epss_rank_major, cpe, cve 
-
+        
         return df.to_dict('records')
+    
+    @app.callback(
+        Output('query-2b-graph', 'figure'),
+        Input("search-bar-org-2b", 'value')
+    )
+    def update_graph2b(org_query):
+        df = dfs[INPUT_DATA_V2b]
+        df["n_ips_str"] = df["ip_list"].apply(contar_virgulas_str)
+        df["n_ips"] = df["ip_list"].apply(contar_virgulas)
+        df = df.sort_values("n_ips")
+        fig = px.bar(df, x='n_ips_str', hover_data=['org_clean', 'ip_list'])
+        if org_query:
+            df = df[df['org_clean'].str.contains(org_query, case=False)]
+            fig = px.bar(df, x='n_ips_str', hover_data=['org_clean', 'ip_list'])
+
+
+
+        return fig
