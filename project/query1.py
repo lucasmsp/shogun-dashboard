@@ -1,13 +1,15 @@
 from dash import html, dcc, dash_table
 import dash_bootstrap_components as dbc
-
 from dash.dependencies import Output, Input
+
 import pandas as pd
 import plotly.express as px
 
-INPUT_DATA = 'v1'
+import project.base as base
 
-def register_layout_query(dfs):
+INPUT_DATA = '1'
+
+def register_layout_query():
     # visualização 1
     q1 = [
         dbc.Row(
@@ -18,7 +20,10 @@ def register_layout_query(dfs):
 
                         id='query-1-table',
                         columns=[
-                            {"name": i, "id": i} for i in sorted(dfs[INPUT_DATA].columns)
+                            {"name": 'EPSS rank', "id": "epss_rank"}, 
+                            {"name": '# CVEs', "id": 'n_cves'},
+                            {"name": '# IPs', "id": 'n_ips'},
+                            {"name": '# organizations', "id": 'n_orgs'}
                         ],
                         sort_action='custom',
                         sort_mode='multi',
@@ -56,15 +61,16 @@ def register_layout_query(dfs):
 
 
 
-def register_callback_query(app, dfs):
+def register_callback_query(app):
     
     @app.callback(
         Output('query-1-table', "data"),
+        Input('date-picker-single', 'date'),
         Input('query-1-table', "sort_by"),
     )
-    def update_table1(sort_by):
-
-        df = dfs[INPUT_DATA]
+    def update_table1(date_value, sort_by):
+        print("[INFO] update_table1: ", date_value)
+        df = base.get_dataset(date_value, INPUT_DATA)
         if len(sort_by):
             df = df.sort_values(
                 [col['column_id'] for col in sort_by],
@@ -79,10 +85,12 @@ def register_callback_query(app, dfs):
     
     @app.callback(
         Output("query-1-graph", "figure"), 
+        Input('date-picker-single', 'date'),
         Input("query-1-dropdown", "value")
     )
-    def update_bar_chart(metric):
-        df = dfs[INPUT_DATA]
+    def update_chart1(date_value, metric):
+        print("[INFO] update_chart1", date_value)
+        df = base.get_dataset(date_value, INPUT_DATA)
         config = {'displayModeBar': False}
         fig = px.bar(df, x="epss_rank", y=metric, barmode="group")
         return fig

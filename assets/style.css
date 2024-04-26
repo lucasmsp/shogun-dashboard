@@ -48,11 +48,10 @@ body {
 
 .menu {
     height: 112px;
-    width: 912px;
-    display: flex;
-    justify-content: space-evenly;
+    width: 80%;
     padding-top: 24px;
-    margin: -80px auto 0 auto;
+    margin-right: auto;
+    margin-left: auto;
     background-color: #FFFFFF;
     box-shadow: 0 4px 6px 0 rgba(0, 0, 0, 0.18);
     
@@ -75,5 +74,22 @@ body {
 .menu-title {
     margin-bottom: 6px;
     font-weight: bold;
-    color: #079A82;
+    text-align: center;
+}
+
+
+.alignleft {
+
+    float: left;
+}
+
+.alignright {
+
+    float: right;
+}
+
+.aligncenter {
+
+    text-align: center;
+    vertical-align: middle;
 }
