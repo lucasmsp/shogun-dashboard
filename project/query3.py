@@ -1,9 +1,13 @@
+import re
+
+import numpy as np
 import pandas as pd
 from dash import html, dcc, dash_table
 import plotly.express as px
 import dash_bootstrap_components as dbc
 from dash import Dash, dcc, html, Input, Output
 import plotly.graph_objs as go
+
 INPUT_DATA = 'v3'
 
 # Precisamos ocultar o "org_list" e de alguma forma, disponibilizar ao usuário, se necessário. P.ex: apenas ao clicar ? por houver (pop-up), exportar como um arquivo csv ?
@@ -11,7 +15,6 @@ INPUT_DATA = 'v3'
 
 #constructs the layout for View 3
 def register_layout_query(dfs):
-
     # visualização 3
     q3 = [
         dbc.Row(
@@ -62,9 +65,16 @@ def register_callback_query(app, dfs):
         Output('query-3-table', "data"),
         Input('query-3-table', "sort_by")
     )
+
+
     def update_table3(sort_by):
         df = dfs[INPUT_DATA]
         df['org_list'] = df['org_list'].str.join(', ')
+
+        df["cvss_rank"] = [float(str(i).replace("<", "").replace(">", "").replace("=", ""))
+                           for i in df["cvss_rank"]]
+        df["epss_rank"] = [float(str(i).replace("<", "").replace(">", "").replace("=", ""))
+                           for i in df["epss_rank"]]
 
         if len(sort_by):
             df = df.sort_values(
@@ -83,7 +93,7 @@ def register_callback_query(app, dfs):
         Input('query-3-table', "sort_by")
     )
     def update_styles(sort_by):
-        return[{
+        return [{
             'if': {'column_id': i['column_id']},
             'background_color': 'white'
         } for i in sort_by]
@@ -105,7 +115,7 @@ def register_callback_query(app, dfs):
         colors = ['red' if i in derived_virtual_selected_rows else '#0074D9'
                   for i in range(len(dff))]
 
-        return[
+        return [
             dcc.Graph(
                 id=column,
                 figure={
@@ -124,7 +134,7 @@ def register_callback_query(app, dfs):
                         }
                     ],
                     "layout": {
-                        "xaxis":{"automargin": True},
+                        "xaxis": {"automargin": True},
                         "yaxis": {
                             "automargin": True,
                             "title": {"text": column}
@@ -136,4 +146,3 @@ def register_callback_query(app, dfs):
             )
             for column in ["cvss", "cvss_rank", "cvss_version", "epss_rank", "n_ips", "n_orgs"] if column in dff
         ]
-
