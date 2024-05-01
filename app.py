@@ -7,17 +7,6 @@ import plotly.express as px
 from project.layout import register_layout
 from project.callbacks import register_callbacks
 
-dfs = {
-    'v1': pd.read_parquet('df_v1.parquet'),
-    'v2a': pd.read_parquet('df_v2a.parquet'),
-    'v2b': pd.read_parquet('df_v2b.parquet'),
-    'v3': pd.read_parquet('df_v3.parquet')
-}
-
-dfs['v2b']['cpe_list'] = dfs['v2b']['cpe_list'].str.join(', ')
-dfs['v2b']['ip_list'] = dfs['v2b']['ip_list'].str.join(', ')
-dfs['v2b']['cve_list'] = dfs['v2b']['cve_list'].str.join(', ')
-
 external_stylesheets = [
     {
         "href": (
@@ -30,8 +19,8 @@ external_stylesheets = [
 ]
 app = Dash(__name__, external_stylesheets=external_stylesheets)
 app.title = "TLHOP/SAM Analytics on EPSS"
-app.layout = register_layout(dfs)
-register_callbacks(app, dfs)
+app.layout = register_layout()
+register_callbacks(app)
 
 
 if __name__ == "__main__":

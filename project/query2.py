@@ -1,15 +1,16 @@
 from dash import html, dcc, dash_table, callback_context
 import dash_bootstrap_components as dbc
-
 from dash.dependencies import Output, Input, State
+
 import pandas as pd
 import plotly.express as px
-
 import re
 
+import project.base as base
 
-INPUT_DATA_V2a = 'v2a'
-INPUT_DATA_V2b = 'v2b'
+
+INPUT_DATA_V2a = '2a'
+INPUT_DATA_V2b = '2b'
 
 
 # garantir ordem das colunas mais lógica (org_clean, ip, cve_id, epss....)
@@ -35,7 +36,7 @@ def cell_callback(row):
         )
     ])
 
-def register_layout_query(dfs):
+def register_layout_query():
     # visualização 2a
     filters_2a = html.Div([
         html.Div(children=[
@@ -109,7 +110,7 @@ def register_layout_query(dfs):
 
             dcc.Dropdown(
                 id="dropdown-cpe-version",
-                options=[{'label': org, 'value': org} for org in sorted(dfs[INPUT_DATA_V2a]['cpe_version'].unique())],
+                options=[], # TODO: {'label': org, 'value': org} for org in sorted(dfs[INPUT_DATA_V2a]['cpe_version'].unique())],
                 placeholder="CPE version",
                 multi=True,
                 style={
@@ -121,7 +122,12 @@ def register_layout_query(dfs):
             html.Label('CVSS rank'),
             dcc.Checklist(
                 id="cvss-rank-checklist",
-                options=[{'label': org, 'value': org} for org in sorted(dfs[INPUT_DATA_V2a]['cvss_rank'].unique())],
+                options=[
+                    {'label': 'Low', 'value': 'low'},
+                    {'label': 'Medium', 'value': 'medium'},
+                    {'label': 'High', 'value': 'high'},
+                    {'label': 'Critical', 'value': 'critical'}
+                ],
                 labelStyle={
                     "font-size": "20px"
                 },
@@ -190,26 +196,6 @@ def register_layout_query(dfs):
         ], style={'padding': 10, 'flex': 1})
     ], style={'display': 'flex', 'flexDirection': 'row'})
 
-
-    columns_order_2a = [
-        "org_clean",
-        "ip_str",
-        "cve_id",
-        "epss",
-        "cpe_version",
-        "cpe_product",
-        "cvss_rank",
-        "epss_rank",
-    ]
-    columns_order_2b = [
-        "org_clean", 
-        "ip_list", 
-        "epss_major", 
-        "epss_rank_major", 
-        "cpe_list", 
-        "cve_list" 
-    ]
-
     q2 = [
         html.H1(children="View 2 - by organizations/IP", className='wrapper'),
         html.Br(),
@@ -219,7 +205,14 @@ def register_layout_query(dfs):
             dash_table.DataTable(
                 id='query-2a-table',
                 columns=[
-                    {"name": i, "id": i} for i in columns_order_2a
+                    {"name": 'Organization (clean)', "id": 'org_clean'},
+                    {"name": 'IP', "id": 'ip_str'},
+                    {"name": 'CVE', "id": 'cve_id'},
+                    {"name": 'EPSS', "id": 'epss'},
+                    {"name": 'EPSS rank', "id": 'epss_rank'},
+                    {"name": 'CVSS rank', "id": 'cvss_rank'},
+                    {"name": 'Product name', "id": 'cpe_product'},
+                    {"name": 'Product version', "id": 'cpe_version'},
                 ],
                 sort_action='custom',
                 sort_mode='multi',
@@ -264,7 +257,12 @@ def register_layout_query(dfs):
 
                 id='query-2b-table',
                 columns=[
-                    {"name": i, "id": i} for i in columns_order_2b
+                    {"name": 'Organization', "id": 'org_clean'},
+                    {"name": 'IP list', "id": 'ip_list'},
+                    {"name": 'EPSS (major)', "id": 'epss_major'},
+                    {"name": 'EPSS rank (major)', "id": 'epss_rank_major'},
+                    {"name": 'Product list', "id": 'cpe_list'},
+                    {"name": 'CVE list', "id": 'cve_list'}
                 ],
                 # sort_action='custom',
                 # sort_mode='multi',
@@ -294,10 +292,11 @@ def register_layout_query(dfs):
     return q2
 
 
-def register_callback_query(app, dfs):
+def register_callback_query(app):
     @app.callback(
         Output('query-2a-table', "data"),
         [
+            Input('date-picker-single', 'date'),
             Input("search-bar-ip", 'value'),
             Input("search-bar-org", 'value'),
             Input("epss-range-slider", 'value'),
@@ -306,12 +305,12 @@ def register_callback_query(app, dfs):
             Input("dropdown-cpe-version", 'value'),
         ]
     )
-    def update_table2a(ip_query, org_query, epss_query, cvss_query, product_query, cpe_version_query):
+    def update_table2a(date_value, ip_query, org_query, epss_query, cvss_query, product_query, cpe_version_query):
 
-        df = dfs[INPUT_DATA_V2a]
+        print("[INFO] query 2 - update_table2a: ", date_value)
+        df = base.get_dataset(date_value, INPUT_DATA_V2a)
         if ip_query:
             df = df[df['ip_str'].str.contains(ip_query, case=False)]
-        
         
         if org_query:
             df = df[df['org_clean'].str.contains(org_query, case=False)]
@@ -337,15 +336,18 @@ def register_callback_query(app, dfs):
     @app.callback(
         Output('query-2a-graph', 'figure'),
         [
+            Input('date-picker-single', 'date'),
             Input("epss-range-slider", 'value'),
             Input("cvss-rank-checklist", 'value'),
             Input("dropdown-cpe-version", 'value'),
             Input("dropdown-color-2a", 'value'),
         ]
     )
-    def update_graph2a(epss_query, cvss_query, cpe_version_query, color):
+    def update_graph2a(date_value, epss_query, cvss_query, cpe_version_query, color):
         
-        df = dfs[INPUT_DATA_V2a]
+        print("[INFO] query 2 - update_graph2a: ", date_value)
+        df = base.get_dataset(date_value, INPUT_DATA_V2a)
+
         if epss_query:
             epss_min, epss_max = epss_query
             df = df[(df['epss'] >= epss_min) & (df['epss'] <= epss_max)]
@@ -396,17 +398,19 @@ def register_callback_query(app, dfs):
     @app.callback(
         Output('query-2b-table', "data"),
         [
+            Input('date-picker-single', 'date'),
             Input("search-bar-org-2b", 'value'),
             Input("search-bar-ip-2b", 'value'),
             Input("search-bar-cpe-2b", 'value'),
             Input("search-bar-cve-2b", 'value'),
         ]
     )
-    def update_table2b(org_query, ip_query, cpe_query, cve_query):
+    def update_table2b(date_value, org_query, ip_query, cpe_query, cve_query):
         # título
 
-        df = dfs[INPUT_DATA_V2b]
-        df["n_ips"] = df["ip_list"].apply(contar_virgulas)
+        print("[INFO] query 2 - update_table2b: ", date_value)
+        df = base.get_dataset(date_value, INPUT_DATA_V2b)
+
         if org_query:
             df = df[df['org_clean'].str.contains(org_query, case=False)]
         if ip_query:
@@ -415,6 +419,9 @@ def register_callback_query(app, dfs):
             df = df[df['cpe_list'].str.contains(cpe_query, case=False)]
         if cve_query:
             df = df[df['cve_list'].str.contains(cve_query, case=False)]
+
+        print(df.columns)
+
 
         # if len(sort_by):
         #     print(sort_by)
@@ -435,10 +442,13 @@ def register_callback_query(app, dfs):
     
     @app.callback(
         Output('query-2b-graph', 'figure'),
+        Input('date-picker-single', 'date'),
         Input("search-bar-org-2b", 'value')
     )
-    def update_graph2b(org_query):
-        df = dfs[INPUT_DATA_V2b]
+    def update_graph2b(date_value, org_query):
+        print("[INFO] query 2 - update_graph2b: ", date_value)
+        df = base.get_dataset(date_value, INPUT_DATA_V2b)
+
         df["n_ips_str"] = df["ip_list"].apply(contar_virgulas_str)
         df["n_ips"] = df["ip_list"].apply(contar_virgulas)
         df = df.sort_values("n_ips")
