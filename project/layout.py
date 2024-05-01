@@ -112,9 +112,9 @@ def register_layout():
 
             dbc.Tabs(
                 [
-                    dbc.Tab(tab1_content, label="Query 1"),
-                    dbc.Tab(tab2_content, label="Query 2"),
-                    dbc.Tab(tab3_content, label="Query 3")
+                    dbc.Tab(tab1_content, label="View 1 - EPSS summary"),
+                    dbc.Tab(tab2_content, label="View 2 - by organizations/IP"),
+                    dbc.Tab(tab3_content, label="View 3 - More details by CVE")
                 ],
                 style={
                     "padding-left": "20px"
