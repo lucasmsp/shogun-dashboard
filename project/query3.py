@@ -1,3 +1,5 @@
+import numpy as np
+import pandas as pd
 
 from dash import html, dcc, dash_table
 import dash_bootstrap_components as dbc
@@ -5,7 +7,6 @@ from dash import Dash, dcc, html, Input, Output
 
 import plotly.express as px
 import plotly.graph_objs as go
-import pandas as pd
 
 import project.base as base
 
@@ -16,7 +17,6 @@ INPUT_DATA = '3'
 
 #constructs the layout for View 3
 def register_layout_query():
-
     # visualização 3
     q3 = [
         dbc.Row(
@@ -76,6 +76,11 @@ def register_callback_query(app):
         print("[INFO] query 3 - update_table3: ", date_value)
         df = base.get_dataset(date_value, INPUT_DATA).drop(['org_list'], axis=1)
 
+#         df["cvss_rank"] = [float(str(i).replace("<", "").replace(">", "").replace("=", ""))
+#                            for i in df["cvss_rank"]]
+#         df["epss_rank"] = [float(str(i).replace("<", "").replace(">", "").replace("=", ""))
+#                            for i in df["epss_rank"]]
+
         if len(sort_by):
             df = df.sort_values(
                 [col['column_id'] for col in sort_by],
@@ -93,6 +98,7 @@ def register_callback_query(app):
         Input('date-picker-single', 'date'),
         Input('query-3-table', "sort_by")
     )
+
     def update_styles(date_value, sort_by):
         print("[INFO] query 3 - update_styles: ", date_value)
         df = base.get_dataset(date_value, INPUT_DATA)
@@ -118,7 +124,7 @@ def register_callback_query(app):
         colors = ['red' if i in derived_virtual_selected_rows else '#0074D9'
                   for i in range(len(df))]
 
-        return[
+        return [
             dcc.Graph(
                 id=column,
                 figure={
@@ -137,7 +143,7 @@ def register_callback_query(app):
                         }
                     ],
                     "layout": {
-                        "xaxis":{"automargin": True},
+                        "xaxis": {"automargin": True},
                         "yaxis": {
                             "automargin": True,
                             "title": {"text": column}
@@ -149,4 +155,3 @@ def register_callback_query(app):
             )
             for column in ["cvss", "cvss_rank", "cvss_version", "epss_rank", "n_ips", "n_orgs"] if column in df
         ]
-
