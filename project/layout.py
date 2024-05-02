@@ -9,8 +9,8 @@ import project.base as base
 
 available_datasets = base.check_available_datasets()
 
+def register_layout(username):
 
-def register_layout():
     tab1_content = dbc.Card(
         dbc.CardBody(
             html.Div(children=[dbc.Row(children=query1.register_layout_query())], className="wrapper")),
@@ -36,8 +36,13 @@ def register_layout():
             html.Div(
                 children=[
                     html.P(children="📊", className="header-emoji"),
-                    html.H1(children="TLHOP/SAM Analytics on EPSS", className="header-title")
-
+                    html.Div(
+                        children=[
+                            html.H1(children="TLHOP/SAM Analytics on EPSS", className="header-title"),
+                            html.H3(f"Logged in as: {username}", className="header-logged-as")
+                        ],
+                        style={"flex": "1"}
+                    ),
                 ],
                 className="header",
             ),
@@ -123,3 +128,4 @@ def register_layout():
         ]
     )
     return layout
+
