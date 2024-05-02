@@ -5,30 +5,26 @@ body {
 }
 
 .header {
-    background-color: #222222;
-    height: 288px;
-    padding: 16px 0 0 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: #333;
+    color: #fff;
+    padding: 6x 20px;
 }
-
+  
 .header-emoji {
-    font-size: 48px;
-    margin: 0 auto;
-    text-align: center;
+    font-size: 3rem;
 }
 
 .header-title {
-    color: #FFFFFF;
-    font-size: 48px;
-    font-weight: bold;
-    text-align: center;
-    margin: 0 auto;
+    margin: 0;
+    font-size: 1.5rem;
 }
 
-.header-description {
-    color: #CFCFCF;
-    margin: 4px auto;
-    text-align: center;
-    max-width: 384px;
+.header-logged-as {
+    margin: 5px 0 0;
+    font-size: 1rem;
 }
 
 .wrapper {
