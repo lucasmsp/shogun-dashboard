@@ -1,27 +1,86 @@
-import numpy as np
-import pandas as pd
-
+import project.base as base
 from dash import html, dcc, dash_table
 import dash_bootstrap_components as dbc
 from dash import Dash, dcc, html, Input, Output
-
-import plotly.express as px
-import plotly.graph_objs as go
-
-import project.base as base
 
 INPUT_DATA = '3'
 
 # Precisamos ocultar o "org_list" e de alguma forma, disponibilizar ao usuário, se necessário. P.ex: apenas ao clicar ? por houver (pop-up), exportar como um arquivo csv ?
 # quais gráficos fazer ?
 
-#constructs the layout for View 3
+# gráficos CVE x N_orgs, CVE X N_ips, CVE X EPSS
+# constructs the layout for View 3
+def create_legend_table():
+
+    columns_type = ["Equal", "Greater than", "Less than", "Not equal"]
+    columns_cve_id = ["CVE-2022-3ee1 or CVE-2022 or 2022-3ee1 or 2022", "< CVE-2022-3ee1 or < CVE-2022",
+                      "> CVE-2022-3ee1 or > CVE-2022, ", "!= CVE-2022-3ee1"]
+    columns_cvss = ["= 2.5", "< 2.5", "> 2.5" , "!= 2.5"]
+    columns_cvss_rank = ["= 0.4", "< 0.4", "> 0.4" , "!= 0.4"]
+    columns_cvss_version = ["= 2.1", "< 2.1", "> 2.1", "!= 2.1"]
+    columns_epss_rank = ["= 0.6", "< 0.6", "> 0.6", "!= 0.6"]
+    columns_ips = ["= 44", "< 44", "> 44", "!= 44"]
+    columns_orgs = ["= 678", "< 678", "> 678", "!= 678"]
+
+    data = []
+    for i in range(len(columns_type)):
+        data.append({
+            "type": columns_type[i],
+            "cve_id": columns_cve_id[i],
+            "cvss": columns_cvss[i],
+            "cvss_rank": columns_cvss_rank[i],
+            "cvss_version": columns_cvss_version[i],
+            "epss_rank": columns_epss_rank[i],
+            "ips": columns_ips[i],
+            "orgs": columns_orgs[i],
+        })
+
+    legend_table = dash_table.DataTable(
+
+        id='legend-table',
+        columns = [
+               {"name": ["Type"], "id": "type"},
+               {"name": ["CVE ID"], "id": "cve_id"},
+               {"name": ["CVSS"], "id": "cvss"},
+               {"name": ["CVSS Rank"], "id": "cvss_rank"},
+               {"name": ["CVSS Version"], "id": "cvss_version"},
+               {"name": ["EPSS Rank"], "id": "epss_rank"},
+               {"name": ["# IPS"], "id": "ips"},
+               {"name": ["# Organizations"], "id": "orgs"},
+            ],
+            data = data,
+    )
+
+    return legend_table
+
 def register_layout_query():
+    legend_table = create_legend_table()
     # visualização 3
     q3 = [
         dbc.Row(
             children=[
-                html.H1(children="View 3 - More details by CVE", className='wrapper'),
+                html.H1(children="View 3 - More details by CVE", style={'text-align': 'center'}),
+                html.H2(children="This analysis allows filtering the desired data in the table "
+                                 "and generating a chart related to the chosen information.",
+                        style={'font-size': '20px'}),
+                dbc.Col(
+                    children=[
+                        html.H1(children="DataTable Filtering", style={'font-size': '15px'})
+                    ],
+                    width=4
+                ),
+
+                dbc.Row(
+                    html.Div(
+                        children=[
+                            legend_table,
+                        ],
+                        style={
+                            'whiteSpace': 'normal',
+
+                        }
+                    ),
+                ),
                 # contém uma tabela iterativa Dash
                 dbc.Row(
                     # Renders an interactive table component
@@ -31,9 +90,9 @@ def register_layout_query():
                         columns=[
                             {"name": "CVE", "id": "cve_id", "selectable": True, "deletable": True},
                             {"name": "CVSS", "id": "cvss", "selectable": True, "deletable": True},
-                            {"name": "CVSS rank", "id": "cvss_rank", "selectable": True, "deletable": True},
-                            {"name": "CVSS version", "id": "cvss_version", "selectable": True, "deletable": True},
-                            {"name": "EPSS rank", "id": "epss_rank", "selectable": True, "deletable": True},
+                            {"name": "CVSS Rank", "id": "cvss_rank", "selectable": True, "deletable": True},
+                            {"name": "CVSS Version", "id": "cvss_version", "selectable": True, "deletable": True},
+                            {"name": "EPSS Rank", "id": "epss_rank", "selectable": True, "deletable": True},
                             {"name": "# IPs", "id": "n_ips", "selectable": True, "deletable": True},
                             {"name": "# organizations", "id": "n_orgs", "selectable": True, "deletable": True},
                         ],
@@ -57,13 +116,12 @@ def register_layout_query():
                     style={'margin-top': '32px'}
 
                 ),
-                html.Div(id='datable-interactivity-container')
+                html.Div(id='datable-interactivity-container'),
             ]
-        )
+        ),
     ]
 
     return q3
-
 
 # register all the callbacks in one place
 def register_callback_query(app):
@@ -74,12 +132,16 @@ def register_callback_query(app):
     )
     def update_table3(date_value, sort_by):
         print("[INFO] query 3 - update_table3: ", date_value)
+
         df = base.get_dataset(date_value, INPUT_DATA).drop(['org_list'], axis=1)
 
-#         df["cvss_rank"] = [float(str(i).replace("<", "").replace(">", "").replace("=", ""))
-#                            for i in df["cvss_rank"]]
-#         df["epss_rank"] = [float(str(i).replace("<", "").replace(">", "").replace("=", ""))
-#                            for i in df["epss_rank"]]
+        df['cvss_version'] = df['cvss_version'].astype(float)
+
+        df["cvss_rank"] = [float(str(i).replace("<", "").replace(">", "").replace("=", ""))
+                           for i in df["cvss_rank"]]
+
+        df["epss_rank"] = [float(str(i).replace("<", "").replace(">", "").replace("=", ""))
+                           for i in df["epss_rank"]]
 
         if len(sort_by):
             df = df.sort_values(
