@@ -55,7 +55,19 @@ def dashboard():
     app.layout = register_layout(current_user)
     return app.index()
 
-app = Dash(__name__, server=server, external_stylesheets=[dbc.themes.BOOTSTRAP])
+external_stylesheets = [
+    {
+        "href": (
+            "https://fonts.googleapis.com/css2?"
+            "family=Lato:wght@400;700&display=swap"
+        ),
+        "rel": "stylesheet",
+    },
+    dbc.themes.BOOTSTRAP
+]
+
+
+app = Dash(__name__, server=server, external_stylesheets=external_stylesheets)
 app.title = "TLHOP/SAM Analytics on EPSS"
 app.layout = register_layout(current_user)
 register_callbacks(app)

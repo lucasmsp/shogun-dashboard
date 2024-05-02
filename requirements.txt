@@ -36,3 +36,4 @@ Werkzeug==3.0.2
 zipp==3.18.1
 dash_auth==1.4.1
 jwt
+flask_login==0.6.3
