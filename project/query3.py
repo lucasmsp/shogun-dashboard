@@ -198,19 +198,26 @@ def register_callback_query(app):
         print("[INFO] update_graphs: ", date_value)
         df = base.get_dataset(date_value, INPUT_DATA)
 
-        if rows is not None:
-            df = pd.DataFrame(rows)
+        df_table = df.copy()
 
+        # rows -> uma var que armazena as linhas de uma tabela que foram alteradas ou selecionadas
+        if rows is not None:
+            df_selected_rows = pd.DataFrame(rows)
+            df_table.update(df_selected_rows)
+
+        # derivered_virtual.... -> contém os índices das linhas que foram selecionadas
         if derived_virtual_selected_rows is None:
             derived_virtual_selected_rows = []
 
         # mudar o gráfico conforme há mudança de página
         start = page_current*15
         end = (page_current+1)*15
-        df_subset = df.iloc[start:end].reset_index()
+
+        # reset_index() -> redefine os índices de um df após x op. que alteram esses
+        df_subset = df_table.iloc[start:end]
 
         colors = ['red' if i in derived_virtual_selected_rows else 'blue'
-                  for i in df_subset['index']]
+                  for i in range(len(df_subset))]
 
         graphs = []
         if value in df_subset:
@@ -221,9 +228,10 @@ def register_callback_query(app):
                     yaxis_title = "EPSS Rank",
                     xaxis=dict(showticklabels=False),
                 )
-                graphs.append(dcc.Graph(
-                    id=value,
-                    figure=fig
+                graphs.append(
+                    dcc.Graph(
+                        id=value,
+                        figure=fig
                 ))
             else:
                 df_grouped = df_subset.groupby('cve_id')[value].agg(['min', 'max', 'mean']).reset_index()
@@ -245,7 +253,7 @@ def register_callback_query(app):
                         mode='lines',
                         marker=dict(color="#ee6c4d"),
                         line=dict(width=1),
-                        showlegend=False
+                        showlegend=True
                     ),
                     go.Scatter(
                         name='Lower Bound',
@@ -256,7 +264,7 @@ def register_callback_query(app):
                         mode='lines',
                         fillcolor='rgba(68, 68, 68, 0.3)',
                         fill='tonexty',
-                        showlegend=False
+                        showlegend=True
                     )
                 ])
 
