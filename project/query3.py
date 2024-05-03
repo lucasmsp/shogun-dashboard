@@ -2,21 +2,23 @@ import project.base as base
 from dash import html, dcc, dash_table
 import dash_bootstrap_components as dbc
 from dash import Dash, dcc, html, Input, Output
+import plotly.express as px
+import plotly.graph_objs as go
+import pandas as pd
 
 INPUT_DATA = '3'
+
 
 # Precisamos ocultar o "org_list" e de alguma forma, disponibilizar ao usuário, se necessário. P.ex: apenas ao clicar ? por houver (pop-up), exportar como um arquivo csv ?
 # quais gráficos fazer ?
 
-# gráficos CVE x N_orgs, CVE X N_ips, CVE X EPSS
-# constructs the layout for View 3
-def create_legend_table():
 
+def create_legend_table():
     columns_type = ["Equal", "Greater than", "Less than", "Not equal"]
     columns_cve_id = ["CVE-2022-3ee1 or CVE-2022 or 2022-3ee1 or 2022", "< CVE-2022-3ee1 or < CVE-2022",
                       "> CVE-2022-3ee1 or > CVE-2022, ", "!= CVE-2022-3ee1"]
-    columns_cvss = ["= 2.5", "< 2.5", "> 2.5" , "!= 2.5"]
-    columns_cvss_rank = ["= 0.4", "< 0.4", "> 0.4" , "!= 0.4"]
+    columns_cvss = ["= 2.5", "< 2.5", "> 2.5", "!= 2.5"]
+    columns_cvss_rank = ["= 0.4", "< 0.4", "> 0.4", "!= 0.4"]
     columns_cvss_version = ["= 2.1", "< 2.1", "> 2.1", "!= 2.1"]
     columns_epss_rank = ["= 0.6", "< 0.6", "> 0.6", "!= 0.6"]
     columns_ips = ["= 44", "< 44", "> 44", "!= 44"]
@@ -38,20 +40,21 @@ def create_legend_table():
     legend_table = dash_table.DataTable(
 
         id='legend-table',
-        columns = [
-               {"name": ["Type"], "id": "type"},
-               {"name": ["CVE ID"], "id": "cve_id"},
-               {"name": ["CVSS"], "id": "cvss"},
-               {"name": ["CVSS Rank"], "id": "cvss_rank"},
-               {"name": ["CVSS Version"], "id": "cvss_version"},
-               {"name": ["EPSS Rank"], "id": "epss_rank"},
-               {"name": ["# IPS"], "id": "ips"},
-               {"name": ["# Organizations"], "id": "orgs"},
-            ],
-            data = data,
+        columns=[
+            {"name": ["Type"], "id": "type"},
+            {"name": ["CVE ID"], "id": "cve_id"},
+            {"name": ["CVSS"], "id": "cvss"},
+            {"name": ["CVSS Rank"], "id": "cvss_rank"},
+            {"name": ["CVSS Version"], "id": "cvss_version"},
+            {"name": ["EPSS Rank"], "id": "epss_rank"},
+            {"name": ["# IPS"], "id": "ips"},
+            {"name": ["# Organizations"], "id": "orgs"},
+        ],
+        data=data,
     )
 
     return legend_table
+
 
 def register_layout_query():
     legend_table = create_legend_table()
@@ -69,7 +72,7 @@ def register_layout_query():
                     ],
                     width=4
                 ),
-
+                # Tabela Legenda
                 dbc.Row(
                     html.Div(
                         children=[
@@ -81,7 +84,7 @@ def register_layout_query():
                         }
                     ),
                 ),
-                # contém uma tabela iterativa Dash
+                # Tabela interativa
                 dbc.Row(
                     # Renders an interactive table component
                     dash_table.DataTable(
@@ -94,11 +97,9 @@ def register_layout_query():
                             {"name": "CVSS Version", "id": "cvss_version", "selectable": True, "deletable": True},
                             {"name": "EPSS Rank", "id": "epss_rank", "selectable": True, "deletable": True},
                             {"name": "# IPs", "id": "n_ips", "selectable": True, "deletable": True},
-                            {"name": "# organizations", "id": "n_orgs", "selectable": True, "deletable": True},
+                            {"name": "# Organizations", "id": "n_orgs", "selectable": True, "deletable": True},
                         ],
-                        # permite que a tabela seja editável
                         editable=True,
-                        # permite filtragem da tabela
                         filter_action="native",
                         sort_action='custom',
                         sort_mode='multi',
@@ -116,6 +117,22 @@ def register_layout_query():
                     style={'margin-top': '32px'}
 
                 ),
+
+                html.H4(children="Choose the type of visualization based on the y-axis.", style={'text-align': 'Left'}),
+                # Dropdown selecionar gráfico
+                dbc.Row(
+                    dcc.Dropdown(
+                        id='graph-type',
+                        options=[
+                            {'label': 'EPSS Rank', 'value': 'epss_rank'},
+                            {'label': '# IPS', 'value': 'n_ips'},
+                            {'label': '# Organizations', 'value': 'n_orgs'},
+                        ],
+                        value='epss_rank'
+                    ),
+                    style={'margin-top': '32px'}
+                ),
+
                 html.Div(id='datable-interactivity-container'),
             ]
         ),
@@ -123,7 +140,7 @@ def register_layout_query():
 
     return q3
 
-# register all the callbacks in one place
+
 def register_callback_query(app):
     @app.callback(
         Output('query-3-table', "data"),
@@ -160,12 +177,11 @@ def register_callback_query(app):
         Input('date-picker-single', 'date'),
         Input('query-3-table', "sort_by")
     )
-
     def update_styles(date_value, sort_by):
         print("[INFO] query 3 - update_styles: ", date_value)
         df = base.get_dataset(date_value, INPUT_DATA)
 
-        return[{
+        return [{
             'if': {'column_id': i['column_id']},
             'background_color': 'white'
         } for i in sort_by]
@@ -174,46 +190,97 @@ def register_callback_query(app):
         Output('datable-interactivity-container', "children"),
         Input('date-picker-single', 'date'),
         Input('query-3-table', "derived_virtual_data"),
-        Input('query-3-table', "derived_virtual_selected_rows")
+        Input('query-3-table', "derived_virtual_selected_rows"),
+        Input('graph-type', 'value'),
+        Input('query-3-table', "page_current")
     )
-    def update_graphs(date_value, rows, derived_virtual_selected_rows):
+    def update_graphs(date_value, rows, derived_virtual_selected_rows, value, page_current):
         print("[INFO] update_graphs: ", date_value)
         df = base.get_dataset(date_value, INPUT_DATA)
+
+        if rows is not None:
+            df = pd.DataFrame(rows)
 
         if derived_virtual_selected_rows is None:
             derived_virtual_selected_rows = []
 
-        colors = ['red' if i in derived_virtual_selected_rows else '#0074D9'
-                  for i in range(len(df))]
+        # mudar o gráfico conforme há mudança de página
+        start = page_current*15
+        end = (page_current+1)*15
+        df_subset = df.iloc[start:end].reset_index()
 
-        return [
-            dcc.Graph(
-                id=column,
-                figure={
-                    "data": [
-                        {
-                            "x": df["cve_id"],
-                            "y": df[column],
-                            # "type": "barh",
-                            "mode": "markers",
-                            "marker": {
-                                "color": colors,
-                                "size": 10,
-                                "opacity": 0.8,
-                                "line": {"width": 0.5, "color": "white"}
-                            },
-                        }
-                    ],
-                    "layout": {
-                        "xaxis": {"automargin": True},
-                        "yaxis": {
-                            "automargin": True,
-                            "title": {"text": column}
-                        },
-                        "height": 200,
-                        "margin": {"t": 10, "l": 10, "r": 10},
-                    },
-                },
-            )
-            for column in ["cvss", "cvss_rank", "cvss_version", "epss_rank", "n_ips", "n_orgs"] if column in df
-        ]
+        colors = ['red' if i in derived_virtual_selected_rows else 'blue'
+                  for i in df_subset['index']]
+
+        graphs = []
+        if value in df_subset:
+            if value == "epss_rank":
+                fig = px.scatter(df_subset, x="cve_id", y=df_subset[value], marginal_x="histogram", marginal_y="rug", color=colors)
+                fig.update_layout(
+                    xaxis_title = "CVE ID",
+                    yaxis_title = "EPSS Rank",
+                    xaxis=dict(showticklabels=False),
+                )
+                graphs.append(dcc.Graph(
+                    id=value,
+                    figure=fig
+                ))
+            else:
+                df_grouped = df_subset.groupby('cve_id')[value].agg(['min', 'max', 'mean']).reset_index()
+
+                fig = go.Figure([
+                    go.Scatter(
+                        name='Measurement',
+                        x=df_grouped['cve_id'],
+                        y=df_grouped['mean'],
+                        mode='markers',
+                        #"#FF8849"
+                        marker=dict(color=colors, size=10),
+                        showlegend=True
+                    ),
+                    go.Scatter(
+                        name='Upper Bound',
+                        x=df_grouped['cve_id'],
+                        y=df_grouped['max'],
+                        mode='lines',
+                        marker=dict(color="#ee6c4d"),
+                        line=dict(width=1),
+                        showlegend=False
+                    ),
+                    go.Scatter(
+                        name='Lower Bound',
+                        x=df_grouped['cve_id'],
+                        y=df_grouped['min'],
+                        marker=dict(color="#3d5a80"),
+                        line=dict(width=1),
+                        mode='lines',
+                        fillcolor='rgba(68, 68, 68, 0.3)',
+                        fill='tonexty',
+                        showlegend=False
+                    )
+                ])
+
+                if value == "n_ips":
+                    fig.update_layout(
+                        xaxis_title = "CVE ID",
+                        yaxis_title=f'# IPs',
+                        title=f'Number of IPs per CVE ID',
+                        hovermode="x",
+                        xaxis=dict(showticklabels=False)
+                    )
+                else:
+                    fig.update_layout(
+                        xaxis_title = "CVE ID",
+                        yaxis_title=f'# Organizations',
+                        title=f'Number of organizations per CVE ID',
+                        hovermode="x",
+                        xaxis=dict(showticklabels=False)
+                    )
+
+                graphs.append(dcc.Graph(
+                    id=value,
+                    figure=fig
+                ))
+
+        return graphs
+
