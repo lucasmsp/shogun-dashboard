@@ -16,7 +16,7 @@ INPUT_DATA = '3'
 # quais gráficos fazer ?
 
 #constructs the layout for View 3
-def register_layout_query():
+def register_layout_query(dm):
     # visualização 3
     q3 = [
         dbc.Row(
@@ -66,7 +66,7 @@ def register_layout_query():
 
 
 # register all the callbacks in one place
-def register_callback_query(app):
+def register_callback_query(dm, app):
     @app.callback(
         Output('query-3-table', "data"),
         Input('date-picker-single', 'date'),
@@ -74,12 +74,8 @@ def register_callback_query(app):
     )
     def update_table3(date_value, sort_by):
         print("[INFO] query 3 - update_table3: ", date_value)
-        df = base.get_dataset(date_value, INPUT_DATA).drop(['org_list'], axis=1)
+        df = dm.get_view_dataset(date_value, INPUT_DATA)
 
-#         df["cvss_rank"] = [float(str(i).replace("<", "").replace(">", "").replace("=", ""))
-#                            for i in df["cvss_rank"]]
-#         df["epss_rank"] = [float(str(i).replace("<", "").replace(">", "").replace("=", ""))
-#                            for i in df["epss_rank"]]
 
         if len(sort_by):
             df = df.sort_values(
@@ -101,7 +97,7 @@ def register_callback_query(app):
 
     def update_styles(date_value, sort_by):
         print("[INFO] query 3 - update_styles: ", date_value)
-        df = base.get_dataset(date_value, INPUT_DATA)
+        df = dm.get_view_dataset(date_value, INPUT_DATA)
 
         return[{
             'if': {'column_id': i['column_id']},
@@ -116,7 +112,7 @@ def register_callback_query(app):
     )
     def update_graphs(date_value, rows, derived_virtual_selected_rows):
         print("[INFO] update_graphs: ", date_value)
-        df = base.get_dataset(date_value, INPUT_DATA)
+        df = dm.get_view_dataset(date_value, INPUT_DATA)
 
         if derived_virtual_selected_rows is None:
             derived_virtual_selected_rows = []

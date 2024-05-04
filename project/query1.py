@@ -9,49 +9,81 @@ import project.base as base
 
 INPUT_DATA = '1'
 
-def register_layout_query():
+def register_layout_query(dm):
     # visualização 1
     q1 = [
         dbc.Row(
             children=[
-                html.H1(children="View 1 - EPSS summary", className='wrapper'),
+                html.H1(children="View 1 - EPSS summary", className='wrapper', style={'textAlign': 'center'}),
+
                 dbc.Row(
-                    dash_table.DataTable(
-
-                        id='query-1-table',
-                        columns=[
-                            {"name": 'EPSS rank', "id": "epss_rank"}, 
-                            {"name": '# CVEs', "id": 'n_cves'},
-                            {"name": '# IPs', "id": 'n_ips'},
-                            {"name": '# organizations', "id": 'n_orgs'}
+                        [
+                            dbc.Col(
+                                html.Div(
+                                    dash_table.DataTable(
+                                        id='query-1-table',
+                                        columns=[
+                                            {"name": 'EPSS rank', "id": "epss_rank"}, 
+                                            {"name": '# CVEs', "id": 'n_cves'},
+                                            {"name": '# IPs', "id": 'n_ips'},
+                                            {"name": '# organizations', "id": 'n_orgs'}
+                                        ],
+                                        sort_action='custom',
+                                        sort_mode='multi',
+                                        sort_by=[],
+                                        style_cell={
+                                            'padding-right': '10px', 
+                                            'padding-left': '10px',
+                                            'text-align': 'center'
+                                        },
+                                        style_data={
+                                            'whiteSpace': 'normal',
+                                            'height': 'auto',
+                                            'max-height': '80px',
+                                            'min-height': '50px', 
+                                            'minWidth': '250px', 
+                                            'width': '250px', 
+                                            'maxWidth': '300px',
+                                        },
+                                        fill_width=False
+                                    ),
+                                    style={
+                                        'margin-top': '32px', 
+                                        'textAlign': 'center',
+                                        'font-size': '26px',
+                                        'font-family': "Lato, sans-serif",
+                                        }
+                                ),
+                                className="mt-3"
+                            ),
+                            dbc.Col(
+                                html.Div([
+                                    html.H4(children="Choose a type of graph: ", className='wrapper'),
+                                    dcc.Dropdown(
+                                        id="query-1-dropdown",
+                                        options=[
+                                            "Bar plot - Number of CVEs by EPSS Rank", 
+                                            "Bar plot - Number of organizations by EPSS Rank",
+                                            "Bar plot - Number of IPs by EPSS Rank",
+                                            "CDF plot - Number of CVEs by EPSS Rank",
+                                            "PDF plot - Number of CVEs by EPSS Rank"
+                                        ],
+                                        value="Bar plot - Number of CVEs by EPSS Rank",
+                                        clearable=False
+                                    ),
+                                    dcc.Graph(
+                                        id="query-1-graph",
+                                        config={
+                                            'displayModeBar': False,
+                                            'scrollZoom': True
+                                        }
+                                    )],
+                                className="mt-3"
+                                )
+                            )
                         ],
-                        sort_action='custom',
-                        sort_mode='multi',
-                        sort_by=[],
-                        style_data={
-                            'whiteSpace': 'normal',
-                            'height': 'auto',
-                            'max-height': '15px', 'min-height': '15px', 'height': '15px'
-                        }
-                    ),
-                    style={'margin-top': '32px'}
-
-                ),
-                html.Br(),
-                html.H4(children="Number of Vulnerabilities in each EPSS rank by metric", className='wrapper'),
-                dcc.Dropdown(
-                    id="query-1-dropdown",
-                    options=["n_cves","n_orgs","n_ips"],
-                    value="n_cves",
-                    clearable=False
-                ),
-                dcc.Graph(
-                    id="query-1-graph",
-                    config={
-                        'displayModeBar': False,
-                        'scrollZoom': True
-                    }
-                )
+                        align="center",
+                    )
             ]
         )
     ]
@@ -61,7 +93,7 @@ def register_layout_query():
 
 
 
-def register_callback_query(app):
+def register_callback_query(dm, app):
     
     @app.callback(
         Output('query-1-table', "data"),
@@ -70,7 +102,7 @@ def register_callback_query(app):
     )
     def update_table1(date_value, sort_by):
         print("[INFO] update_table1: ", date_value)
-        df = base.get_dataset(date_value, INPUT_DATA)
+        df = dm.get_view_dataset(date_value, INPUT_DATA)
         if len(sort_by):
             df = df.sort_values(
                 [col['column_id'] for col in sort_by],
@@ -90,7 +122,80 @@ def register_callback_query(app):
     )
     def update_chart1(date_value, metric):
         print("[INFO] update_chart1", date_value)
-        df = base.get_dataset(date_value, INPUT_DATA)
+        df = dm.get_view_dataset(date_value, INPUT_DATA)
         config = {'displayModeBar': False}
-        fig = px.bar(df, x="epss_rank", y=metric, barmode="group")
+
+        y_column = "n_cves"
+        y_label = "# CVEs"
+        graph_type = "bar plot"
+
+        if metric == "Bar plot - Number of CVEs by EPSS Rank":
+            y_column = "n_cves"
+            y_label = "# CVEs"
+            graph_type = "bar plot"
+        elif metric == "Bar plot - Number of organizations by EPSS Rank":
+            y_column = "n_orgs"
+            y_label = "# Orgs"
+            graph_type = "bar plot"
+        elif metric == "Bar plot - Number of IPs by EPSS Rank":
+            y_column = "n_ips"
+            y_label = "# IPs"
+            graph_type = "bar plot"
+        elif metric == "PDF plot - Number of CVEs by EPSS Rank":
+            y_column = "n_cves"
+            y_label = "# CVEs"
+            graph_type = "pdf plot"
+        elif metric == "CDF plot - Number of CVEs by EPSS Rank":
+            y_column = "n_cves"
+            y_label = "# CVEs"
+            graph_type = "cdf plot"
+        
+        if graph_type == "bar plot":
+            fig = px.bar(df,
+                x="epss_rank", 
+                y=y_column, 
+                barmode="group", 
+                title=metric, 
+                labels={
+                        "epss_rank": "EPSS Rank",
+                        y_column: y_label
+                    }
+                )
+        elif graph_type == "pdf plot":
+            df['pdf'] = df['n_cves'] / sum(df['n_cves'])
+            df = df.reset_index()
+            fig = px.bar(df,
+                x="epss_rank", 
+                y='pdf', 
+                barmode="group", 
+                title=metric, 
+                labels={
+                        "epss_rank": "EPSS Rank",
+                        'pdf': 'Probability Density'
+                    }
+                )
+
+        else:
+            df['pdf'] = df['n_cves'] / sum(df['n_cves'])
+            df['cdf'] = df['pdf'].cumsum()
+            df = df.reset_index()
+            fig = px.bar(df,
+                x="epss_rank", 
+                y='cdf', 
+                barmode="group", 
+                title=metric, 
+                labels={
+                        "epss_rank": "EPSS Rank",
+                        'cdf': 'Probability'
+                    }
+                )
+
+        fig.update_traces(width=1)
+        fig.update_layout(
+            font=dict(
+                family="Lato, sans-serif",
+                size=18,
+            )
+        )
+
         return fig
