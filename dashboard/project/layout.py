@@ -120,7 +120,7 @@ def register_layout(dm, username):
                     dbc.Tab(tab3_content, label="View 3 - More details by CVE")
                 ],
                 style={
-                    "padding-left": "20px"
+                    "paddingLeft": "20px"
                 }
             )
         ]

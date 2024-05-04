@@ -35,16 +35,16 @@ body {
     padding-left: 10px;
     background-color: #FFFFFF;
     margin-top: 32px;
+    
 }
 
 .card {
     margin-bottom: 24px;
-    
 }
 
 .menu {
     height: 112px;
-    width: 80%;
+    width: 85%;
     padding-top: 24px;
     margin-right: auto;
     margin-left: auto;
