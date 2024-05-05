@@ -9,8 +9,9 @@ import plotly.graph_objs as go
 import pandas as pd
 
 INPUT_DATA = '3'
-def dash_components():
 
+
+def dash_components():
     components_1 = html.Div([
         html.Div(children=[
             html.Center([
@@ -72,6 +73,14 @@ def dash_components():
                 min=0,
                 max=1,
                 step=0.1,
+                marks={
+                    0.0: '0.0',
+                    0.2: '0.2',
+                    0.4: '0.4',
+                    0.6: '0.6',
+                    0.8: '0.8',
+                    1.0: '1.0',
+                },
                 value=[0.5, 0.7],
                 tooltip={
                     'placement': 'top',
@@ -126,8 +135,8 @@ def register_layout_query():
                 ),
                 html.H2(
                     children="This visualization allows the analysis of the distribution of CVEs "
-                                 "in relation to IPs and organizations acessible on the Internet",
-                        style={'font-size': '20px'}
+                             "in relation to IPs and organizations acessible on the Internet",
+                    style={'font-size': '20px'}
                 ),
 
                 component_1,
@@ -137,14 +146,14 @@ def register_layout_query():
                         id='query-3-table',
                         columns=[
                             {"name": "CVE", "id": "cve_id", "selectable": True},
-                            {"name": "CVSS", "id": "cvss", "selectable": True}, # TODO {CVSS and CVSS Rank}
+                            {"name": "CVSS", "id": "cvss", "selectable": True},  # TODO {CVSS and CVSS Rank}
                             {"name": "CVSS Rank", "id": "cvss_rank", "selectable": True},
                             {"name": "CVSS Version", "id": "cvss_version", "selectable": True},
                             {"name": "EPSS Rank", "id": "epss_rank", "selectable": True},
                             {"name": "# IPs", "id": "n_ips", "selectable": True},
                             {"name": "# Organizations", "id": "n_orgs", "selectable": True},
                         ],
-                        editable=True,
+                        # editable=True,
                         sort_action='custom',
                         sort_mode='multi',
                         sort_by=[],
@@ -183,6 +192,15 @@ def register_layout_query():
 
     return q3
 
+def find_expression(string):
+    list_expressions = ['>=', '<=', '!=']
+    for i in list_expressions:
+        index = string.find(i)
+
+        if index != -1:
+            return i
+
+
 def register_callback_query(app):
     @app.callback(
         Output('query-3-table', "data"),
@@ -196,8 +214,8 @@ def register_callback_query(app):
         Input('search-bar-ip', 'value')
 
     )
-    def update_table3(date_value, sort_by, ip_query, cve_query, dropdown_query, org_query,
-                      cvss_query, epss_query):
+    def update_table3(date_value, sort_by, cve_query, dropdown_query_cvss, cvss_range_query,
+                      epss_range_query, org_query, ip_query):
         print("[INFO] query 3 - update_table3: ", date_value)
 
         df = base.get_dataset(date_value, INPUT_DATA).drop(['org_list'], axis=1).drop_duplicates(["cve_id"])
@@ -214,54 +232,72 @@ def register_callback_query(app):
                 inplace=False
             )
 
-        # if ip_query:
-        #     op = str(ip_query)
-        #     operator = op[0]
-        #     value = op[1:].strip()
-        #     value = int(value)
-        #     if operator == '=':
-        #         df = df[df['n_ips'] == value]
-        #     elif operator == '!=':
-        #         df = df[df['n_ips'] != value]
-        #     elif operator == '>':
-        #         df = df[df['n_ips'] > value]
-        #     elif operator == '<':
-        #         df = df[df['n_ips'] < value]
-        #     elif operator == '>=':
-        #         df = df[df['n_ips'] >= value]
-        #     elif operator == '<=':
-        #         df = df[df['n_ips'] <= value]
-
         if cve_query:
             df = df[df['cve_id'].str.contains(cve_query, case=False)]
 
-        if dropdown_query:
-            drop = str(dropdown_query)
-            numbers = json.loads(drop)
-            value1 = float(numbers[0])
-            value2 = float(numbers[1])
-            df = df[(df['cvss_version'] >= value1) & (df['cvss_version'] <= value2)]
+        if dropdown_query_cvss:
+            drop = str(dropdown_query_cvss)
+            value = float(drop)
+            df = df[df['cvss_version'] == value]
 
-        # if org_query:
-        #     op = str(org_query)
-        #     operator = op[0]
-        #     value = op[1:].strip()
-        #     value = int(value)
-        #     if operator == '=':
-        #         df = df[df['n_ors'] == value]
-        #     elif operator == '!=':
-        #         df = df[df['n_ors'] != value]
-        #     elif operator == '>':
-        #         df = df[df['n_ors'] > value]
-        #     elif operator == '<':
-        #         df = df[df['n_ors'] < value]
-        #     elif operator == '>=':
-        #         df = df[df['n_orgs'] >= value]
-        #     elif operator == '<=':
-        #         df = df[df['n_orgs'] <= value]
+        if cvss_range_query:
+            df = df[(df['cvss'] >= cvss_range_query[0]) & (df['cvss'] <= cvss_range_query[1])]
 
-        if cvss_query:
-            df = df[(df['cvss'] >= cvss_query[0]) & (df['cvss'] <= cvss_query[1])]
+        if org_query:
+            op = str(org_query)
+            op = op.replace(" ", "")
+            result_expression = find_expression(op)
+
+            if result_expression in ['>=', '<=', '!=']:
+                info = op.split('=')
+                value = int(info[1])
+                if result_expression == ">=":
+                    df = df[df['n_orgs'] >= value]
+
+                elif result_expression == '<=':
+                    df = df[df['n_orgs'] <= value]
+
+                elif result_expression == '!=':
+                    df = df[df['n_orgs'] != value]
+
+            else:
+                operator = op[0]
+                value = op[1:].strip()
+                value = int(value)
+                if operator == '=':
+                    df = df[df['n_orgs'] == value]
+                elif operator == '>':
+                    df = df[df['n_orgs'] > value]
+                elif operator == '<':
+                    df = df[df['n_orgs'] < value]
+
+        if ip_query:
+            op = str(ip_query)
+            op = op.replace(" ", "")
+            result_expression = find_expression(op)
+
+            if result_expression in ['>=', '<=', '!=']:
+                info = op.split('=')
+                value = int(info[1])
+                if result_expression == ">=":
+                    df = df[df['n_ips'] >= value]
+
+                elif result_expression == '<=':
+                    df = df[df['n_ips'] <= value]
+
+                elif result_expression == '!=':
+                    df = df[df['n_ips'] != value]
+
+            else:
+                operator = op[0]
+                value = op[1:].strip()
+                value = int(value)
+                if operator == '=':
+                    df = df[df['n_ips'] == value]
+                elif operator == '>':
+                    df = df[df['n_ips'] > value]
+                elif operator == '<':
+                    df = df[df['n_ips'] < value]
 
         return df.to_dict('records')
 
@@ -291,139 +327,6 @@ def register_callback_query(app):
     #     df = base.get_dataset(date_value, INPUT_DATA)
 
 
-
-# Precisamos ocultar o "org_list" e de alguma forma, disponibilizar ao usuário, se necessário. P.ex: apenas ao clicar ? por houver (pop-up), exportar como um arquivo csv ?
-# quais gráficos fazer ?
-
-
-# def create_legend_table():
-#     columns_type = ["Equal", "Greater than", "Less than", "Not equal"]
-#     columns_cve_id = ["CVE-2022-3ee1 or CVE-2022 or 2022-3ee1 or 2022", "< CVE-2022-3ee1 or < CVE-2022",
-#                       "> CVE-2022-3ee1 or > CVE-2022, ", "!= CVE-2022-3ee1"]
-#     columns_cvss = ["= 2.5", "< 2.5", "> 2.5", "!= 2.5"]
-#     columns_cvss_rank = ["= 0.4", "< 0.4", "> 0.4", "!= 0.4"]
-#     columns_cvss_version = ["= 2.1", "< 2.1", "> 2.1", "!= 2.1"]
-#     columns_epss_rank = ["= 0.6", "< 0.6", "> 0.6", "!= 0.6"]
-#     columns_ips = ["= 44", "< 44", "> 44", "!= 44"]
-#     columns_orgs = ["= 678", "< 678", "> 678", "!= 678"]
-#
-#     data = []
-#     for i in range(len(columns_type)):
-#         data.append({
-#             "type": columns_type[i],
-#             "cve_id": columns_cve_id[i],
-#             "cvss": columns_cvss[i],
-#             "cvss_rank": columns_cvss_rank[i],
-#             "cvss_version": columns_cvss_version[i],
-#             "epss_rank": columns_epss_rank[i],
-#             "ips": columns_ips[i],
-#             "orgs": columns_orgs[i],
-#         })
-#
-#     legend_table = dash_table.DataTable(
-#
-#         id='legend-table',
-#         columns=[
-#             {"name": ["Type"], "id": "type"},
-#             {"name": ["CVE ID"], "id": "cve_id"},
-#             {"name": ["CVSS"], "id": "cvss"},
-#             {"name": ["CVSS Rank"], "id": "cvss_rank"},
-#             {"name": ["CVSS Version"], "id": "cvss_version"},
-#             {"name": ["EPSS Rank"], "id": "epss_rank"},
-#             {"name": ["# IPS"], "id": "ips"},
-#             {"name": ["# Organizations"], "id": "orgs"},
-#         ],
-#         data=data,
-#     )
-#
-#     return legend_table
-#
-#
-# def register_layout_query():
-#     legend_table = create_legend_table()
-#     # visualização 3
-#     q3 = [
-#         dbc.Row(
-#             children=[
-#                 html.H1(children="View 3 - More details by CVE", style={'text-align': 'center'}),
-#                 html.H2(children="This analysis allows filtering the desired data in the table "
-#                                  "and generating a chart related to the chosen information.",
-#                         style={'font-size': '20px'}),
-#                 dbc.Col(
-#                     children=[
-#                         html.H1(children="DataTable Filtering", style={'font-size': '15px'})
-#                     ],
-#                     width=4
-#                 ),
-#                 # Tabela Legenda
-#                 dbc.Row(
-#                     html.Div(
-#                         children=[
-#                             legend_table,
-#                         ],
-#                         style={
-#                             'whiteSpace': 'normal',
-#
-#                         }
-#                     ),
-#                 ),
-#                 # Tabela interativa
-#                 dbc.Row(
-#                     # Renders an interactive table component
-#                     dash_table.DataTable(
-#
-#                         id='query-3-table',
-#                         columns=[
-#                             {"name": "CVE", "id": "cve_id", "selectable": True, "deletable": True},
-#                             {"name": "CVSS", "id": "cvss", "selectable": True, "deletable": True},
-#                             {"name": "CVSS Rank", "id": "cvss_rank", "selectable": True, "deletable": True},
-#                             {"name": "CVSS Version", "id": "cvss_version", "selectable": True, "deletable": True},
-#                             {"name": "EPSS Rank", "id": "epss_rank", "selectable": True, "deletable": True},
-#                             {"name": "# IPs", "id": "n_ips", "selectable": True, "deletable": True},
-#                             {"name": "# Organizations", "id": "n_orgs", "selectable": True, "deletable": True},
-#                         ],
-#                         editable=True,
-#                         filter_action="native",
-#                         sort_action='custom',
-#                         sort_mode='multi',
-#                         sort_by=[],
-#                         row_selectable='multi',
-#                         row_deletable=True,
-#                         page_current=0,
-#                         page_size=15,
-#                         style_data={
-#                             'whiteSpace': 'normal',
-#                             'height': 'auto',
-#                             'max-height': '15px', 'min-height': '15px', 'height': '15px'
-#                         }
-#                     ),
-#                     style={'margin-top': '32px'}
-#
-#                 ),
-#
-#                 html.H4(children="Choose the type of visualization based on the y-axis.", style={'text-align': 'Left'}),
-#                 # Dropdown selecionar gráfico
-#                 dbc.Row(
-#                     dcc.Dropdown(
-#                         id='graph-type',
-#                         options=[
-#                             {'label': 'EPSS Rank', 'value': 'epss_rank'},
-#                             {'label': '# IPS', 'value': 'n_ips'},
-#                             {'label': '# Organizations', 'value': 'n_orgs'},
-#                         ],
-#                         value='epss_rank'
-#                     ),
-#                     style={'margin-top': '32px'}
-#                 ),
-#
-#                 html.Div(id='datable-interactivity-container'),
-#             ]
-#         ),
-#     ]
-#
-#     return q3
-#
-#
 # def register_callback_query(app):
 #     @app.callback(
 #         Output('query-3-table', "data"),
@@ -574,4 +477,3 @@ def register_callback_query(app):
 #                 ))
 #
 #         return graphs
-
