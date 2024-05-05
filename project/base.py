@@ -14,10 +14,10 @@ def get_dataset(day, version):
 
     if day in check_available_datasets():
         print("Reading a new day:", day)
-        
-        df = pd.read_parquet(f'data/{day}/df_v{version}.parquet')
-        df = pd.read_parquet(f'data/{day}/df_v{version}.parquet')
-        df = pd.read_parquet(f'data/{day}/df_v{version}.parquet')
+        #
+        # df = pd.read_parquet(f'data/{day}/df_v{version}.parquet')
+        # df = pd.read_parquet(f'data/{day}/df_v{version}.parquet')
+        # df = pd.read_parquet(f'data/{day}/df_v{version}.parquet')
         df = pd.read_parquet(f'data/{day}/df_v{version}.parquet')
 
         if version == '2b':
