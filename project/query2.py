@@ -40,6 +40,12 @@ def cell_callback(row):
         )
     ])
 
+# def display_tooltip(row):
+#     colunas_df_limpo = ['org_clean', 'epss_major']
+#     colunas_ausentes = [coluna for coluna in colunas_df_original if coluna not in colunas_df_limpo]
+#     tooltip_text = ", ".join(colunas_ausentes)
+#     return tooltip_text
+
 def register_layout_query():
     # visualização 2a
     filters_2a = html.Div([
@@ -283,11 +289,11 @@ def register_layout_query():
                 id='query-2b-table',
                 columns=[
                     {"name": 'Organization', "id": 'org_clean'},
-                    {"name": 'IP list', "id": 'ip_list'},
+                    # {"name": 'IP list', "id": 'ip_list'},
                     {"name": 'EPSS (major)', "id": 'epss_major'},
-                    {"name": 'EPSS rank (major)', "id": 'epss_rank_major'},
-                    {"name": 'Product list', "id": 'cpe_list'},
-                    {"name": 'CVE list', "id": 'cve_list'}
+                    # {"name": 'EPSS rank (major)', "id": 'epss_rank_major'},
+                    # {"name": 'Product list', "id": 'cpe_list'},
+                    # {"name": 'CVE list', "id": 'cve_list'}
                 ],
                 # sort_action='custom',
                 # sort_mode='multi',
@@ -299,7 +305,6 @@ def register_layout_query():
                     # 'height': 'auto',
                     'max-height': '15px', 'min-height': '15px', 'height': '15px'
                 },
-
             ),
             style={'margin-top': '32px'}
 
@@ -521,6 +526,15 @@ def register_callback_query(app):
 
         print(df.columns)
 
+        df_limpo = df[['org_clean', 'epss_major']]
+        print(df.columns)
+
+        def display_tooltip(row):
+            colunas_df_limpo = ['org_clean', 'epss_major']
+            colunas_ausentes = [coluna for coluna in df.columns if coluna not in colunas_df_limpo]
+            tooltip_text = ", ".join(colunas_ausentes)
+            return tooltip_text
+
 
         # if len(sort_by):
         #     print(sort_by)
@@ -537,7 +551,7 @@ def register_callback_query(app):
 
         # org_clean, ip, epss_major, epss_rank_major, cpe, cve 
 
-        return df.to_dict('records')
+        return df_limpo.to_dict('records')
 
     @app.callback(
         Output('query-2b-graph', 'figure'),
@@ -548,7 +562,6 @@ def register_callback_query(app):
     def update_graph2b(date_value, org_query, type):
         print("[INFO] query 2 - update_graph2b: ", date_value)
         df = base.get_dataset(date_value, INPUT_DATA_V2b)
-        # df_limpo = df.drop(["ip_list", "product_list", "cve_list"])
         df["n_ips_str"] = df["ip_list"].apply(contar_virgulas_str)
         df["n_ips"] = df["ip_list"].apply(contar_virgulas)
         df = df.sort_values("n_ips")
@@ -613,5 +626,12 @@ def register_callback_query(app):
 
 
             return fig
+        
+    
+    def display_tooltip(row):
+        colunas_df_limpo = ['org_clean', 'epss_major']
+        colunas_ausentes = [coluna for coluna in colunas_df_original if coluna not in colunas_df_limpo]
+        tooltip_text = ", ".join(colunas_ausentes)
+        return tooltip_text
 
 
