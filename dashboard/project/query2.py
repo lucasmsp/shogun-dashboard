@@ -36,7 +36,7 @@ def cell_callback(row):
         )
     ])
 
-def register_layout_query():
+def register_layout_query(dm):
     # visualização 2a
     filters_2a = html.Div([
         html.Div(children=[
@@ -83,7 +83,7 @@ def register_layout_query():
                     0.8: '0.8',
                     1.0: '1.0',
                 },
-                value=[0.5, 0.7],
+                value=[0.8, 1.0],
                 tooltip={
                     'placement': 'top', 
                     'always_visible': True,
@@ -292,7 +292,7 @@ def register_layout_query():
     return q2
 
 
-def register_callback_query(app):
+def register_callback_query(dm, app):
     @app.callback(
         Output('query-2a-table', "data"),
         [
@@ -308,7 +308,7 @@ def register_callback_query(app):
     def update_table2a(date_value, ip_query, org_query, epss_query, cvss_query, product_query, cpe_version_query):
 
         print("[INFO] query 2 - update_table2a: ", date_value)
-        df = base.get_dataset(date_value, INPUT_DATA_V2a)
+        df = dm.get_view_dataset(date_value, INPUT_DATA_V2a)
         if ip_query:
             df = df[df['ip_str'].str.contains(ip_query, case=False)]
         
@@ -320,7 +320,6 @@ def register_callback_query(app):
             df = df[(df['epss'] >= epss_min) & (df['epss'] <= epss_max)]
 
         if cvss_query:
-            print(cvss_query)
             df = df[df['cvss_rank'].isin(cvss_query)]
 
         if product_query:
@@ -346,7 +345,7 @@ def register_callback_query(app):
     def update_graph2a(date_value, epss_query, cvss_query, cpe_version_query, color):
         
         print("[INFO] query 2 - update_graph2a: ", date_value)
-        df = base.get_dataset(date_value, INPUT_DATA_V2a)
+        df = dm.get_view_dataset(date_value, INPUT_DATA_V2a)
 
         if epss_query:
             epss_min, epss_max = epss_query
@@ -409,7 +408,7 @@ def register_callback_query(app):
         # título
 
         print("[INFO] query 2 - update_table2b: ", date_value)
-        df = base.get_dataset(date_value, INPUT_DATA_V2b)
+        df = dm.get_view_dataset(date_value, INPUT_DATA_V2b)
 
         if org_query:
             df = df[df['org_clean'].str.contains(org_query, case=False)]
@@ -419,9 +418,6 @@ def register_callback_query(app):
             df = df[df['cpe_list'].str.contains(cpe_query, case=False)]
         if cve_query:
             df = df[df['cve_list'].str.contains(cve_query, case=False)]
-
-        print(df.columns)
-
 
         # if len(sort_by):
         #     print(sort_by)
@@ -447,7 +443,7 @@ def register_callback_query(app):
     )
     def update_graph2b(date_value, org_query):
         print("[INFO] query 2 - update_graph2b: ", date_value)
-        df = base.get_dataset(date_value, INPUT_DATA_V2b)
+        df = dm.get_view_dataset(date_value, INPUT_DATA_V2b)
 
         df["n_ips_str"] = df["ip_list"].apply(contar_virgulas_str)
         df["n_ips"] = df["ip_list"].apply(contar_virgulas)

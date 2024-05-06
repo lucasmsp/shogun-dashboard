@@ -7,26 +7,24 @@ import project.query3 as query3
 
 import project.base as base
 
-available_datasets = base.check_available_datasets()
-
-def register_layout(username):
+def register_layout(dm, username):
 
     tab1_content = dbc.Card(
         dbc.CardBody(
-            html.Div(children=[dbc.Row(children=query1.register_layout_query())], className="wrapper")),
+            html.Div(children=[dbc.Row(children=query1.register_layout_query(dm))], className="wrapper")),
         className="mt-3",
     )
 
     tab2_content = dbc.Card(
         dbc.CardBody(
-            html.Div(children=[dbc.Row(children=query2.register_layout_query())], className="wrapper"),
+            html.Div(children=[dbc.Row(children=query2.register_layout_query(dm))], className="wrapper"),
         ),
         className="mt-3",
     )
 
     tab3_content = dbc.Card(
         dbc.CardBody(
-            html.Div(children=[dbc.Row(children=query3.register_layout_query())], className="wrapper"),
+            html.Div(children=[dbc.Row(children=query3.register_layout_query(dm))], className="wrapper"),
         ),
         className="mt-3",
     )
@@ -84,10 +82,10 @@ def register_layout(username):
                                         html.Div(
                                             dcc.DatePickerSingle(
                                                 id='date-picker-single',
-                                                min_date_allowed=available_datasets[0],
-                                                max_date_allowed=available_datasets[-1],
-                                                initial_visible_month=available_datasets[0],
-                                                date=available_datasets[-1],
+                                                min_date_allowed=dm.first_day,
+                                                max_date_allowed=dm.last_day,
+                                                initial_visible_month=dm.first_day,
+                                                date=dm.last_day,
                                             ),
                                             className='alignleft'
                                         ),
@@ -122,7 +120,7 @@ def register_layout(username):
                     dbc.Tab(tab3_content, label="View 3 - More details by CVE")
                 ],
                 style={
-                    "padding-left": "20px"
+                    "paddingLeft": "20px"
                 }
             )
         ]

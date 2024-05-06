@@ -8,8 +8,8 @@ import project.query3 as query3
 
 from datetime import date
 
-def register_callbacks(app):
+def register_callbacks(dm, app):
   
-    query1.register_callback_query(app)
-    query2.register_callback_query(app)
-    query3.register_callback_query(app)
+    query1.register_callback_query(dm, app)
+    query2.register_callback_query(dm, app)
+    query3.register_callback_query(dm, app)
