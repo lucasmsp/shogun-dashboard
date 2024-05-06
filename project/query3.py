@@ -135,7 +135,7 @@ def register_layout_query():
                 ),
                 html.H2(
                     children="This visualization allows the analysis of the distribution of CVEs "
-                             "in relation to IPs and organizations acessible on the Internet",
+                             "in relation to IPs and organizations accessible on the Internet",
                     style={'font-size': '20px'}
                 ),
 
