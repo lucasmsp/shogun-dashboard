@@ -113,7 +113,26 @@ def dash_components():
                     }
                 )
             ]),
-
+            dbc.Row(style={'margin-top': '50px'}),
+            html.Label('CVSS rank', style={"margin-left": "15px", "font-size": "15px"}),
+            dcc.Checklist(
+                id="cvss-rank-checklist",
+                options=[
+                    {'label': '< 0.2', 'value': '< 0.2'},
+                    {'label': '< 0.4', 'value': '< 0.4'},
+                    {'label': '< 0.6', 'value': '< 0.6'},
+                    {'label': '< 0.8', 'value': '< 0.8'},
+                    {'label': '>= 0.8', 'value': '>= 0.8'}
+                ],
+                labelStyle={
+                    "font-size": "15px"
+                },
+                inputStyle={
+                    "margin": "10px",
+                    "transition": "background-color 0.3s ease-in-out 0.1s",
+                },
+                inline=True,
+            ),
         ],
             style={'padding': 10, 'flex': 1})
     ],
@@ -140,7 +159,6 @@ def register_layout_query():
                 ),
 
                 component_1,
-
                 dbc.Row(
                     dash_table.DataTable(
                         id='query-3-table',
@@ -153,11 +171,9 @@ def register_layout_query():
                             {"name": "# IPs", "id": "n_ips", "selectable": True},
                             {"name": "# Organizations", "id": "n_orgs", "selectable": True},
                         ],
-                        # editable=True,
                         sort_action='custom',
                         sort_mode='multi',
                         sort_by=[],
-                        row_selectable='multi',
                         page_current=0,
                         page_size=15,
                         style_data={
@@ -170,27 +186,30 @@ def register_layout_query():
                     style={'margin-top': '32px'}
                 ),
 
-                html.H4(children="Choose the type of visualization based on the y-axis.", style={'text-align': 'Left'}),
+                html.Div(style={'height': '50px'}),
 
+                html.H4(children="Choose the type of chart", style={'text-align': 'Left'}),
                 dbc.Row(
                     dcc.Dropdown(
                         id='graph-type',
                         options=[
-                            {'label': 'EPSS Rank', 'value': 'epss_rank'},
-                            {'label': '# IPS', 'value': 'n_ips'},
-                            {'label': '# Organizations', 'value': 'n_orgs'},
+                            {'label': 'EPSS Rank by CVSS Score', 'value': 'epss_rank'},
+                            {'label': 'EPSS-CVSS score relationship', 'value': 'epss_cvss'},
+                            {'label': '# IPS by CVSS', 'value': 'ips_cvss'},
+                            {'label': '# Organizations by CVSS', 'value': 'orgs_cvss'},
+                            {'label': '# IPs by EPSS', 'value': 'ips_epss'}
                         ],
                         value='epss_rank'
                     ),
                     style={'margin-top': '32px'}
                 ),
-
                 html.Div(id='datable-interactivity-container'),
             ]
         ),
     ]
 
     return q3
+
 
 def find_expression(string):
     list_expressions = ['>=', '<=', '!=']
@@ -211,11 +230,11 @@ def register_callback_query(app):
         Input('cvss-range-slider', 'value'),
         Input('epss-range-slider', 'value'),
         Input('search-bar-org', 'value'),
-        Input('search-bar-ip', 'value')
-
+        Input('search-bar-ip', 'value'),
+        Input('cvss-rank-checklist', 'value')
     )
     def update_table3(date_value, sort_by, cve_query, dropdown_query_cvss, cvss_range_query,
-                      epss_range_query, org_query, ip_query):
+                      epss_range_query, org_query, ip_query, cvss_rank_query):
         print("[INFO] query 3 - update_table3: ", date_value)
 
         df = base.get_dataset(date_value, INPUT_DATA).drop(['org_list'], axis=1).drop_duplicates(["cve_id"])
@@ -242,6 +261,10 @@ def register_callback_query(app):
 
         if cvss_range_query:
             df = df[(df['cvss'] >= cvss_range_query[0]) & (df['cvss'] <= cvss_range_query[1])]
+
+        # TODO -> coluna epss
+        # if epss_range_query:
+        #     df = df[(df['epss'] >= cvss_range_query[0]) & (df['epss'] <= cvss_range_query[1])]
 
         if org_query:
             op = str(org_query)
@@ -299,6 +322,12 @@ def register_callback_query(app):
                 elif operator == '<':
                     df = df[df['n_ips'] < value]
 
+        if cvss_rank_query:
+            list_numbers = ['< 0.2', '< 0.4', '< 0.6', '< 0.8', '>= 0.8']
+            for i in list_numbers:
+                if i in cvss_rank_query:
+                    df = df[df['cvss_rank'].str.contains(i, case=False)]
+
         return df.to_dict('records')
 
     @app.callback(
@@ -315,165 +344,94 @@ def register_callback_query(app):
             'background_color': 'white'
         } for i in sort_by]
 
-    # @app.callback(
-    #     Output('datable-interactivity-container', "children"),
-    #     Input('date-picker-single', 'date'),
-    #     Input('query-3-table', "derived_virtual_data"),
-    #     Input('query-3-table', "derived_virtual_selected_rows"),
-    #     Input('graph-type', 'value'),
-    # )
-    # def update_graphs(date_value, rows, derived_virtual_selected_rows, value, page_current):
-    #     print("[INFO] update_graphs: ", date_value)
-    #     df = base.get_dataset(date_value, INPUT_DATA)
+    @app.callback(
+        Output('datable-interactivity-container', "children"),
+        Input('date-picker-single', 'date'),
+        Input('graph-type', 'value')
+    )
+    def update_graphs(date_value, value):
+        print("[INFO] update_graphs: ", date_value)
+        df = base.get_dataset(date_value, INPUT_DATA).drop(['org_list'], axis=1).drop_duplicates(["cve_id"])
 
+        graphs = []
 
-# def register_callback_query(app):
-#     @app.callback(
-#         Output('query-3-table', "data"),
-#         Input('date-picker-single', 'date'),
-#         Input('query-3-table', "sort_by")
-#     )
-#     def update_table3(date_value, sort_by):
-#         print("[INFO] query 3 - update_table3: ", date_value)
-#
-#         df = base.get_dataset(date_value, INPUT_DATA).drop(['org_list'], axis=1)
-#
-#         df['cvss_version'] = df['cvss_version'].astype(float)
-#
-#         df["cvss_rank"] = [float(str(i).replace("<", "").replace(">", "").replace("=", ""))
-#                            for i in df["cvss_rank"]]
-#
-#         df["epss_rank"] = [float(str(i).replace("<", "").replace(">", "").replace("=", ""))
-#                            for i in df["epss_rank"]]
-#
-#         if len(sort_by):
-#             df = df.sort_values(
-#                 [col['column_id'] for col in sort_by],
-#                 ascending=[
-#                     col['direction'] == 'asc'
-#                     for col in sort_by
-#                 ],
-#                 inplace=False
-#             )
-#
-#         return df.to_dict('records')
-#
-#     @app.callback(
-#         Output('query-3-table', "style_data_conditional"),
-#         Input('date-picker-single', 'date'),
-#         Input('query-3-table', "sort_by")
-#     )
-#     def update_styles(date_value, sort_by):
-#         print("[INFO] query 3 - update_styles: ", date_value)
-#         df = base.get_dataset(date_value, INPUT_DATA)
-#
-#         return [{
-#             'if': {'column_id': i['column_id']},
-#             'background_color': 'white'
-#         } for i in sort_by]
-#
-#     @app.callback(
-#         Output('datable-interactivity-container', "children"),
-#         Input('date-picker-single', 'date'),
-#         Input('query-3-table', "derived_virtual_data"),
-#         Input('query-3-table', "derived_virtual_selected_rows"),
-#         Input('graph-type', 'value'),
-#         Input('query-3-table', "page_current")
-#     )
-#     def update_graphs(date_value, rows, derived_virtual_selected_rows, value, page_current):
-#         print("[INFO] update_graphs: ", date_value)
-#         df = base.get_dataset(date_value, INPUT_DATA)
-#
-#         df_table = df.copy()
-#
-#         # rows -> uma var que armazena as linhas de uma tabela que foram alteradas ou selecionadas
-#         if rows is not None:
-#             df_selected_rows = pd.DataFrame(rows)
-#             df_table.update(df_selected_rows)
-#
-#         # derivered_virtual.... -> contém os índices das linhas que foram selecionadas
-#         if derived_virtual_selected_rows is None:
-#             derived_virtual_selected_rows = []
-#
-#         # mudar o gráfico conforme há mudança de página
-#         start = page_current*15
-#         end = (page_current+1)*15
-#
-#         # reset_index() -> redefine os índices de um df após x op. que alteram esses
-#         df_subset = df_table.iloc[start:end]
-#
-#         colors = ['red' if i in derived_virtual_selected_rows else 'blue'
-#                   for i in range(len(df_subset))]
-#
-#         graphs = []
-#         if value in df_subset:
-#             if value == "epss_rank":
-#                 fig = px.scatter(df_subset, x="cve_id", y=df_subset[value], marginal_x="histogram", marginal_y="rug", color=colors)
-#                 fig.update_layout(
-#                     xaxis_title = "CVE ID",
-#                     yaxis_title = "EPSS Rank",
-#                     xaxis=dict(showticklabels=False),
-#                 )
-#                 graphs.append(
-#                     dcc.Graph(
-#                         id=value,
-#                         figure=fig
-#                 ))
-#             else:
-#                 df_grouped = df_subset.groupby('cve_id')[value].agg(['min', 'max', 'mean']).reset_index()
-#
-#                 fig = go.Figure([
-#                     go.Scatter(
-#                         name='Measurement',
-#                         x=df_grouped['cve_id'],
-#                         y=df_grouped['mean'],
-#                         mode='markers',
-#                         #"#FF8849"
-#                         marker=dict(color=colors, size=10),
-#                         showlegend=True
-#                     ),
-#                     go.Scatter(
-#                         name='Upper Bound',
-#                         x=df_grouped['cve_id'],
-#                         y=df_grouped['max'],
-#                         mode='lines',
-#                         marker=dict(color="#ee6c4d"),
-#                         line=dict(width=1),
-#                         showlegend=True
-#                     ),
-#                     go.Scatter(
-#                         name='Lower Bound',
-#                         x=df_grouped['cve_id'],
-#                         y=df_grouped['min'],
-#                         marker=dict(color="#3d5a80"),
-#                         line=dict(width=1),
-#                         mode='lines',
-#                         fillcolor='rgba(68, 68, 68, 0.3)',
-#                         fill='tonexty',
-#                         showlegend=True
-#                     )
-#                 ])
-#
-#                 if value == "n_ips":
-#                     fig.update_layout(
-#                         xaxis_title = "CVE ID",
-#                         yaxis_title=f'# IPs',
-#                         title=f'Number of IPs per CVE ID',
-#                         hovermode="x",
-#                         xaxis=dict(showticklabels=False)
-#                     )
-#                 else:
-#                     fig.update_layout(
-#                         xaxis_title = "CVE ID",
-#                         yaxis_title=f'# Organizations',
-#                         title=f'Number of organizations per CVE ID',
-#                         hovermode="x",
-#                         xaxis=dict(showticklabels=False)
-#                     )
-#
-#                 graphs.append(dcc.Graph(
-#                     id=value,
-#                     figure=fig
-#                 ))
-#
-#         return graphs
+        if value == "epss_rank":
+            fig = px.scatter(df, x=df["cvss"], y=df['epss_rank'], marginal_x="histogram",
+                             marginal_y="rug", title="EPSS Rank by CVSS score", color='epss_rank')
+            fig.update_layout(
+                xaxis_title="CVSS Score",
+                yaxis_title="EPSS Rank",
+                xaxis=dict(showticklabels=False),
+            )
+            graphs.append(
+                dcc.Graph(
+                    id=value,
+                    figure=fig
+                ))
+        # TODO -> Mudar o 'epss_rank' por 'epss'
+        elif value == "epss_cvss":
+            fig = px.bar(df, x=df["epss_rank"], y=df['cvss'], title="EPSS-CVSS score relationship")
+            fig.update_layout(
+                xaxis_title="EPSS Score",
+                yaxis_title="CVSS Score",
+                xaxis=dict(showticklabels=False),
+            )
+            graphs.append(
+                dcc.Graph(
+                    id=value,
+                    figure=fig
+                ))
+
+        elif value == "ips_cvss":
+            fig = px.bar(df, x=df['cvss'], y=df['n_ips'], title="# IPs by CVSS")
+            fig.update_layout(
+                xaxis_title="CVSS Score",
+                yaxis_title="# IPs",
+                xaxis=dict(showticklabels=False),
+            )
+            graphs.append(
+                dcc.Graph(
+                    id=value,
+                    figure=fig
+                ))
+
+        elif value == "orgs_cvss":
+            fig = px.bar(df, x=df['cvss'], y=df['n_orgs'], title="# Organizations by CVSS")
+            fig.update_layout(
+                xaxis_title="# CVSS Score",
+                yaxis_title="# Organizations Score",
+                xaxis=dict(showticklabels=False),
+            )
+            graphs.append(
+                dcc.Graph(
+                    id=value,
+                    figure=fig
+                ))
+
+        elif value == "ips_epss":
+            fig = px.bar(df, x=df['epss_rank'], y=df['n_ips'], title="# IPs by EPSS")
+            fig.update_layout(
+                xaxis_title="# EPSS Score",
+                yaxis_title="# IPs",
+                xaxis=dict(showticklabels=False),
+            )
+            graphs.append(
+                dcc.Graph(
+                    id=value,
+                    figure=fig
+                ))
+
+        elif value == "orgs_cvss":
+            fig = px.bar(df, x=df['cvss'], y=df['n_orgs'], title="# Organizations by CVSS")
+            fig.update_layout(
+                xaxis_title="# CVSS Score",
+                yaxis_title="# Organizations",
+                xaxis=dict(showticklabels=False),
+            )
+            graphs.append(
+                dcc.Graph(
+                    id=value,
+                    figure=fig
+                ))
+
+        return graphs
