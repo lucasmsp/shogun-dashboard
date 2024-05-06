@@ -61,11 +61,37 @@ def dash_components():
                 allowCross=False,
             ),
 
+        ], style={'padding': 10, 'flex': 1}),
+
+        html.Div(children=[
+            html.Center([
+                dcc.Input(
+                    id='search-bar-org',
+                    type="search",
+                    placeholder="Org filter expression ('>', '<', '=','>=', '<=') e.g., '> 30'",
+                    style={
+                        "width": "100%",
+                        "margin": "15px"
+                    }
+                )
+            ]),
+
+            html.Center([
+                dcc.Input(
+                    id='search-bar-ip',
+                    type="search",
+                    placeholder="IP filter expression ('>', '<', '=','>=', '<=') e.g., '> 30'",
+                    style={
+                        "width": "100%",
+                        "margin": "15px"
+                    }
+                )
+            ]),
+
             html.Label(
                 children='Choose the EPSS range',
                 style={
                     "margin-left": "30px",
-                    "margin-bottom": "10px",
                 }
             ),
             dcc.RangeSlider(
@@ -87,51 +113,6 @@ def dash_components():
                     'always_visible': True,
                 },
                 allowCross=False,
-            ),
-        ], style={'padding': 10, 'flex': 1}),
-
-        html.Div(children=[
-            html.Center([
-                dcc.Input(
-                    id='search-bar-org',
-                    type="search",
-                    placeholder="Org filter expression ('>', '<', '=','>=', '<=') e.g., '> 30'",
-                    style={
-                        "width": "100%",
-                        "margin": "15px"
-                    }
-                )
-            ]),
-            html.Center([
-                dcc.Input(
-                    id='search-bar-ip',
-                    type="search",
-                    placeholder="IP filter expression ('>', '<', '=','>=', '<=') e.g., '> 30'",
-                    style={
-                        "width": "100%",
-                        "margin": "15px"
-                    }
-                )
-            ]),
-            dbc.Row(style={'margin-top': '50px'}),
-            html.Label('CVSS rank', style={"margin-left": "15px", "font-size": "15px"}),
-            dcc.Checklist(
-                id="cvss-rank-checklist",
-                options=[
-                    {'label': '< 0.2', 'value': '< 0.2'},
-                    {'label': '< 0.4', 'value': '< 0.4'},
-                    {'label': '< 0.6', 'value': '< 0.6'},
-                    {'label': '< 0.8', 'value': '< 0.8'},
-                    {'label': '>= 0.8', 'value': '>= 0.8'}
-                ],
-                labelStyle={
-                    "font-size": "15px"
-                },
-                inputStyle={
-                    "margin": "10px",
-                    "transition": "background-color 0.3s ease-in-out 0.1s",
-                },
-                inline=True,
             ),
         ],
             style={'padding': 10, 'flex': 1})
@@ -164,9 +145,9 @@ def register_layout_query():
                         id='query-3-table',
                         columns=[
                             {"name": "CVE", "id": "cve_id", "selectable": True},
-                            {"name": "CVSS", "id": "cvss", "selectable": True},  # TODO {CVSS and CVSS Rank}
+                            {"name": "CVSS and CVSS Version", "id": "cvss_and_cvssv", "selectable": True},
                             {"name": "CVSS Rank", "id": "cvss_rank", "selectable": True},
-                            {"name": "CVSS Version", "id": "cvss_version", "selectable": True},
+                            {"name": "EPSS", "id": "epss_rank", "selectable": True},  # TODO {mudar o valor para epss}
                             {"name": "EPSS Rank", "id": "epss_rank", "selectable": True},
                             {"name": "# IPs", "id": "n_ips", "selectable": True},
                             {"name": "# Organizations", "id": "n_orgs", "selectable": True},
@@ -230,16 +211,19 @@ def register_callback_query(app):
         Input('cvss-range-slider', 'value'),
         Input('epss-range-slider', 'value'),
         Input('search-bar-org', 'value'),
-        Input('search-bar-ip', 'value'),
-        Input('cvss-rank-checklist', 'value')
+        Input('search-bar-ip', 'value')
     )
     def update_table3(date_value, sort_by, cve_query, dropdown_query_cvss, cvss_range_query,
-                      epss_range_query, org_query, ip_query, cvss_rank_query):
+                      epss_range_query, org_query, ip_query):
         print("[INFO] query 3 - update_table3: ", date_value)
 
         df = base.get_dataset(date_value, INPUT_DATA).drop(['org_list'], axis=1).drop_duplicates(["cve_id"])
 
+        df['cvss_and_cvssv'] = df['cvss'].astype(str) + ' (v ' + df['cvss_version'].astype(str) + ')'
+
         df['cvss_version'] = df['cvss_version'].astype(float)
+
+        df['cvss'] = df['cvss'].astype(float)
 
         if len(sort_by):
             df = df.sort_values(
@@ -322,12 +306,6 @@ def register_callback_query(app):
                 elif operator == '<':
                     df = df[df['n_ips'] < value]
 
-        if cvss_rank_query:
-            list_numbers = ['< 0.2', '< 0.4', '< 0.6', '< 0.8', '>= 0.8']
-            for i in list_numbers:
-                if i in cvss_rank_query:
-                    df = df[df['cvss_rank'].str.contains(i, case=False)]
-
         return df.to_dict('records')
 
     @app.callback(
@@ -337,7 +315,6 @@ def register_callback_query(app):
     )
     def update_styles(date_value, sort_by):
         print("[INFO] query 3 - update_styles: ", date_value)
-        df = base.get_dataset(date_value, INPUT_DATA)
 
         return [{
             'if': {'column_id': i['column_id']},
@@ -354,27 +331,36 @@ def register_callback_query(app):
         df = base.get_dataset(date_value, INPUT_DATA).drop(['org_list'], axis=1).drop_duplicates(["cve_id"])
 
         graphs = []
-
         if value == "epss_rank":
-            fig = px.scatter(df, x=df["cvss"], y=df['epss_rank'], marginal_x="histogram",
-                             marginal_y="rug", title="EPSS Rank by CVSS score", color='epss_rank')
+            fig = px.scatter(df, x=df["cvss"], y=df['epss_rank'], title="EPSS Rank by CVSS score", color='epss_rank')
             fig.update_layout(
                 xaxis_title="CVSS Score",
                 yaxis_title="EPSS Rank",
-                xaxis=dict(showticklabels=False),
+                # xaxis=dict(showticklabels=False),
+                xaxis=dict(
+                    tickmode='array',
+                    tickvals=[0, 2, 4, 6, 8, 10],
+                    range=[0, 10]
+                )
             )
             graphs.append(
                 dcc.Graph(
                     id=value,
                     figure=fig
                 ))
-        # TODO -> Mudar o 'epss_rank' por 'epss'
+
         elif value == "epss_cvss":
-            fig = px.bar(df, x=df["epss_rank"], y=df['cvss'], title="EPSS-CVSS score relationship")
+            df = df.groupby("epss_rank").sum("cvss").reset_index() # TODO {mudar o valor para 'epss' e alterar a ordem. eg. df.groupby('cvss').sum('epss')....}
+            fig = px.bar(df, x=df["cvss"], y=df['epss_rank'], title="EPSS-CVSS score relationship") # TODO {Mudar o 'epss_rank' por 'epss' e trocar o chart type para 'line'}
             fig.update_layout(
-                xaxis_title="EPSS Score",
-                yaxis_title="CVSS Score",
-                xaxis=dict(showticklabels=False),
+                xaxis_title="CVSS Score",
+                yaxis_title="EPSS Score",
+                # xaxis=dict(showticklabels=False),
+                xaxis=dict(
+                    tickmode='array',
+                    tickvals=[0, 2, 4, 6, 8, 10],
+                    range=[0, 10]
+                )
             )
             graphs.append(
                 dcc.Graph(
@@ -383,11 +369,16 @@ def register_callback_query(app):
                 ))
 
         elif value == "ips_cvss":
-            fig = px.bar(df, x=df['cvss'], y=df['n_ips'], title="# IPs by CVSS")
+            df = df.groupby("cvss").sum("n_ips").reset_index()
+            fig = px.line(df, x=df['cvss'], y=df['n_ips'], title="# IPs by CVSS")
             fig.update_layout(
                 xaxis_title="CVSS Score",
                 yaxis_title="# IPs",
-                xaxis=dict(showticklabels=False),
+                xaxis=dict(
+                    tickmode='array',
+                    tickvals=[0, 2, 4, 6, 8, 10],
+                    range=[0, 10]
+                )
             )
             graphs.append(
                 dcc.Graph(
@@ -396,11 +387,16 @@ def register_callback_query(app):
                 ))
 
         elif value == "orgs_cvss":
-            fig = px.bar(df, x=df['cvss'], y=df['n_orgs'], title="# Organizations by CVSS")
+            df = df.groupby("cvss").sum("n_orgs").reset_index()
+            fig = px.line(df, x=df['cvss'], y=df['n_orgs'], title="# Organizations by CVSS")
             fig.update_layout(
-                xaxis_title="# CVSS Score",
-                yaxis_title="# Organizations Score",
-                xaxis=dict(showticklabels=False),
+                xaxis_title="CVSS Score",
+                yaxis_title="# Organizations",
+                xaxis=dict(
+                    tickmode='array',
+                    tickvals=[0, 2, 4, 6, 8, 10],
+                    range=[0, 10]
+                )
             )
             graphs.append(
                 dcc.Graph(
@@ -409,23 +405,11 @@ def register_callback_query(app):
                 ))
 
         elif value == "ips_epss":
-            fig = px.bar(df, x=df['epss_rank'], y=df['n_ips'], title="# IPs by EPSS")
+            df = df.groupby("epss_rank").sum("n_ips").reset_index() # TODO {mudar 'epss_rank' para 'epss'}
+            fig = px.line(df, x=df['epss_rank'], y=df['n_ips'], title="# IPs by EPSS")# TODO {mudar 'epss_rank' para 'epss'}
             fig.update_layout(
                 xaxis_title="# EPSS Score",
                 yaxis_title="# IPs",
-                xaxis=dict(showticklabels=False),
-            )
-            graphs.append(
-                dcc.Graph(
-                    id=value,
-                    figure=fig
-                ))
-
-        elif value == "orgs_cvss":
-            fig = px.bar(df, x=df['cvss'], y=df['n_orgs'], title="# Organizations by CVSS")
-            fig.update_layout(
-                xaxis_title="# CVSS Score",
-                yaxis_title="# Organizations",
                 xaxis=dict(showticklabels=False),
             )
             graphs.append(
