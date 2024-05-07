@@ -43,8 +43,8 @@ def register_layout_query(dm):
             html.Label(
                 'EPSS range',
                 style={
-                    "margin-left": "30px",
-                    "margin-bottom": "10px",
+                    "marginLeft": "30px",
+                    "marginBottom": "10px",
                 }
             ),
             dcc.RangeSlider(
@@ -102,7 +102,7 @@ def register_layout_query(dm):
                     {'label': 'Critical', 'value': 'critical'}
                 ],
                 labelStyle={
-                    "font-size": "20px"
+                    "fontSize": "20px"
                 },
                 inputStyle={
                     "margin": "10px",
@@ -202,7 +202,7 @@ def register_layout_query(dm):
                 tooltip_duration=None,
                 style_cell={'textAlign': 'center'}
             ),
-            style={'margin-top': '32px'},
+            style={'marginTop': '32px'},
         ),
         dbc.Popover([
             dbc.PopoverHeader("Título do Popover"),
@@ -293,7 +293,7 @@ def register_layout_query(dm):
                         id="dropdown-type-2b",
                         options=[
                             {'label': 'Bars', 'value': 'Bars'},
-                            {'label': 'PDF/CDF', 'value': 'CDF'},
+                            {'label': 'PDF/CDF - Distribution of CVE by IPs', 'value': 'CDF'},
                         ],
                         placeholder="Type of graph...",
                         style={
@@ -467,11 +467,11 @@ def register_callback_query(dm, app):
     #     return str(len(re.findall(r",", texto)) + 1)
     
     def contar_virgulas(texto):
-        return len(re.findall(r",", texto)) + 1
+        return len(re.findall(r";", texto)) + 1
     
     def get_tooltip_info(row):
-        cpe_list = row['cpe_list'].split(', ')
-        cve_list = row['cve_list'].split(', ')
+        cpe_list = row['cpe_list'].split('; ')
+        cve_list = row['cve_list'].split('; ')
         string = ''
         while(cpe_list or cve_list):
             if cpe_list:
@@ -523,7 +523,7 @@ def register_callback_query(dm, app):
                     'type': 'markdown'
                 },
                 'epss_major': {
-                    'value': "**IP list:**  \n" + "  \n".join(row['ip_list'].split(', ')),
+                    'value': "**IP list:**  \n" + "  \n".join(row['ip_list'].split('; ')),
                     'type': 'markdown'
                 },
             } for row in df.to_dict('records')
@@ -543,7 +543,6 @@ def register_callback_query(dm, app):
         df = dm.get_view_dataset(date_value, INPUT_DATA_V2b)
 
         df["n_ips"] = df["ip_list"].apply(contar_virgulas)
-        df["n_ips_str"] = str(df["n_ips"])
         df = df.sort_values("n_ips")
 
         if type == "CDF":
@@ -564,23 +563,22 @@ def register_callback_query(dm, app):
             fig.add_trace(go.Scatter(x=stats_df['n_ips'], y=stats_df['pdf'], mode='lines', name='PDF'))
             fig.add_trace(go.Scatter(x=stats_df['n_ips'], y=stats_df['cdf'], mode='lines', name='CDF'))
 
-            fig.update_layout(title='PDF e CDF',
-                            xaxis_title='Value',
+            fig.update_layout(title='PDF/CDF - Distribution of CVE by IPs',
+                            xaxis_title='Number of IPs',
                             yaxis_title='Probability',
                             showlegend=True)
             return fig
         else:
             ips_cont = df['n_ips'].value_counts()
-            fig = px.bar(df, x='n_ips_str', hover_data=['org_clean', 'ip_list'])
             if org_query:
                 df = df[df['org_clean'].str.contains(org_query, case=False)]
                 
             fig = go.Figure()
 
-            fig.add_trace(go.Bar(x=ips_cont.index, y=ips_cont.values, name='CVSS Rank'))
+            fig.add_trace(go.Bar(x=ips_cont.index, y=ips_cont.values, name='Number of IPs'))
 
-            fig.update_layout(title='Distribution of CVSS',
-                    xaxis=dict(title='CVSS Rank'),
-                    yaxis=dict(title='Number of registers'))
-
+            fig.update_layout(title='Bar plot - Distribution of CVE by IPs',
+                    xaxis=dict(title='Number of IPs (< 100)'),
+                    yaxis=dict(title='Number of organizations'),
+                    xaxis_range=[0,100])
             return fig
