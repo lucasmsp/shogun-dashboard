@@ -46,8 +46,8 @@ def dash_components():
             html.Label(
                 children='Choose the CVSS range',
                 style={
-                    "margin-left": "30px",
-                    "margin-bottom": "10px",
+                    "marginLeft": "30px",
+                    "marginBottom": "10px",
                 }
             ),
             dcc.RangeSlider(
@@ -93,7 +93,7 @@ def dash_components():
             html.Label(
                 children='Choose the EPSS range',
                 style={
-                    "margin-left": "30px",
+                    "marginLeft": "30px",
                 }
             ),
             dcc.RangeSlider(
@@ -166,7 +166,7 @@ def register_layout_query(dm):
                             'height': '15px'
                         }
                     ),
-                    style={'margin-top': '32px'}
+                    style={'marginTop': '32px'}
                 ),
 
                 html.Div(style={'height': '50px'}),
@@ -185,7 +185,7 @@ def register_layout_query(dm):
                         ],
                         value='Scatter plot - EPSS by CVSS Score'
                     ),
-                    style={'margin-top': '32px'}
+                    style={'marginTop': '32px'}
                 ),
                 html.Div(id='datable-interactivity-container'),
             ]

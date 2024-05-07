@@ -2,6 +2,7 @@ from dash import html, dcc, dash_table, callback_context
 from dash.dependencies import Output, Input, State
 import dash_bootstrap_components as dbc
 
+import itertools
 import plotly.express as px
 import plotly.graph_objs as go
 import pandas as pd
@@ -60,7 +61,7 @@ def register_layout_query(dm):
                     0.8: '0.8',
                     1.0: '1.0',
                 },
-                value=[0.5, 0.7],
+                value=[0.6, 1.0],
                 tooltip={
                     'placement': 'top',
                     'always_visible': True,
@@ -248,7 +249,7 @@ def register_layout_query(dm):
             id="query-2a-graph",
             config={
                 'displayModeBar': False,
-                'scrollZoom': True
+                'scrollZoom': False
             }
         ),
         html.Br(),
@@ -281,7 +282,7 @@ def register_layout_query(dm):
                     'rule': 'text-align: center; border: 1px solid;;'
                 }],
             ),
-            style={'margin-top': '32px'}
+            style={'marginTop': '32px'}
 
         ),
         html.Br(),
@@ -309,7 +310,7 @@ def register_layout_query(dm):
             id="query-2b-graph",
             config={
                 'displayModeBar': False,
-                'scrollZoom': True
+                'scrollZoom': False
             }
         )
     ]
@@ -359,10 +360,7 @@ def register_callback_query(dm, app):
         df_clean = df[['org_clean', 'ip_str', 'cvss_rank', 'epss', 'cpe_product']]
         tooltip_data = [
             {
-                'ip_str': {
-                    'value': "**CVE:**  " + str(row['cve_id']),
-                    'type': 'markdown'
-                },'cvss_rank': {
+                'cvss_rank': {
                     'value': "**CVSS:**  " + str(row['cvss_score']),
                     'type': 'markdown'
                 },
@@ -462,29 +460,15 @@ def register_callback_query(dm, app):
                     xaxis=dict(title='CVSS Rank'),
                     yaxis=dict(title='Number of registers'))
             return fig
-    
-    # def contar_virgulas_str(texto):
-    #     return str(len(re.findall(r",", texto)) + 1)
-    
+        
     def contar_virgulas(texto):
         return len(re.findall(r";", texto)) + 1
     
     def get_tooltip_info(row):
-        cpe_list = row['cpe_list'].split('; ')
-        cve_list = row['cve_list'].split('; ')
-        string = ''
-        while(cpe_list or cve_list):
-            if cpe_list:
-                string = string+  '| ' + cpe_list[0] + '  | '
-                cpe_list.pop(0)
-            else:
-                string = string + '|  |  '
-            if cve_list:
-                string = string + cve_list[0] + '|  \n'
-                cve_list.pop(0)
-            else:
-                string = string + ' |  \n'
-        return string
+        return "".join(["| " + i + " | " + j + " | \n" 
+                        for i, j in itertools.zip_longest(
+                            str(row["cpe_list"]).split(";")[0:20], 
+                            str(row["cve_list"]).split(";")[0:20], fillvalue=" ")])
 
     @app.callback(
         Output('query-2b-table', "data"),
@@ -516,14 +500,15 @@ def register_callback_query(dm, app):
 
         tooltip_data = [
             {
-                'org_clean': {
-                    'value': "| CPE list        | CVE list        |  \n" +
-                             "| :-------------: | :-------------: |  \n" +
-                             get_tooltip_info(row),
+                'epss_major': {
+                    'value': 
+                        "| CPE list        | CVE list        |  \n" +
+                        "| :-------------: | :-------------: |  \n" +
+                        get_tooltip_info(row),
                     'type': 'markdown'
                 },
-                'epss_major': {
-                    'value': "**IP list:**  \n" + "  \n".join(row['ip_list'].split('; ')),
+                'org_clean': {
+                    'value': "**IP list:**  \n" + "  \n".join(row['ip_list'].split(';')[0:20]),
                     'type': 'markdown'
                 },
             } for row in df.to_dict('records')
