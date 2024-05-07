@@ -1,19 +1,30 @@
 from dash import html, dcc, dash_table, callback_context
-from dash.dependencies import Output, Input, State
 import dash_bootstrap_components as dbc
 
-import plotly.express as px
-import plotly.graph_objs as go
+import plotly.graph_objects as go
+
+from dash.dependencies import Output, Input, State
+
 import pandas as pd
-import re
+import numpy as np
+import plotly.express as px
 
 import project.base as base
 
+import re
 
 INPUT_DATA_V2a = '2a'
 INPUT_DATA_V2b = '2b'
 
-def register_layout_query(dm):
+
+# garantir ordem das colunas mais lógica (org_clean, ip, cve_id, epss....)
+# precisamos add a lógica de filtrar os elementos e outras interatividades: https://dash.plotly.com/datatable/interactivity
+# Precisamos ocultar o "org_list" e de alguma forma, disponibilizar ao usuário, se necessário. P.ex: por houver (pop-up), exportar como um arquivo csv ?
+# quais gráficos fazer (se for mais de um grafico, fazer como dividir os graficos na mesma linha)?
+# colocar título nos graficos
+# arrumar nomes das colunas nas tabelas
+
+def register_layout_query():
     # visualização 2a
     filters_2a = html.Div([
         html.Div(children=[
@@ -43,8 +54,8 @@ def register_layout_query(dm):
             html.Label(
                 'EPSS range',
                 style={
-                    "marginLeft": "30px",
-                    "marginBottom": "10px",
+                    "margin-left": "30px",
+                    "margin-bottom": "10px",
                 }
             ),
             dcc.RangeSlider(
@@ -102,7 +113,7 @@ def register_layout_query(dm):
                     {'label': 'Critical', 'value': 'critical'}
                 ],
                 labelStyle={
-                    "fontSize": "20px"
+                    "font-size": "20px"
                 },
                 inputStyle={
                     "margin": "10px",
@@ -202,7 +213,7 @@ def register_layout_query(dm):
                 tooltip_duration=None,
                 style_cell={'textAlign': 'center'}
             ),
-            style={'marginTop': '32px'},
+            style={'margin-top': '32px'},
         ),
         dbc.Popover([
             dbc.PopoverHeader("Título do Popover"),
@@ -223,7 +234,7 @@ def register_layout_query(dm):
                             "width": "90%",
                             "margin": "15px",
                         },
-                        value='EPSS'
+                        value='epss_rank'
                     ),
                 ),
                 dbc.Col(
@@ -293,7 +304,7 @@ def register_layout_query(dm):
                         id="dropdown-type-2b",
                         options=[
                             {'label': 'Bars', 'value': 'Bars'},
-                            {'label': 'PDF/CDF - Distribution of CVE by IPs', 'value': 'CDF'},
+                            {'label': 'PDF/CDF', 'value': 'CDF'},
                         ],
                         placeholder="Type of graph...",
                         style={
@@ -317,8 +328,8 @@ def register_layout_query(dm):
     return q2
 
 
+def register_callback_query(app):
 
-def register_callback_query(dm, app):
     @app.callback(
         Output('query-2a-table', "data"),
         Output('query-2a-table', "tooltip_data"),
@@ -333,8 +344,9 @@ def register_callback_query(dm, app):
         ]
     )
     def update_table2a(date_value, ip_query, org_query, epss_query, cvss_query, product_query, cpe_version_query):
+
         print("[INFO] query 2 - update_table2a: ", date_value)
-        df = dm.get_view_dataset(date_value, INPUT_DATA_V2a)
+        df = base.get_dataset(date_value, INPUT_DATA_V2a)
         if ip_query:
             df = df[df['ip_str'].str.contains(ip_query, case=False)]
 
@@ -363,7 +375,7 @@ def register_callback_query(dm, app):
                     'value': "**CVE:**  " + str(row['cve_id']),
                     'type': 'markdown'
                 },'cvss_rank': {
-                    'value': "**CVSS:**  " + str(row['cvss_score']),
+                    'value': "**CVSS:**  " + str(row['cvss']),
                     'type': 'markdown'
                 },
                 'epss': {
@@ -392,9 +404,9 @@ def register_callback_query(dm, app):
         ]
     )
     def update_graph2a(date_value, epss_query, cvss_query, cpe_version_query, color, type):
-        
+
         print("[INFO] query 2 - update_graph2a: ", date_value)
-        df = dm.get_view_dataset(date_value, INPUT_DATA_V2a)
+        df = base.get_dataset(date_value, INPUT_DATA_V2a)
 
         if epss_query:
             epss_min, epss_max = epss_query
@@ -453,25 +465,22 @@ def register_callback_query(dm, app):
                     yaxis=dict(title='Number of registers'))
 
             if color:
-                grouped_df = df.groupby(['cvss_rank', 'severity', color.lower()])
+                grouped_df = df.groupby(['cvss_rank', 'severity', color])
                 aggregated_df = grouped_df.size().to_frame(name='count')
                 aggregated_df = aggregated_df.reset_index()
                 aggregated_df = aggregated_df.sort_values('severity')
-                fig = px.bar(aggregated_df, x='cvss_rank', y="count", color=color.lower())
+                fig = px.bar(aggregated_df, x='cvss_rank', y="count", color=color)
                 fig.update_layout(title='Distribution of CVSS Rank',
                     xaxis=dict(title='CVSS Rank'),
                     yaxis=dict(title='Number of registers'))
             return fig
-    
-    # def contar_virgulas_str(texto):
-    #     return str(len(re.findall(r",", texto)) + 1)
-    
+
     def contar_virgulas(texto):
-        return len(re.findall(r";", texto)) + 1
+        return len(re.findall(r",", texto)) + 1
     
     def get_tooltip_info(row):
-        cpe_list = row['cpe_list'].split('; ')
-        cve_list = row['cve_list'].split('; ')
+        cpe_list = row['cpe_list'].split(', ')
+        cve_list = row['cve_list'].split(', ')
         string = ''
         while(cpe_list or cve_list):
             if cpe_list:
@@ -485,6 +494,7 @@ def register_callback_query(dm, app):
             else:
                 string = string + ' |  \n'
         return string
+
 
     @app.callback(
         Output('query-2b-table', "data"),
@@ -501,7 +511,7 @@ def register_callback_query(dm, app):
         # título
 
         print("[INFO] query 2 - update_table2b: ", date_value)
-        df = dm.get_view_dataset(date_value, INPUT_DATA_V2b)
+        df = base.get_dataset(date_value, INPUT_DATA_V2b)
 
         if org_query:
             df = df[df['org_clean'].str.contains(org_query, case=False)]
@@ -523,7 +533,7 @@ def register_callback_query(dm, app):
                     'type': 'markdown'
                 },
                 'epss_major': {
-                    'value': "**IP list:**  \n" + "  \n".join(row['ip_list'].split('; ')),
+                    'value': "**IP list:**  \n" + "  \n".join(row['ip_list'].split(', ')),
                     'type': 'markdown'
                 },
             } for row in df.to_dict('records')
@@ -531,7 +541,6 @@ def register_callback_query(dm, app):
 
         return df_limpo.to_dict('records'), tooltip_data
 
-    
     @app.callback(
         Output('query-2b-graph', 'figure'),
         Input('date-picker-single', 'date'),
@@ -540,9 +549,9 @@ def register_callback_query(dm, app):
     )
     def update_graph2b(date_value, org_query, type):
         print("[INFO] query 2 - update_graph2b: ", date_value)
-        df = dm.get_view_dataset(date_value, INPUT_DATA_V2b)
-
+        df = base.get_dataset(date_value, INPUT_DATA_V2b)
         df["n_ips"] = df["ip_list"].apply(contar_virgulas)
+        df["n_ips_str"] = str(df["n_ips"])
         df = df.sort_values("n_ips")
 
         if type == "CDF":
@@ -563,22 +572,26 @@ def register_callback_query(dm, app):
             fig.add_trace(go.Scatter(x=stats_df['n_ips'], y=stats_df['pdf'], mode='lines', name='PDF'))
             fig.add_trace(go.Scatter(x=stats_df['n_ips'], y=stats_df['cdf'], mode='lines', name='CDF'))
 
-            fig.update_layout(title='PDF/CDF - Distribution of CVE by IPs',
-                            xaxis_title='Number of IPs',
+            fig.update_layout(title='PDF e CDF',
+                            xaxis_title='Value',
                             yaxis_title='Probability',
                             showlegend=True)
             return fig
         else:
             ips_cont = df['n_ips'].value_counts()
+            fig = px.bar(df, x='n_ips_str', hover_data=['org_clean', 'ip_list'])
             if org_query:
                 df = df[df['org_clean'].str.contains(org_query, case=False)]
                 
             fig = go.Figure()
 
-            fig.add_trace(go.Bar(x=ips_cont.index, y=ips_cont.values, name='Number of IPs'))
+            fig.add_trace(go.Bar(x=ips_cont.index, y=ips_cont.values, name='CVSS Rank'))
 
-            fig.update_layout(title='Bar plot - Distribution of CVE by IPs',
-                    xaxis=dict(title='Number of IPs (< 100)'),
-                    yaxis=dict(title='Number of organizations'),
-                    xaxis_range=[0,100])
+            fig.update_layout(title='Distribution of CVSS',
+                    xaxis=dict(title='CVSS Rank'),
+                    yaxis=dict(title='Number of registers'))
+
             return fig
+        
+
+
