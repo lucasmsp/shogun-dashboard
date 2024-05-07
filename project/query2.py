@@ -24,28 +24,6 @@ INPUT_DATA_V2b = '2b'
 # colocar título nos graficos
 # arrumar nomes das colunas nas tabelas
 
-# def display_dropdown(cell_value):
-#     dropdown_options = [{'label': value, 'value': value} for value in cell_value.split(',')]
-#     return dcc.Dropdown(options=dropdown_options, value=cell_value)
-
-def cell_callback(row):
-    return html.Div([
-        html.Button(f'Mostrar lista {row}', id=f'button_{row}'),
-        dbc.Modal(
-            id=f'modal_{row}',
-            children=[
-                html.Div(id=f'modal_content_{row}')
-            ],
-            is_open=False
-        )
-    ])
-
-# def display_tooltip(row):
-#     colunas_df_limpo = ['org_clean', 'epss_major']
-#     colunas_ausentes = [coluna for coluna in colunas_df_original if coluna not in colunas_df_limpo]
-#     tooltip_text = ", ".join(colunas_ausentes)
-#     return tooltip_text
-
 def register_layout_query():
     # visualização 2a
     filters_2a = html.Div([
@@ -100,10 +78,7 @@ def register_layout_query():
                 },
                 allowCross=False,
             ),
-
-
         ], style={'padding': 10, 'flex': 1}),
-
         html.Div(children=[
 
             html.Center([
@@ -117,18 +92,17 @@ def register_layout_query():
                     }
                 )
             ]),
-            dcc.Dropdown(
-                id="dropdown-cpe-version",
-                options=[], # TODO: [{'label': org, 'value': org} for org in sorted(dfa['cpe_version'].unique()) if date_pick],
-                placeholder="Product version",
-                multi=True,
-                style={
-                    "width": "90%",
-                    "margin": "15px",
-                }
-            ),
-            
-
+            html.Center([
+                dcc.Input(
+                    id="search-bar-cpe-version",
+                    type="search",
+                    placeholder="Search by product version...",
+                    style={
+                        "width": "90%",
+                        "margin": "15px"
+                    }
+                )
+            ]),
             html.Label('CVSS rank'),
             dcc.Checklist(
                 id="cvss-rank-checklist",
@@ -217,12 +191,12 @@ def register_layout_query():
                 columns=[
                     {"name": 'Organization (clean)', "id": 'org_clean'},
                     {"name": 'IP', "id": 'ip_str'},
-                    {"name": 'CVE', "id": 'cve_id'},
+                    # {"name": 'CVE', "id": 'cve_id'},
                     {"name": 'EPSS', "id": 'epss'},
-                    {"name": 'EPSS rank', "id": 'epss_rank'},
-                    {"name": 'CVSS rank', "id": 'cvss_rank'},
+                    # {"name": 'EPSS rank', "id": 'epss_rank'},
+                    {"name": 'CVSS Rank', "id": 'cvss_rank'},
                     {"name": 'Product name', "id": 'cpe_product'},
-                    {"name": 'Product version', "id": 'cpe_version'},
+                    # {"name": 'Product version', "id": 'cpe_version'},
                 ],
                 sort_action='custom',
                 sort_mode='multi',
@@ -234,10 +208,17 @@ def register_layout_query():
                     'max-height': '15px',
                     'min-height': '15px',
                     'height': '15px'
-                }
+                },
+                tooltip_delay=0,
+                tooltip_duration=None,
+                style_cell={'textAlign': 'center'}
             ),
-            style={'margin-top': '32px'}
+            style={'margin-top': '32px'},
         ),
+        dbc.Popover([
+            dbc.PopoverHeader("Título do Popover"),
+            dbc.PopoverBody("Conteúdo do Popover"),
+        ], id="popover"),
         html.Br(),
         dbc.Row(
             [
@@ -245,14 +226,15 @@ def register_layout_query():
                     dcc.Dropdown(
                         id="dropdown-color-2a",
                         options=[
-                            {'label': 'epss', 'value': 'epss'},
-                            {'label': 'cve_id', 'value': 'cve_id'},
+                            {'label': 'EPSS', 'value': 'epss_rank'},
+                            {'label': 'CVE', 'value': 'cve_id'},
                         ],
                         placeholder="Group by...",
                         style={
                             "width": "90%",
                             "margin": "15px",
-                        }
+                        },
+                        value='epss_rank'
                     ),
                 ),
                 dbc.Col(
@@ -260,13 +242,14 @@ def register_layout_query():
                         id="dropdown-type-2a",
                         options=[
                             {'label': 'Bars', 'value': 'Bars'},
-                            {'label': 'CDF', 'value': 'CDF'},
+                            {'label': 'PDF/CDF', 'value': 'CDF'},
                         ],
                         placeholder="Type of graph...",
                         style={
                             "width": "90%",
                             "margin": "15px",
-                        }
+                        },
+                        value='Bars'
                     ),
                 )
             ]
@@ -295,16 +278,19 @@ def register_layout_query():
                     # {"name": 'Product list', "id": 'cpe_list'},
                     # {"name": 'CVE list', "id": 'cve_list'}
                 ],
-                # sort_action='custom',
-                # sort_mode='multi',
-                # sort_by=[],
-                page_current=0,
                 page_size=10,
                 style_data={
                     'whiteSpace': 'normal',
                     # 'height': 'auto',
                     'max-height': '15px', 'min-height': '15px', 'height': '15px'
                 },
+                tooltip_delay=0,
+                tooltip_duration=None,
+                style_cell={'textAlign': 'center'},
+                css=[{
+                    'selector': '.dash-table-tooltip',
+                    'rule': 'text-align: center; border: 1px solid;;'
+                }],
             ),
             style={'margin-top': '32px'}
 
@@ -318,7 +304,7 @@ def register_layout_query():
                         id="dropdown-type-2b",
                         options=[
                             {'label': 'Bars', 'value': 'Bars'},
-                            {'label': 'CDF', 'value': 'CDF'},
+                            {'label': 'PDF/CDF', 'value': 'CDF'},
                         ],
                         placeholder="Type of graph...",
                         style={
@@ -343,8 +329,10 @@ def register_layout_query():
 
 
 def register_callback_query(app):
+
     @app.callback(
         Output('query-2a-table', "data"),
+        Output('query-2a-table', "tooltip_data"),
         [
             Input('date-picker-single', 'date'),
             Input("search-bar-ip", 'value'),
@@ -352,14 +340,13 @@ def register_callback_query(app):
             Input("epss-range-slider", 'value'),
             Input("cvss-rank-checklist", 'value'),
             Input("search-bar-cpe-product", 'value'),
-            Input("dropdown-cpe-version", 'value'),
+            Input("search-bar-cpe-version", 'value'),
         ]
     )
     def update_table2a(date_value, ip_query, org_query, epss_query, cvss_query, product_query, cpe_version_query):
 
         print("[INFO] query 2 - update_table2a: ", date_value)
         df = base.get_dataset(date_value, INPUT_DATA_V2a)
-        date_pick = date_value
         if ip_query:
             df = df[df['ip_str'].str.contains(ip_query, case=False)]
 
@@ -378,11 +365,32 @@ def register_callback_query(app):
             df = df[df['cpe_product'].str.contains(product_query, case=False)]
 
         if cpe_version_query:
-            df = df[df['cpe_version'].isin(cpe_version_query)]
+            df = df[df['cpe_version'].str.contains(cpe_version_query)]
 
         df = df.sort_values(by=['epss'], ascending=True)
+        df_clean = df[['org_clean', 'ip_str', 'cvss_rank', 'epss', 'cpe_product']]
+        tooltip_data = [
+            {
+                'ip_str': {
+                    'value': "**CVE:**  " + str(row['cve_id']),
+                    'type': 'markdown'
+                },'cvss_rank': {
+                    'value': "**CVSS:**  " + str(row['cvss']),
+                    'type': 'markdown'
+                },
+                'epss': {
+                    'value': "**EPSS Rank:**  " + str(row['epss_rank']),
+                    'type': 'markdown'
+                },
+                'cpe_product': {
+                    'value': "**Product Version:**  " + row['cpe_version'] + "  \n**CVE:**  " + row['cve_id'],
+                    'type': 'markdown'
+                }
+            } for row in df.to_dict('records')
+        ]
 
-        return df.to_dict('records')
+
+        return df_clean.to_dict('records'), tooltip_data
 
     @app.callback(
         Output('query-2a-graph', 'figure'),
@@ -390,7 +398,7 @@ def register_callback_query(app):
             Input('date-picker-single', 'date'),
             Input("epss-range-slider", 'value'),
             Input("cvss-rank-checklist", 'value'),
-            Input("dropdown-cpe-version", 'value'),
+            Input("search-bar-cpe-version", 'value'),
             Input("dropdown-color-2a", 'value'),
             Input("dropdown-type-2a", 'value'),
         ]
@@ -408,7 +416,7 @@ def register_callback_query(app):
             df = df[df['cvss_rank'].isin(cvss_query)]
 
         if cpe_version_query:
-            df = df[df['cpe_version'].isin(cpe_version_query)]
+            df = df[df['cpe_version'].str.contains(cpe_version_query)]
 
         
         if type == "CDF":
@@ -425,25 +433,17 @@ def register_callback_query(app):
             # CDF
             stats_df['cdf'] = stats_df['pdf'].cumsum()
             stats_df = stats_df.reset_index()
-            # stats_df.plot(x = 'value', y = ['pdf', 'cdf'], grid = True)
+
             fig = go.Figure()
-            # Adicionar linha para pdf
             fig.add_trace(go.Scatter(x=stats_df['epss'], y=stats_df['pdf'], mode='lines', name='PDF'))
-
-            # Adicionar linha para cdf
             fig.add_trace(go.Scatter(x=stats_df['epss'], y=stats_df['cdf'], mode='lines', name='CDF'))
-
-            # Atualizar layout do gráfico
-            fig.update_layout(title='PDF e CDF',
-                            xaxis_title='Valor',
-                            yaxis_title='Probabilidade',
+            fig.update_layout(title='PDF and CDF',
+                            xaxis_title='Value',
+                            yaxis_title='Probability',
                             showlegend=True)
             return fig
+        
         else:      
-
-
-
-
             df = df.sort_values(by=['cvss_rank'], ascending=True)
             severity_mapping = {
                 "low": 1,
@@ -454,53 +454,51 @@ def register_callback_query(app):
 
             cvss_counts = df['cvss_rank'].value_counts()
             df['severity'] = df['cvss_rank'].map(severity_mapping)
-            severity_counts = df['severity'].value_counts().sort_index()
 
-            # df = df.sort_values(by='severity', ascending=True)
-
-            # df = df.groupby('cvss_rank').sum()
-            # print(df)
-            # temp = df.groupby("cvss_rank").agg(LIST_IP=("ip_str", set), N_IPS=("ip_str", "count")).reset_index()
-            # temp['LIST_IP'] = temp['LIST_IP'].str.join(', ')
-
-            # data = go.Bar(x=df['cvss_rank'])
 
             fig = go.Figure()
 
             fig.add_trace(go.Bar(x=cvss_counts.index, y=cvss_counts.values, name='CVSS Rank'))
 
-            # Adicionando a contagem de registros para cada 'severity' no eixo x
-            # fig.add_trace(go.Bar(x=severity_counts.index, y=severity_counts.values, name='Severity'))
-
-            # Atualizando o layout do gráfico
-            fig.update_layout(title='Distribuição de CVSS Rank',
+            fig.update_layout(title='Distribution of CVSS Rank',
                     xaxis=dict(title='CVSS Rank'),
-                    yaxis=dict(title='Quantidade de Registros'))
+                    yaxis=dict(title='Number of registers'))
 
-            # fig = go.Figure(df, x='cvss_rank', hover_data=["ip_str", "cve_id"], barmode='stack')
-            # df = df.groupby(['cvss_rank'])
             if color:
-                df = df.sort_values(by=['severity', color], ascending=True)
-                if color == 'cve_id':
-                    # df = df.groupby("cvss_rank").agg(LIST_IP=("ip_str", set), N_IPS=("ip_str", "count")).reset_index()
-                    # df['LIST_IP'] = df['LIST_IP'].str.join(', ')
-                    fig = px.bar(df, x='cvss_rank', color=color, hover_data=["ip_str", "cve_id"], barmode='stack')
-                else:
-                    fig = px.bar(df, x='cvss_rank', color=color, hover_data=["ip_str", "cve_id"], barmode='stack')
-
-
-
+                grouped_df = df.groupby(['cvss_rank', 'severity', color])
+                aggregated_df = grouped_df.size().to_frame(name='count')
+                aggregated_df = aggregated_df.reset_index()
+                aggregated_df = aggregated_df.sort_values('severity')
+                fig = px.bar(aggregated_df, x='cvss_rank', y="count", color=color)
+                fig.update_layout(title='Distribution of CVSS Rank',
+                    xaxis=dict(title='CVSS Rank'),
+                    yaxis=dict(title='Number of registers'))
             return fig
-
-    def contar_virgulas_str(texto):
-        return str(len(re.findall(r",", texto)) + 1)
 
     def contar_virgulas(texto):
         return len(re.findall(r",", texto)) + 1
+    
+    def get_tooltip_info(row):
+        cpe_list = row['cpe_list'].split(', ')
+        cve_list = row['cve_list'].split(', ')
+        string = ''
+        while(cpe_list or cve_list):
+            if cpe_list:
+                string = string+  '| ' + cpe_list[0] + '  | '
+                cpe_list.pop(0)
+            else:
+                string = string + '|  |  '
+            if cve_list:
+                string = string + cve_list[0] + '|  \n'
+                cve_list.pop(0)
+            else:
+                string = string + ' |  \n'
+        return string
 
 
     @app.callback(
         Output('query-2b-table', "data"),
+        Output('query-2b-table', "tooltip_data"),
         [
             Input('date-picker-single', 'date'),
             Input("search-bar-org-2b", 'value'),
@@ -524,34 +522,24 @@ def register_callback_query(app):
         if cve_query:
             df = df[df['cve_list'].str.contains(cve_query, case=False)]
 
-        print(df.columns)
-
         df_limpo = df[['org_clean', 'epss_major']]
-        print(df.columns)
 
-        def display_tooltip(row):
-            colunas_df_limpo = ['org_clean', 'epss_major']
-            colunas_ausentes = [coluna for coluna in df.columns if coluna not in colunas_df_limpo]
-            tooltip_text = ", ".join(colunas_ausentes)
-            return tooltip_text
+        tooltip_data = [
+            {
+                'org_clean': {
+                    'value': "| CPE list        | CVE list        |  \n" +
+                             "| :-------------: | :-------------: |  \n" +
+                             get_tooltip_info(row),
+                    'type': 'markdown'
+                },
+                'epss_major': {
+                    'value': "**IP list:**  \n" + "  \n".join(row['ip_list'].split(', ')),
+                    'type': 'markdown'
+                },
+            } for row in df.to_dict('records')
+        ]
 
-
-        # if len(sort_by):
-        #     print(sort_by)
-        #     print(df)
-        #     df = df.sort_values(
-        #         [col['column_id'] for col in sort_by],
-        #         ascending=[
-        #             col['direction'] == 'asc'
-        #             for col in sort_by
-        #         ],
-        #         inplace=True
-        #     )
-        #     print(df)
-
-        # org_clean, ip, epss_major, epss_rank_major, cpe, cve 
-
-        return df_limpo.to_dict('records')
+        return df_limpo.to_dict('records'), tooltip_data
 
     @app.callback(
         Output('query-2b-graph', 'figure'),
@@ -562,17 +550,17 @@ def register_callback_query(app):
     def update_graph2b(date_value, org_query, type):
         print("[INFO] query 2 - update_graph2b: ", date_value)
         df = base.get_dataset(date_value, INPUT_DATA_V2b)
-        df["n_ips_str"] = df["ip_list"].apply(contar_virgulas_str)
         df["n_ips"] = df["ip_list"].apply(contar_virgulas)
+        df["n_ips_str"] = str(df["n_ips"])
         df = df.sort_values("n_ips")
 
         if type == "CDF":
             stats_df = df \
-                .groupby('n_ips_str') \
-                ['n_ips_str'] \
+                .groupby('n_ips') \
+                ['n_ips'] \
                 .agg('count') \
                 .pipe(pd.DataFrame) \
-                .rename(columns = {'n_ips_str': 'frequency'})
+                .rename(columns = {'n_ips': 'frequency'})
 
             # PDF
             stats_df['pdf'] = stats_df['frequency'] / sum(stats_df['frequency'])
@@ -580,18 +568,13 @@ def register_callback_query(app):
             # CDF
             stats_df['cdf'] = stats_df['pdf'].cumsum()
             stats_df = stats_df.reset_index()
-            # stats_df.plot(x = 'value', y = ['pdf', 'cdf'], grid = True)
             fig = go.Figure()
-            # Adicionar linha para pdf
-            fig.add_trace(go.Scatter(x=stats_df['n_ips_str'], y=stats_df['pdf'], mode='lines', name='PDF'))
+            fig.add_trace(go.Scatter(x=stats_df['n_ips'], y=stats_df['pdf'], mode='lines', name='PDF'))
+            fig.add_trace(go.Scatter(x=stats_df['n_ips'], y=stats_df['cdf'], mode='lines', name='CDF'))
 
-            # Adicionar linha para cdf
-            fig.add_trace(go.Scatter(x=stats_df['n_ips_str'], y=stats_df['cdf'], mode='lines', name='CDF'))
-
-            # Atualizar layout do gráfico
             fig.update_layout(title='PDF e CDF',
-                            xaxis_title='Valor',
-                            yaxis_title='Probabilidade',
+                            xaxis_title='Value',
+                            yaxis_title='Probability',
                             showlegend=True)
             return fig
         else:
@@ -604,34 +587,11 @@ def register_callback_query(app):
 
             fig.add_trace(go.Bar(x=ips_cont.index, y=ips_cont.values, name='CVSS Rank'))
 
-            # Adicionando a contagem de registros para cada 'severity' no eixo x
-            # fig.add_trace(go.Bar(x=severity_counts.index, y=severity_counts.values, name='Severity'))
-
-            # Atualizando o layout do gráfico
-            fig.update_layout(title='Distribuição de CVSS Rank',
+            fig.update_layout(title='Distribution of CVSS',
                     xaxis=dict(title='CVSS Rank'),
-                    yaxis=dict(title='Quantidade de Registros'))
-
-            # fig = go.Figure(df, x='cvss_rank', hover_data=["ip_str", "cve_id"], barmode='stack')
-            # df = df.groupby(['cvss_rank'])
-            # if color:
-            #     df = df.sort_values(by=['severity', color], ascending=True)
-            #     if color == 'cve_id':
-            #         # df = df.groupby("cvss_rank").agg(LIST_IP=("ip_str", set), N_IPS=("ip_str", "count")).reset_index()
-            #         # df['LIST_IP'] = df['LIST_IP'].str.join(', ')
-            #         fig = px.bar(df, x='cvss_rank', color=color, hover_data=["ip_str", "cve_id"], barmode='stack')
-            #     else:
-            #         fig = px.bar(df, x='cvss_rank', color=color, hover_data=["ip_str", "cve_id"], barmode='stack')
-
-
+                    yaxis=dict(title='Number of registers'))
 
             return fig
         
-    
-    def display_tooltip(row):
-        colunas_df_limpo = ['org_clean', 'epss_major']
-        colunas_ausentes = [coluna for coluna in colunas_df_original if coluna not in colunas_df_limpo]
-        tooltip_text = ", ".join(colunas_ausentes)
-        return tooltip_text
 
 
