@@ -59,14 +59,14 @@ class DatasetManager(object):
 
         commit = self.retrive_commit(day)
         df = None
-        if commit > 0:
+        if commit >= 0:
             filepath = self.tlhop_epss_report_path
 
-            print(f"Reading {code} of day {day}")
-            dt = DeltaTable(filepath, version=commit)
+            print(f"Reading report of day {day}")
+            dt = DeltaTable(filepath, version=commit).to_pyarrow_dataset()
 
             if single_output:
-                dt = dt.filter(condition).head(1).to_pydict()
+                df = dt.filter(condition).head(1).to_pydict()
             else:
                 df = dt.to_table(filter=condition, columns=columns).to_pandas()
 

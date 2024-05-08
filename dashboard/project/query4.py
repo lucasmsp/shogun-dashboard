@@ -6,17 +6,11 @@ import plotly.express as px
 import plotly.graph_objs as go
 import plotly.figure_factory as ff
 
+import pyarrow.dataset as ds
 import pandas as pd
 import json
 
-from deltalake import DeltaTable
-
-import pyarrow.dataset as ds
-
 import project.base as base
-
-dt = DeltaTable("/opt/output_data/tlhop-epss-dashboard.delta")
-dataset = dt.to_pyarrow_dataset()
 
 def register_layout_query(dm):
     q4 = html.Div([
@@ -24,7 +18,7 @@ def register_layout_query(dm):
         dash_table.DataTable(
             id='query-4-table',
             columns=[
-                {"name": 'meta', "id": "meta_id"},
+                # {"name": 'ID', "id": "meta_id"},
                 {"name": 'IP', "id": "ip_str"},
                 {"name": 'OS', "id": 'os'},
                 {"name": 'Organization', "id": 'org'},
@@ -34,7 +28,7 @@ def register_layout_query(dm):
             sort_action='custom',
             sort_mode='multi',
             sort_by=[],
-            page_size=10,
+            page_size=20,
             style_data={
                 'whiteSpace': 'normal',
                 'height': 'auto',
@@ -53,9 +47,13 @@ def register_callback_query(dm, app):
         Input('date-picker-single', 'date')
     )
     def update_table4(date_value):
-        print("[INFO] update_table4: ", date_value)
-        df = dataset.to_table(columns=["meta_id", "ip_str", "os", "org", "hostnames", "domains"]).to_pandas()
-        df = df.head(1000)
+        print("[INFO] update_table4: ", date_value, flush=True)
+
+        df = dm.get_report_dataset(date_value, columns=["meta_id", "ip_str", "os", "org", "hostnames", "domains"])
+        df['hostnames'] = df["hostnames"].str.join(", ") 
+        df['domains'] = df["domains"].str.join(", ") 
+        df['os'] = df["os"].fillna("-")
+        # df = df.head(1000)
 
         return df.to_dict('records')
         
@@ -66,6 +64,7 @@ def register_callback_query(dm, app):
         State('date-picker-single', 'date')
     )
     def update_graph(active_cell, table_data, date_value):
+
         if active_cell:
 
             row = active_cell['row']
@@ -73,42 +72,42 @@ def register_callback_query(dm, app):
             ip_str = table_data[row]['ip_str']
 
             condition = (ds.field("meta_id") == meta_id)
-            filtered_data = dataset.filter(condition).head(1).to_pydict()
-
-            vulns = filtered_data.get('vulns') if filtered_data else None
+            filtered_data = dm.get_report_dataset(date_value, condition=condition, single_output=True)
+            vulns = filtered_data.get('vulns', [])
 
             cvss_scores = []
             cve_ids = []
             description = []
-            if vulns:
-                for cve_list in vulns:
-                    for cve in cve_list:
-                        if 'cvss_score' in cve:
-                            cvss_scores.append(cve['cvss_score'])
-                            cve_ids.append(cve['cve_id'])
-                            description.append(cve['description'])
+            for cve_list in vulns:
+                for cve in cve_list:
+                    if 'cvss_score' in cve:
+                        cvss_scores.append(cve['cvss_score'])
+                        cve_ids.append(cve['cve_id'])
+                        description.append(cve['description'])
 
-            df = pd.DataFrame({'CVSS Score': cvss_scores})
+            df = pd.DataFrame({'CVSS Score': cvss_scores, "CVE": cve_ids})
 
             fig = px.bar(df,
-                x='CVSS Score',
-                title=f"Vulnerabilities of IP {ip_str}",
-                labels={'CVSS Score': 'CVSS Score', 'count': 'Count'}
+                x = 'CVE',
+                y = 'CVSS Score',
+                title = f"Vulnerabilities of IP {ip_str}",
+                #labels= {'CVSS Score': 'CVSS Score', 'count': 'Count'}
             )
 
             vulns = filtered_data.get('vulns') if filtered_data else None
 
-            cve_summary_list = [
-                html.Div([
-                    html.H3(f"CVE ID: {cve_id}"),
-                    html.H2(f"Summary: {description}")
-                ]) for cve_id, description in zip(cve_ids, description)
+            cve_summary_card = [dbc.CardHeader("CVE summary")] + [
+                html.P(children=[
+                        html.Strong('CVE ID: '), html.Span(cve_id+ "\t"),
+                        html.Strong('- Summary: '), html.Span(description+"\n")
+                    ], className="card-text")
+                for cve_id, description in zip(cve_ids, description)
             ]
 
             return html.Div([
                 dcc.Graph(figure=fig),
-                html.Div(cve_summary_list)
-            ])
+                html.Div(cve_summary_card)
+                ])
 
         return html.Div([
             html.H2("No row selected"),
