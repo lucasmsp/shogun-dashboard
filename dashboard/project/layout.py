@@ -4,6 +4,7 @@ import dash_bootstrap_components as dbc
 import project.query1 as query1
 import project.query2 as query2
 import project.query3 as query3
+import project.query4 as query4
 
 import project.base as base
 
@@ -25,6 +26,13 @@ def register_layout(dm, username):
     tab3_content = dbc.Card(
         dbc.CardBody(
             html.Div(children=[dbc.Row(children=query3.register_layout_query(dm))], className="wrapper"),
+        ),
+        className="mt-3",
+    )
+
+    tab4_content = dbc.Card(
+        dbc.CardBody(
+            html.Div(children=[dbc.Row(children=query4.register_layout_query(dm))], className="wrapper"),
         ),
         className="mt-3",
     )
@@ -117,7 +125,8 @@ def register_layout(dm, username):
                 [
                     dbc.Tab(tab1_content, label="View 1 - EPSS summary"),
                     dbc.Tab(tab2_content, label="View 2 - by organizations/IP"),
-                    dbc.Tab(tab3_content, label="View 3 - More details by CVE")
+                    dbc.Tab(tab3_content, label="View 3 - More details by CVE"),
+                    dbc.Tab(tab4_content, label="View 4 - IP Data")
                 ],
                 style={
                     "paddingLeft": "20px"
