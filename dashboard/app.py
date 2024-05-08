@@ -1,10 +1,21 @@
 from flask import Flask, redirect, url_for, request, render_template
-from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
+from flask_login import LoginManager, login_user, logout_user, login_required, current_user
+
 from dash import Dash
 import dash_bootstrap_components as dbc
 
 from project.layout import register_layout
 from project.callbacks import register_callbacks
+from project.base import User, users, waiting_next_execution
+from project.storage import DatasetManager
+
+from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
+import sys
+
+if len(sys.argv) > 1:
+    dev_mode = sys.argv[1] == 'dev'
+else:
+    dev_mode = False
 
 server = Flask(__name__)
 server.secret_key = 'super secret key'
@@ -12,14 +23,8 @@ server.secret_key = 'super secret key'
 login_manager = LoginManager()
 login_manager.init_app(server)
 
-class User(UserMixin):
-    def __init__(self, username):
-        self.id = username
-
-    def __str__(self):
-        return self.id
-
-users = {'admin': {'password': 'admin'}}
+dm = DatasetManager()
+dm.check_available_datasets()
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -52,8 +57,9 @@ def root():
 @server.route('/dashboard/')
 @login_required
 def dashboard():
-    app.layout = register_layout(current_user)
+    app.layout = register_layout(dm, current_user)
     return app.index()
+
 
 external_stylesheets = [
     {
@@ -69,8 +75,14 @@ external_stylesheets = [
 
 app = Dash(__name__, server=server, external_stylesheets=external_stylesheets)
 app.title = "TLHOP/SAM Analytics on EPSS"
-app.layout = register_layout(current_user)
-register_callbacks(app)
+app.layout = register_layout(dm, current_user)
+register_callbacks(dm, app)
+
+executor = ThreadPoolExecutor(max_workers=1)
+executor.submit(waiting_next_execution, dev_mode)
 
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    if dev_mode:
+        app.run_server(debug=True, host="0.0.0.0", port=8080, use_reloader=False)
+    else:
+        app.run_server(debug=False, host="0.0.0.0", port=8080, use_reloader=False)
