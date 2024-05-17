@@ -1,3 +1,5 @@
+import itertools
+
 from dash import html, dcc, dash_table
 import dash_bootstrap_components as dbc
 from dash import Dash, dcc, html, Input, Output
@@ -12,6 +14,7 @@ import json
 import project.base as base
 
 INPUT_DATA = '3'
+
 
 def dash_components():
     components_1 = html.Div([
@@ -68,7 +71,7 @@ def dash_components():
         html.Div(children=[
             html.Center([
                 dcc.Input(
-                    id='search-bar-org',
+                    id='search-bar-query3-org',
                     type="search",
                     placeholder="Org filter expression ('>', '<', '=','>=', '<=') e.g., '> 30'",
                     style={
@@ -80,7 +83,7 @@ def dash_components():
 
             html.Center([
                 dcc.Input(
-                    id='search-bar-ip',
+                    id='search-bar-query3-ip',
                     type="search",
                     placeholder="IP filter expression ('>', '<', '=','>=', '<=') e.g., '> 30'",
                     style={
@@ -97,7 +100,7 @@ def dash_components():
                 }
             ),
             dcc.RangeSlider(
-                id='epss-range-slider',
+                id='epss-range-query3-slider',
                 min=0,
                 max=1,
                 step=0.1,
@@ -109,7 +112,7 @@ def dash_components():
                     0.8: '0.8',
                     1.0: '1.0',
                 },
-                value=[0.1, 1.0],
+                value=[0, 1],
                 tooltip={
                     'placement': 'top',
                     'always_visible': True,
@@ -147,9 +150,10 @@ def register_layout_query(dm):
                         id='query-3-table',
                         columns=[
                             {"name": "CVE", "id": "cve_id", "selectable": True},
-                            {"name": "CVSS (CVSS version)", "id": "cvss_and_cvssv", "selectable": True},
-                            {"name": "CVSS Rank", "id": "cvss_rank", "selectable": True},
-                            {"name": "EPSS", "id": "epss", "selectable": True},  # TODO {mudar o valor para epss}
+                            {"name": "CVSS", "id": "cvss_score", "selectable": True},
+                            # {"name": "CVSS (CVSS version)", "id": "cvss_and_cvssv", "selectable": True},
+                            # {"name": "CVSS Rank", "id": "cvss_rank", "selectable": True},
+                            # {"name": "EPSS", "id": "epss", "selectable": True},
                             {"name": "EPSS Rank", "id": "epss_rank", "selectable": True},
                             {"name": "# IPs", "id": "n_ips", "selectable": True},
                             {"name": "# Organizations", "id": "n_orgs", "selectable": True},
@@ -171,6 +175,11 @@ def register_layout_query(dm):
 
                 html.Div(style={'height': '50px'}),
 
+                dbc.Popover([
+                    dbc.PopoverHeader("Título do Popover"),
+                    dbc.PopoverBody("Conteúdo do Popover"),
+                ], id="popover-query3"),
+
                 html.H4(children="Choose the type of chart", style={'text-align': 'Left'}),
                 dbc.Row(
                     dcc.Dropdown(
@@ -181,9 +190,9 @@ def register_layout_query(dm):
                             {'label': 'Line plot - # IPS by CVSS', 'value': 'ips_cvss'},
                             {'label': 'Line plot - # IPs by EPSS', 'value': 'ips_epss'},
                             {'label': 'Line plot - # Organizations by CVSS', 'value': 'orgs_cvss'},
-                            {'label': "Line plot - # Organizations by EPSS", 'value': 'orgs_epss'},                            
+                            {'label': "Line plot - # Organizations by EPSS", 'value': 'orgs_epss'},
                         ],
-                        value='Scatter plot - EPSS by CVSS Score'
+                        value=''
                     ),
                     style={'marginTop': '32px'}
                 ),
@@ -203,30 +212,35 @@ def find_expression(string):
         if index != -1:
             return i
 
-
+def get_tooltip_info(row):
+    return "".join(["| " + i + " | " + j + " | \n"
+                    for i, j in itertools.zip_longest(
+                        str(row["cvss_version"]).split(";")[0:20],
+                        str(row["cvss_rank"]).split(";")[0:20], fillvalue=" ")])
 
 # register all the callbacks in one place
 def register_callback_query(dm, app):
     @app.callback(
         Output('query-3-table', "data"),
+        Output('query-3-table', "tooltip_data"),
         Input('date-picker-single', 'date'),
         Input('query-3-table', "sort_by"),
         Input('search-bar-cve', 'value'),
         Input('dropdown-cvss-version', 'value'),
         Input('cvss-range-slider', 'value'),
-        Input('epss-range-slider', 'value'),
-        Input('search-bar-org', 'value'),
-        Input('search-bar-ip', 'value')
+        Input('epss-range-query3-slider', 'value'),
+        Input('search-bar-query3-org', 'value'),
+        Input('search-bar-query3-ip', 'value')
     )
     def update_table3(date_value, sort_by, cve_query, dropdown_query_cvss, cvss_range_query,
                       epss_range_query, org_query, ip_query):
         print("[INFO] query 3 - update_table3: ", date_value)
 
         df = dm.get_view_dataset(date_value, INPUT_DATA)
-
-        df['cvss_and_cvssv'] = df['cvss_score'].astype(str) + ' (v ' + df['cvss_version'].astype(str) + ')'
+        # df['cvss_and_cvssv'] = df['cvss_score'].astype(str) + ' (v ' + df['cvss_version'].astype(str) + ')'
         #df['cvss_version'] = df['cvss_version'].astype(float)
         #df['cvss_score'] = df['cvss_score'].astype(float)
+        # print(df.dtypes)
 
         if len(sort_by):
             df = df.sort_values(
@@ -250,7 +264,7 @@ def register_callback_query(dm, app):
             df = df[(df['cvss_score'] >= cvss_range_query[0]) & (df['cvss_score'] <= cvss_range_query[1])]
 
         if epss_range_query:
-            df = df[(df['epss'] >= cvss_range_query[0]) & (df['epss'] <= cvss_range_query[1])]
+            df = df[(df['epss'] >= epss_range_query[0]) & (df['epss'] <= epss_range_query[1])]
 
         if org_query:
             op = str(org_query)
@@ -308,7 +322,23 @@ def register_callback_query(dm, app):
                 elif operator == '<':
                     df = df[df['n_ips'] < value]
 
-        return df.to_dict('records')
+        # df_clean = df[['org_clean', 'ip_str', 'cvss_rank', 'epss', 'cpe_product']]
+        tooltip_data = [
+            {
+                'cvss_score': {
+                    'value':
+                        "| CVSS Version         |  CVSS Rank           |  \n" +
+                        "| :------------------: | :------------------: |  \n" +
+                        get_tooltip_info(row),
+                    'type': 'markdown'
+                },
+                'epss_rank': {
+                    'value': "**EPSS:**  " + str(row['epss']),
+                    'type': 'markdown'
+                },
+            } for row in df.to_dict('records')
+        ]
+        return df.to_dict('records'), tooltip_data
 
     @app.callback(
         Output('query-3-table', "style_data_conditional"),
@@ -332,8 +362,29 @@ def register_callback_query(dm, app):
 
         df = dm.get_view_dataset(date_value, INPUT_DATA)
         graphs = []
+
+        if value:
+            graphs.append(
+                dcc.Graph(
+                    id=value,
+                    figure=get_graph(df, value)
+                )
+            )
+        else:
+            graphs.append(
+                dcc.Graph(
+                    id='epss_cvss',
+                    figure=get_graph(df, 'epss_cvss')
+                )
+            )
+
+        return graphs
+
+    def get_graph(df, value):
+
         if value == "epss_cvss":
-            fig = px.scatter(df, x=df["cvss_score"], y=df['epss'], title="Scatter plot - EPSS by CVSS score", color='epss_rank')
+            fig = px.scatter(df, x=df["cvss_score"], y=df['epss'], title="Scatter plot - EPSS by CVSS score",
+                             color='epss_rank')
             fig.update_layout(
                 xaxis_title="CVSS Score",
                 yaxis_title="EPSS",
@@ -344,24 +395,21 @@ def register_callback_query(dm, app):
                     range=[0, 10]
                 )
             )
-            graphs.append(
-                dcc.Graph(
-                    id=value,
-                    figure=fig
-                ))
+            return fig
+
         elif value == "epss_rank_cvss_rank":
-            z = df.groupby(["cvss_rank", "epss_rank"]).count()\
-                .reset_index()\
-                .pivot(index="cvss_rank", columns="epss_rank", values=["cve_id"])\
-                .fillna(0)\
+            z = df.groupby(["cvss_rank", "epss_rank"]).count() \
+                .reset_index() \
+                .pivot(index="cvss_rank", columns="epss_rank", values=["cve_id"]) \
+                .fillna(0) \
                 .reset_index()
             z.columns = ['epss_rank', '< 0.2', '< 0.4', '< 0.6', '< 0.8', '>= 0.8']
 
             severity_mapping = {
-            "low": 1,
-            "medium": 2,
-            "high": 3,
-            "critical": 4
+                "low": 1,
+                "medium": 2,
+                "high": 3,
+                "critical": 4
             }
             z['severity'] = z['epss_rank'].map(severity_mapping)
             z = z.sort_values(by='severity', ascending=True)
@@ -370,8 +418,8 @@ def register_callback_query(dm, app):
             y = ['< 0.2', '< 0.4', '< 0.6', '< 0.8', '>= 0.8']
             z = z[y].T.values.tolist()
             z_text = [[str(y) for y in x] for x in z]
-            
-            fig = ff.create_annotated_heatmap(z, x=x, y=y, annotation_text=z_text, colorscale='Viridis') 
+
+            fig = ff.create_annotated_heatmap(z, x=x, y=y, annotation_text=z_text, colorscale='Viridis')
             fig['data'][0]['showscale'] = True
 
             fig.update_layout(
@@ -382,13 +430,7 @@ def register_callback_query(dm, app):
                 yaxis_title="EPSS Rank",
                 xaxis={'side': 'bottom'},
             )
-
-            graphs.append(
-                dcc.Graph(
-                    id=value,
-                    figure=fig
-                ))
-
+            return fig
         elif value == "ips_cvss":
             df = df.groupby("cvss_score").sum("n_ips").reset_index()
             fig = px.line(df, x=df['cvss_score'], y=df['n_ips'], title="Line plot - # IPs by CVSS")
@@ -401,11 +443,7 @@ def register_callback_query(dm, app):
                     range=[0, 10]
                 )
             )
-            graphs.append(
-                dcc.Graph(
-                    id=value,
-                    figure=fig
-                ))
+            return fig
 
         elif value == "orgs_cvss":
             df = df.groupby("cvss_score").sum("n_orgs").reset_index()
@@ -419,11 +457,8 @@ def register_callback_query(dm, app):
                     range=[0, 10]
                 )
             )
-            graphs.append(
-                dcc.Graph(
-                    id=value,
-                    figure=fig
-                ))
+            return fig
+
         elif value == "orgs_epss":
             df = df.groupby("epss").sum("n_orgs").reset_index()
             fig = px.line(df, x=df['epss'], y=df['n_orgs'], title="Line plot - # Organizations by EPSS")
@@ -436,11 +471,7 @@ def register_callback_query(dm, app):
                     range=[0, 1.0]
                 )
             )
-            graphs.append(
-                dcc.Graph(
-                    id=value,
-                    figure=fig
-                ))
+            return fig
 
         elif value == "ips_epss":
             df = df.groupby("epss").sum("n_ips").reset_index()
@@ -454,10 +485,5 @@ def register_callback_query(dm, app):
                     range=[0, 1.0]
                 )
             )
-            graphs.append(
-                dcc.Graph(
-                    id=value,
-                    figure=fig
-                ))
 
-        return graphs
+            return fig
