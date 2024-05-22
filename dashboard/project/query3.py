@@ -327,7 +327,6 @@ def register_callback_query(dm, app):
                 elif operator == '<':
                     df = df[df['n_ips'] < value]
 
-        # df_clean = df[['org_clean', 'ip_str', 'cvss_rank', 'epss', 'cpe_product']]
         tooltip_data = [
             {
                 'cvss_score': {
