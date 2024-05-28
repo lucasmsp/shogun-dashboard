@@ -5,13 +5,7 @@ import dash_bootstrap_components as dbc
 from dash import Dash, dcc, html, Input, Output
 
 import plotly.express as px
-import plotly.graph_objs as go
 import plotly.figure_factory as ff
-
-import pandas as pd
-import json
-
-import project.base as base
 
 INPUT_DATA = '3'
 
@@ -145,6 +139,7 @@ def register_layout_query(dm):
                 ),
 
                 component_1,
+
                 dbc.Row(
                     dash_table.DataTable(
                         id='query-3-table',
@@ -170,6 +165,10 @@ def register_layout_query(dm):
                     ),
                     style={'marginTop': '32px'}
                 ),
+
+                html.H5(children="For more information's about the CVE, click in the link bellow",
+                        style={'text-align': 'Left'}),
+
                 html.A(id='link', target='_blank'),
 
                 html.Div(style={'height': '50px'}),
@@ -245,7 +244,7 @@ def register_callback_query(dm, app):
         # df['cvss_and_cvssv'] = df['cvss_score'].astype(str) + ' (v ' + df['cvss_version'].astype(str) + ')'
         #df['cvss_version'] = df['cvss_version'].astype(float)
         #df['cvss_score'] = df['cvss_score'].astype(float)
-        # print(df.dtypes)
+
 
         if len(sort_by):
             df = df.sort_values(
@@ -351,7 +350,12 @@ def register_callback_query(dm, app):
                 url = f"https://cve.mitre.org/cgi-bin/cvename.cgi?name={cell_value}"
                 return url, f"{url}", df.to_dict('records'), tooltip_data
 
-        return '', '', df.to_dict('records'), tooltip_data
+        # default value for the cve
+        first_cve_value = df.iloc[0]['cve_id']
+        url = f"https://cve.mitre.org/cgi-bin/cvename.cgi?name={first_cve_value}"
+        return url, f"{url}", df.to_dict('records'), tooltip_data
+
+        # return '', '', df.to_dict('records'), tooltip_data
         # return df.to_dict('records'), tooltip_data
 
     @app.callback(
