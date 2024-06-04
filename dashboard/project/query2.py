@@ -1,6 +1,7 @@
-from dash import html, dcc, dash_table, callback_context
+from dash import html, dcc, dash_table, callback_context, ctx, no_update
 from dash.dependencies import Output, Input, State
 import dash_bootstrap_components as dbc
+import dash_ag_grid as dag
 
 import itertools
 import plotly.express as px
@@ -170,45 +171,34 @@ def register_layout_query(dm):
         ], style={'padding': 10, 'flex': 1})
     ], style={'display': 'flex', 'flexDirection': 'row'})
 
-    q2 = [
-        html.H1(children="View 2 - by organizations/IP", className='wrapper'),
-        html.Br(),
-        html.H2(children="Highest EPSS for each org/IP", className='wrapper'),
+    tab1_content = [
+        html.H2(children="List of vulnerable products for each org/IP", className='wrapper'),
         filters_2a,
         dbc.Row(
-            dash_table.DataTable(
-                id='query-2a-table',
-                columns=[
-                    {"name": 'Organization (clean)', "id": 'org_clean'},
-                    {"name": 'IP', "id": 'ip_str'},
-                    # {"name": 'CVE', "id": 'cve_id'},
-                    {"name": 'EPSS', "id": 'epss'},
-                    # {"name": 'EPSS rank', "id": 'epss_rank'},
-                    {"name": 'CVSS Rank', "id": 'cvss_rank'},
-                    {"name": 'Product name', "id": 'cpe_product'},
-                    # {"name": 'Product version', "id": 'cpe_version'},
+            dag.AgGrid(
+                id="query-2a-grid",
+                columnDefs=[
+                    {"field": 'org_clean', "headerName": 'Organization (clean)'},
+                    {"field": 'ip_str', "headerName": 'IP', },
+                    {"field": 'epss', "headerName": 'EPSS', "tooltipField": "epss_rank"},
+                    {"field": 'cvss_rank', "headerName": 'CVSS Rank', "tooltipField": "cvss_rank"},
+                    {
+                        "field": 'cpe_product', 
+                        "headerName": 'Product name', 
+                        "tooltipField": "cve_id"
+                    },
                 ],
-                sort_action='custom',
-                sort_mode='multi',
-                sort_by=[],
-                page_current=0,
-                page_size=10,
-                style_data={
-                    'whiteSpace': 'normal',
-                    'max-height': '15px',
-                    'min-height': '15px',
-                    'height': '15px'
-                },
-                tooltip_delay=0,
-                tooltip_duration=None,
-                style_cell={'textAlign': 'center'}
-            ),
-            style={'marginTop': '32px'},
+                defaultColDef={"flex": 1},
+                columnSize="responsiveSizeToFit",
+                columnSizeOptions= {"skipHeader": False},
+                dashGridOptions={
+                    'tooltipInteraction': True,
+                    'tooltipShowDelay': 10, 
+                    'tooltipHideDelay': 10000
+                }
+            )
         ),
-        dbc.Popover([
-            dbc.PopoverHeader("Título do Popover"),
-            dbc.PopoverBody("Conteúdo do Popover"),
-        ], id="popover"),
+
         html.Br(),
         dbc.Row(
             [
@@ -224,7 +214,7 @@ def register_layout_query(dm):
                             "width": "90%",
                             "margin": "15px",
                         },
-                        value='EPSS'
+                        value='epss_rank'
                     ),
                 ),
                 dbc.Col(
@@ -251,40 +241,62 @@ def register_layout_query(dm):
                 'displayModeBar': False,
                 'scrollZoom': False
             }
-        ),
-        html.Br(),
+        )
+    ]
 
-        html.H2(children="List of vulnerable products for each org/IP", className='wrapper'),
+    tab2_content = [
+        html.H2(children="Highest EPSS for each org/IP", className='wrapper'),
         filters_2b,
         dbc.Row(
-            dash_table.DataTable(
-
-                id='query-2b-table',
-                columns=[
-                    {"name": 'Organization', "id": 'org_clean'},
-                    # {"name": 'IP list', "id": 'ip_list'},
-                    {"name": 'EPSS (major)', "id": 'epss_major'},
-                    # {"name": 'EPSS rank (major)', "id": 'epss_rank_major'},
-                    # {"name": 'Product list', "id": 'cpe_list'},
-                    # {"name": 'CVE list', "id": 'cve_list'}
+            dag.AgGrid(
+                id="query-2b-grid",
+                columnDefs=[
+                    {"field": 'org_clean', "headerName": 'Organization'},
+                    {"field": 'epss_major', "headerName": 'EPSS (major)', },
                 ],
-                page_size=10,
-                style_data={
-                    'whiteSpace': 'normal',
-                    # 'height': 'auto',
-                    'max-height': '15px', 'min-height': '15px', 'height': '15px'
-                },
-                tooltip_delay=0,
-                tooltip_duration=None,
-                style_cell={'textAlign': 'center'},
-                css=[{
-                    'selector': '.dash-table-tooltip',
-                    'rule': 'text-align: center; border: 1px solid;;'
-                }],
-            ),
-            style={'marginTop': '32px'}
-
+                defaultColDef={"flex": 1},
+                columnSize="responsiveSizeToFit",
+                columnSizeOptions= {"skipHeader": False},
+                dashGridOptions={"rowSelection": "single", "animateRows": False}
+            )
         ),
+        dbc.Modal(
+            [
+                dbc.ModalHeader(
+                    dcc.Tabs(
+                        id="tabs-modal-2b",
+                        children=[
+                            dcc.Tab(
+                                label="IP list", 
+                                value="ip_list", 
+                                style={'padding': '6px', 'display': 'flex', 'width': '90px', 'justify-content': 'center'},
+                                selected_style={'padding': '6px', 'display': 'flex', 'width': '100px', 'justify-content': 'center'},
+                            ),
+                            dcc.Tab(
+                                label="CVE list", 
+                                value="cve_list", 
+                                style={'padding': '6px', 'display': 'flex', 'width': '90px', 'justify-content': 'center'},
+                                selected_style={'padding': '6px', 'display': 'flex', 'width': '100px', 'justify-content': 'center'},
+                            ),
+                            dcc.Tab(
+                                label="CPE list",
+                                value="cpe_list",
+                                style={'padding': '6px', 'display': 'flex', 'width': '90px', 'justify-content': 'center'},
+                                selected_style={'padding': '6px', 'display': 'flex', 'width': '100px', 'justify-content': 'center'},
+                            ),
+                        ],
+                        value="ip_list",
+                        style={'height': '44px'}
+                    ),
+                    id="header-modal-2b",
+                ),
+                dbc.ModalBody(id="body-modal-2b"),
+            ],
+            id="modal-info-2b",
+            is_open=False,
+            scrollable=True
+        ),
+
         html.Br(),
 
         dbc.Row(
@@ -300,7 +312,8 @@ def register_layout_query(dm):
                         style={
                             "width": "90%",
                             "margin": "15px",
-                        }
+                        },
+                        value="Bars"
                     ),
                 )
             ]
@@ -315,14 +328,26 @@ def register_layout_query(dm):
         )
     ]
 
+
+    q2 = [
+        html.H1(children="View 2 - by organizations/IP", className='wrapper'),
+        html.Br(),
+        dbc.Tabs(
+            [
+                dbc.Tab(tab1_content, label="List of vulnerable products for each org/IP"),
+                dbc.Tab(tab2_content, label="Highest EPSS for each org/IP"),
+            ]
+        ),
+    ]
+
     return q2
 
 
 
 def register_callback_query(dm, app):
+
     @app.callback(
-        Output('query-2a-table', "data"),
-        Output('query-2a-table', "tooltip_data"),
+        Output('query-2a-grid', "rowData"),
         [
             Input('date-picker-single', 'date'),
             Input("search-bar-ip", 'value'),
@@ -333,7 +358,7 @@ def register_callback_query(dm, app):
             Input("search-bar-cpe-version", 'value'),
         ]
     )
-    def update_table2a(date_value, ip_query, org_query, epss_query, cvss_query, product_query, cpe_version_query):
+    def update_grid2a(date_value, ip_query, org_query, epss_query, cvss_query, product_query, cpe_version_query):
         print("[INFO] query 2 - update_table2a: ", date_value)
         df = dm.get_view_dataset(date_value, INPUT_DATA_V2a)
         if ip_query:
@@ -357,26 +382,10 @@ def register_callback_query(dm, app):
             df = df[df['cpe_version'].str.contains(cpe_version_query)]
 
         df = df.sort_values(by=['epss'], ascending=True)
-        df_clean = df[['org_clean', 'ip_str', 'cvss_rank', 'epss', 'cpe_product']]
-        tooltip_data = [
-            {
-                'cvss_rank': {
-                    'value': "**CVSS:**  " + str(row['cvss_score']),
-                    'type': 'markdown'
-                },
-                'epss': {
-                    'value': "**EPSS Rank:**  " + str(row['epss_rank']),
-                    'type': 'markdown'
-                },
-                'cpe_product': {
-                    'value': "**Product Version:**  " + row['cpe_version'] + "  \n**CVE:**  " + row['cve_id'],
-                    'type': 'markdown'
-                }
-            } for row in df.to_dict('records')
-        ]
 
 
-        return df_clean.to_dict('records'), tooltip_data
+        return df.to_dict('records')
+
 
     @app.callback(
         Output('query-2a-graph', 'figure'),
@@ -451,6 +460,7 @@ def register_callback_query(dm, app):
                     yaxis=dict(title='Number of registers'))
 
             if color:
+                print(color)
                 grouped_df = df.groupby(['cvss_rank', 'severity', color.lower()])
                 aggregated_df = grouped_df.size().to_frame(name='count')
                 aggregated_df = aggregated_df.reset_index()
@@ -464,15 +474,9 @@ def register_callback_query(dm, app):
     def contar_virgulas(texto):
         return len(re.findall(r";", texto)) + 1
     
-    def get_tooltip_info(row):
-        return "".join(["| " + i + " | " + j + " | \n" 
-                        for i, j in itertools.zip_longest(
-                            str(row["cpe_list"]).split(";")[0:20], 
-                            str(row["cve_list"]).split(";")[0:20], fillvalue=" ")])
-
     @app.callback(
-        Output('query-2b-table', "data"),
-        Output('query-2b-table', "tooltip_data"),
+        
+        Output("query-2b-grid", "rowData"),
         [
             Input('date-picker-single', 'date'),
             Input("search-bar-org-2b", 'value'),
@@ -481,11 +485,10 @@ def register_callback_query(dm, app):
             Input("search-bar-cve-2b", 'value'),
         ]
     )
-    def update_table2b(date_value, org_query, ip_query, cpe_query, cve_query):
-        # título
-
+    def update_grid2b(date_value, org_query, ip_query, cpe_query, cve_query):
         print("[INFO] query 2 - update_table2b: ", date_value)
         df = dm.get_view_dataset(date_value, INPUT_DATA_V2b)
+        
 
         if org_query:
             df = df[df['org_clean'].str.contains(org_query, case=False)]
@@ -496,27 +499,36 @@ def register_callback_query(dm, app):
         if cve_query:
             df = df[df['cve_list'].str.contains(cve_query, case=False)]
 
-        df_limpo = df[['org_clean', 'epss_major']]
 
-        tooltip_data = [
-            {
-                'epss_major': {
-                    'value': 
-                        "| CPE list        | CVE list        |  \n" +
-                        "| :-------------: | :-------------: |  \n" +
-                        get_tooltip_info(row),
-                    'type': 'markdown'
-                },
-                'org_clean': {
-                    'value': "**IP list:**  \n" + "  \n".join(row['ip_list'].split(';')[0:20]),
-                    'type': 'markdown'
-                },
-            } for row in df.to_dict('records')
-        ]
-
-        return df_limpo.to_dict('records'), tooltip_data
-
+        return df.to_dict('records')
     
+    @app.callback(
+        [   
+            Output("modal-info-2b", "is_open"),
+            Output("body-modal-2b", "children"),
+        ],
+        [
+            Input("query-2b-grid", "selectedRows"),
+            Input("tabs-modal-2b", "value"),
+        ]
+    )
+    def manage_modals_2b(selection, tab):
+        if selection:
+            if tab == "ip_list":
+                text = dbc.ListGroup(
+                    [dbc.ListGroupItem(i) for i in selection[0]["ip_list"].split(";")]
+                )
+            elif tab == "cve_list":
+                text = dbc.ListGroup(
+                    [dbc.ListGroupItem(i) for i in selection[0]["cve_list"].split(";")]
+                ) 
+            elif tab == "cpe_list":
+                text = dbc.ListGroup(
+                    [dbc.ListGroupItem(i) for i in selection[0]["cpe_list"].split(";")]
+                )
+            return True, text
+        return no_update, no_update
+
     @app.callback(
         Output('query-2b-graph', 'figure'),
         Input('date-picker-single', 'date'),
@@ -549,9 +561,10 @@ def register_callback_query(dm, app):
             fig.add_trace(go.Scatter(x=stats_df['n_ips'], y=stats_df['cdf'], mode='lines', name='CDF'))
 
             fig.update_layout(title='PDF/CDF - Distribution of CVE by IPs',
-                            xaxis_title='Number of IPs',
+                            xaxis_title='Number of IPs (< 100)',
                             yaxis_title='Probability',
-                            showlegend=True)
+                            showlegend=True,
+                            xaxis_range=[1,100])
             return fig
         else:
             ips_cont = df['n_ips'].value_counts()
