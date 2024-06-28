@@ -5,13 +5,7 @@ import dash_bootstrap_components as dbc
 from dash import Dash, dcc, html, Input, Output
 
 import plotly.express as px
-import plotly.graph_objs as go
 import plotly.figure_factory as ff
-
-import pandas as pd
-import json
-
-import project.base as base
 
 INPUT_DATA = '3'
 
@@ -145,19 +139,18 @@ def register_layout_query(dm):
                 ),
 
                 component_1,
+
                 dbc.Row(
                     dash_table.DataTable(
                         id='query-3-table',
                         columns=[
                             {"name": "CVE", "id": "cve_id", "selectable": True},
                             {"name": "CVSS", "id": "cvss_score", "selectable": True},
-                            # {"name": "CVSS (CVSS version)", "id": "cvss_and_cvssv", "selectable": True},
-                            # {"name": "CVSS Rank", "id": "cvss_rank", "selectable": True},
-                            # {"name": "EPSS", "id": "epss", "selectable": True},
                             {"name": "EPSS Rank", "id": "epss_rank", "selectable": True},
                             {"name": "# IPs", "id": "n_ips", "selectable": True},
                             {"name": "# Organizations", "id": "n_orgs", "selectable": True},
                         ],
+                        active_cell={'row': 0, 'column': 0, 'column_id': 'cve_id'},
                         sort_action='custom',
                         sort_mode='multi',
                         sort_by=[],
@@ -172,6 +165,11 @@ def register_layout_query(dm):
                     ),
                     style={'marginTop': '32px'}
                 ),
+
+                html.H5(children="For more information's about the CVE, click in the link bellow",
+                        style={'text-align': 'Left'}),
+
+                html.A(id='link', target='_blank'),
 
                 html.Div(style={'height': '50px'}),
 
@@ -196,6 +194,7 @@ def register_layout_query(dm):
                     ),
                     style={'marginTop': '32px'}
                 ),
+
                 html.Div(id='datable-interactivity-container'),
             ]
         ),
@@ -212,19 +211,24 @@ def find_expression(string):
         if index != -1:
             return i
 
+
 def get_tooltip_info(row):
     return "".join(["| " + i + " | " + j + " | \n"
                     for i, j in itertools.zip_longest(
-                        str(row["cvss_version"]).split(";")[0:20],
-                        str(row["cvss_rank"]).split(";")[0:20], fillvalue=" ")])
+            str(row["cvss_version"]).split(";")[0:20],
+            str(row["cvss_rank"]).split(";")[0:20], fillvalue=" ")])
+
 
 # register all the callbacks in one place
 def register_callback_query(dm, app):
     @app.callback(
+        Output('link', 'href'),
+        Output('link', 'children'),
         Output('query-3-table', "data"),
         Output('query-3-table', "tooltip_data"),
         Input('date-picker-single', 'date'),
         Input('query-3-table', "sort_by"),
+        Input('query-3-table', 'active_cell'),
         Input('search-bar-cve', 'value'),
         Input('dropdown-cvss-version', 'value'),
         Input('cvss-range-slider', 'value'),
@@ -232,7 +236,7 @@ def register_callback_query(dm, app):
         Input('search-bar-query3-org', 'value'),
         Input('search-bar-query3-ip', 'value')
     )
-    def update_table3(date_value, sort_by, cve_query, dropdown_query_cvss, cvss_range_query,
+    def update_table3(date_value, sort_by, active_cell, cve_query, dropdown_query_cvss, cvss_range_query,
                       epss_range_query, org_query, ip_query):
         print("[INFO] query 3 - update_table3: ", date_value)
 
@@ -240,7 +244,7 @@ def register_callback_query(dm, app):
         # df['cvss_and_cvssv'] = df['cvss_score'].astype(str) + ' (v ' + df['cvss_version'].astype(str) + ')'
         #df['cvss_version'] = df['cvss_version'].astype(float)
         #df['cvss_score'] = df['cvss_score'].astype(float)
-        # print(df.dtypes)
+
 
         if len(sort_by):
             df = df.sort_values(
@@ -322,7 +326,6 @@ def register_callback_query(dm, app):
                 elif operator == '<':
                     df = df[df['n_ips'] < value]
 
-        # df_clean = df[['org_clean', 'ip_str', 'cvss_rank', 'epss', 'cpe_product']]
         tooltip_data = [
             {
                 'cvss_score': {
@@ -338,7 +341,22 @@ def register_callback_query(dm, app):
                 },
             } for row in df.to_dict('records')
         ]
-        return df.to_dict('records'), tooltip_data
+
+        if active_cell:
+            row = active_cell['row']
+            col = active_cell['column_id']
+            cell_value = df.iloc[row][col]
+            if col == 'cve_id':
+                url = f"https://cve.mitre.org/cgi-bin/cvename.cgi?name={cell_value}"
+                return url, f"{url}", df.to_dict('records'), tooltip_data
+
+        # default value for the cve
+        first_cve_value = df.iloc[0]['cve_id']
+        url = f"https://cve.mitre.org/cgi-bin/cvename.cgi?name={first_cve_value}"
+        return url, f"{url}", df.to_dict('records'), tooltip_data
+
+        # return '', '', df.to_dict('records'), tooltip_data
+        # return df.to_dict('records'), tooltip_data
 
     @app.callback(
         Output('query-3-table', "style_data_conditional"),
@@ -361,6 +379,7 @@ def register_callback_query(dm, app):
         print("[INFO] update_graphs: ", date_value)
 
         df = dm.get_view_dataset(date_value, INPUT_DATA)
+        # print(df.dtypes)
         graphs = []
 
         if value:
