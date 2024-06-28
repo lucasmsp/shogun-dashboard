@@ -47,7 +47,7 @@ def dash_components():
                 }
             ),
             dcc.RangeSlider(
-                id='cvss-range-slider',
+                id='cvss-range-query3-slider',
                 min=0,
                 max=10,
                 count=1,
@@ -129,8 +129,8 @@ def register_layout_query(dm):
             {"function": "'Click on the cell for more details'"}},
         {"field": 'cvss_score', "headerName": 'CVSS', 'tooltipValueGetter': {"function": "'CVSS Version: ' + "
                                                                                          "params.data.cvss_version"}},
-        {"field": 'epss_rank', "headerName": 'EPSS Rank', 'tooltipValueGetter': {"function": "'EPSS: ' + "
-                                                                                             "params.data.epss"}},
+        {"field": 'epss', "headerName": 'EPSS', 'tooltipValueGetter': {"function": "'EPSS: ' + "
+                                                                                             "params.data.epss_rank"}},
         {"field": 'n_ips', "headerName": "# IPs"},
         {"field": 'n_orgs', "headerName": "# Organizations"},
     ]
@@ -139,7 +139,7 @@ def register_layout_query(dm):
         id="query-3-ag",
         columnDefs=columnDefs,
         rowData=[],
-        columnSize="sizeToFit",
+        columnSize="responsiveSizeToFit",
         dashGridOptions={'enableBrowserTooltips': True}
 
     )
@@ -211,7 +211,7 @@ def register_callback_query(dm, app):
         [Input('date-picker-single', 'date'),
          Input('search-bar-cve', 'value'),
          Input('dropdown-cvss-version', 'value'),
-         Input('cvss-range-slider', 'value'),
+         Input('cvss-range-query3-slider', 'value'),
          Input('epss-range-query3-slider', 'value'),
          Input('search-bar-query3-org', 'value'),
          Input('search-bar-query3-ip', 'value')]

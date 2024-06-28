@@ -5,7 +5,7 @@ import dash_bootstrap_components as dbc
 from dash import Dash, dcc, html, Input, Output, callback
 import plotly.figure_factory as ff
 import numpy as np
-
+import pandas as pd
 
 def register_layout_query(dm):
     q5 = [
@@ -30,11 +30,11 @@ def register_layout_query(dm):
                     dcc.Dropdown(
                         id='dropdown-query',
                         options=[
-                            {'label': 'Choropleth Map - # IPs per vulnerability', 'value': 'ip_str'},
-                            {'label': 'Choropleth Map - Average of CVSS by state', 'value': 'cvss_score'},
-                            {'label': 'Choropleth Map - Average of EPSS by state', 'value': 'epss_score'},
-                            {'label': 'Choropleth Map - Number of different CVEs per state', 'value': 'cve_id'},
-                            {'label': 'Choropleth Map - CVSS values by states', 'value': 'ip_cvss'}
+                            {'label': 'Choropleth Map of brazilian states - # IPs with vulnerabilities', 'value': 'ip_str'},
+                            {'label': 'Choropleth Map of brazilian states - Average of CVSS by state', 'value': 'cvss_score'},
+                            {'label': 'Choropleth Map of brazilian states - Average of EPSS by state', 'value': 'epss_score'},
+                            {'label': 'Choropleth Map of brazilian states - Number of different CVEs per state', 'value': 'cve_id'},
+                            {'label': 'Choropleth Map of brazilian states - CVSS values by states', 'value': 'ip_cvss'}
                         ],
                         clearable=False,
                         value='ip_str'
@@ -62,8 +62,10 @@ def register_layout_query(dm):
 
 
 def register_callback_query(dm, app):
+
+
     with urlopen("https://raw.githubusercontent.com/codeforamerica/click_that_hood/"
-                 "master/public/data/brazil-states.geojson") as response:
+                    "master/public/data/brazil-states.geojson") as response:
         brazil = json.load(response)
 
     state_id_map = {}
@@ -114,7 +116,7 @@ def register_callback_query(dm, app):
         Input("dropdown-query", 'value'),
         Input('range-slider-values', 'data')
     )
-    def update_choropleth_map(date_value, value, cvss_range_query):
+    def update_choropleth_map(date_value, value, cvss_range_query=[0,10]):
 
         print("[INFO] update_table4: ", date_value, flush=True)
 
@@ -124,9 +126,7 @@ def register_callback_query(dm, app):
                                        columns=["ip_str", "region_code"])
 
             df['name'] = df['region_code'].map(state_id_map)
-
             df['n_ips'] = df.groupby('region_code')['ip_str'].transform(lambda x: x.nunique(dropna=True))
-
             df = df[['n_ips', 'region_code', 'name']].drop_duplicates()
 
             fig = px.choropleth_mapbox(
@@ -155,21 +155,17 @@ def register_callback_query(dm, app):
 
             df = dm.get_report_dataset(date_value,
                                        columns=["ip_str", "region_code", "vulns_scores"])
-
             df['name'] = df['region_code'].map(state_id_map)
-
             df['cvss_new'] = df['vulns_scores'].apply(lambda x: x['cvss_score'])
-
-            df = df.drop('vulns_scores', axis=1)
-
-            df = df.explode('cvss_new')
+            df = df.drop('vulns_scores', axis=1)\
+                .explode('cvss_new')
 
             # Transformando cada item em float
-            df['cvss_new'] = df['cvss_new'].apply(lambda x: float(x))
-
+            df['cvss_new'] = pd.to_numeric(df['cvss_new'], downcast='float', errors='coerce')
+            # filtrando apenas o maior CVSS_NEW de cada IP
+            df = df.groupby(['region_code', "name", 'ip_str']).max('cvss_new').reset_index()
             # Criando uma coluna 'cvss_mean' que armazena a média dos cvss por estado
             df['cvss_mean'] = df.groupby('region_code')['cvss_new'].transform('mean')
-
             #Criando um df somente com as 3 colunas necessárias para criar o mapa
             df = df[['cvss_mean', 'region_code', 'name']].drop_duplicates()
 
@@ -188,7 +184,7 @@ def register_callback_query(dm, app):
                 opacity=0.5,
             )
             fig.update_layout(
-                title="Average CVSS by state",
+                title="Average CVSS by state (only the major CVE per IP)",
                 margin={'r': 1, 'l': 1, 'b': 1, 't': 40},
                 font=dict(size=12),
             )
@@ -198,19 +194,16 @@ def register_callback_query(dm, app):
         elif value == 'epss_score':
 
             df = dm.get_report_dataset(date_value,
-                                       columns=["region_code", "vulns_scores"])
+                                       columns=['ip_str', "region_code", "vulns_scores"])
 
             df['name'] = df['region_code'].map(state_id_map)
-
-            df['epss_new'] = df['vulns_scores'].apply(lambda x: x['epss'])
-
-            df = df.drop('vulns_scores', axis=1)
-
-            df = df.explode('epss_new')
-
+            df['epss_new'] = df['vulns_scores'].apply(lambda x: x['epss'])            
+            df = df.drop('vulns_scores', axis=1)\
+                .explode('epss_new')
             # Transformando cada item em float
-            df['epss_new'] = df['epss_new'].apply(lambda x: float(x))
-
+            df['epss_new'] = pd.to_numeric(df['epss_new'], downcast='float', errors='coerce')
+            # filtrando apenas o maior epss_new de cada IP
+            df = df.groupby(['region_code', "name", 'ip_str']).max('epss_new').reset_index()
             # Criando uma coluna 'epss_sum' que armazena a média dos epss por estado
             df['epss_mean'] = df.groupby('region_code')['epss_new'].transform('mean')
 
@@ -232,7 +225,7 @@ def register_callback_query(dm, app):
                 opacity=0.5,
             )
             fig.update_layout(
-                title="Average EPSS by state",
+                title="Average EPSS by state (only the major CVE per IP)",
                 margin={'r': 1, 'l': 1, 'b': 1, 't': 40},
                 font=dict(size=12),
             )
@@ -245,17 +238,13 @@ def register_callback_query(dm, app):
                                        columns=["region_code", "vulns_scores"])
 
             df['name'] = df['region_code'].map(state_id_map)
-
             df['cve_new'] = df['vulns_scores'].apply(lambda x: x['cve_id'])
+            df = df.drop('vulns_scores', axis=1)\
+                .explode('cve_new')
 
-            df = df.drop('vulns_scores', axis=1)
-
-            df = df.explode('cve_new')
-
-            df['n_cves'] = df.groupby('region_code')['cve_new'].transform(lambda x: x.nunique(dropna=True))
-
-            df = df[['n_cves', 'region_code', 'name']].drop_duplicates()
-
+            df = df[['region_code', 'name', 'cve_new']].drop_duplicates()
+            df['n_cves'] = df.groupby(['region_code', 'name'])['cve_new'].transform(lambda x: x.nunique(dropna=True))
+            
             fig = px.choropleth_mapbox(
                 df,
                 locations="name",
@@ -284,18 +273,16 @@ def register_callback_query(dm, app):
                                        columns=["ip_str", "region_code", "vulns_scores"])
 
             df['name'] = df['region_code'].map(state_id_map)
-
             df['cvss_new'] = df['vulns_scores'].apply(lambda x: x['cvss_score'])
 
             df = df.explode('cvss_new')
 
             df['cvss_new'] = df['cvss_new'].apply(lambda x: float(x))
-
-            df = df.drop('vulns_scores', axis=1)
-
-            # df = df[(df['cvss_new'] >= 5)]
+            df = df.groupby(['region_code', "name", 'ip_str']).max('cvss_new').reset_index()
 
             df = df[(df['cvss_new'] >= cvss_range_query[0]) & (df['cvss_new'] <= cvss_range_query[1])]
+
+            df = df.groupby(by=['region_code', "name"]).agg(n_ips=('ip_str', pd.Series.nunique)).reset_index()
 
             fig = px.choropleth_mapbox(
                 df,
@@ -304,7 +291,7 @@ def register_callback_query(dm, app):
                 color="cvss_new",
                 color_continuous_scale="Rainbow",
                 hover_name="region_code",
-                hover_data=["cvss_new", "ip_str"],
+                hover_data=["n_ips"],
                 mapbox_style="carto-positron",
                 labels={'cvss_new': 'CVSS range'},
                 center={"lat": -14, "lon": -55},

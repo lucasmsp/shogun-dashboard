@@ -38,3 +38,4 @@ jwt
 flask_login==0.6.3
 croniter
 deltalake
+dash_ag_grid
