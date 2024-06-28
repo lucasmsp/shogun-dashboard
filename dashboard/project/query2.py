@@ -12,13 +12,12 @@ import re
 import project.base as base
 
 
-INPUT_DATA_V2a = '2a'
-INPUT_DATA_V2b = '2b'
+INPUT_DATA_V2 = '2'
 
 def register_layout_query(dm):
     # visualização 2a
-    filters_2a = html.Div([
-        html.Div(children=[
+    filters_2a = dbc.Row([
+        dbc.Col(children=[
             html.Center([
                 dcc.Input(
                     id="search-bar-ip",
@@ -70,7 +69,7 @@ def register_layout_query(dm):
                 allowCross=False,
             ),
         ], style={'padding': 10, 'flex': 1}),
-        html.Div(children=[
+        dbc.Col(children=[
 
             html.Center([
                 dcc.Input(
@@ -115,7 +114,7 @@ def register_layout_query(dm):
 
             html.Br(),
         ], style={'padding': 10, 'flex': 1})
-    ], style={'display': 'flex', 'flexDirection': 'row'})
+    ])
 
     filters_2b = html.Div([
         html.Div(children=[
@@ -234,12 +233,14 @@ def register_layout_query(dm):
                 )
             ]
         ),
-        
         dcc.Graph(
             id="query-2a-graph",
             config={
                 'displayModeBar': False,
                 'scrollZoom': False
+            },
+            style={
+                "display": "flex",
             }
         )
     ]
@@ -252,7 +253,7 @@ def register_layout_query(dm):
                 id="query-2b-grid",
                 columnDefs=[
                     {"field": 'org_clean', "headerName": 'Organization'},
-                    {"field": 'epss_major', "headerName": 'EPSS (major)', },
+                    {"field": 'epss', "headerName": 'EPSS (major)', },
                 ],
                 defaultColDef={"flex": 1},
                 columnSize="responsiveSizeToFit",
@@ -268,7 +269,7 @@ def register_layout_query(dm):
                         children=[
                             dcc.Tab(
                                 label="IP list", 
-                                value="ip_list", 
+                                value="ip_str", 
                                 style={'padding': '6px', 'display': 'flex', 'width': '90px', 'justify-content': 'center'},
                                 selected_style={'padding': '6px', 'display': 'flex', 'width': '100px', 'justify-content': 'center'},
                             ),
@@ -338,6 +339,42 @@ def register_layout_query(dm):
                 dbc.Tab(tab2_content, label="Highest EPSS for each org/IP"),
             ]
         ),
+        dbc.Modal(
+            [
+                dbc.ModalHeader(
+                    dcc.Tabs(
+                        id="tabs-modal-2b",
+                        children=[
+                            dcc.Tab(
+                                label="IP list", 
+                                value="ip_str", 
+                                style={'padding': '6px', 'display': 'flex', 'width': '90px', 'justify-content': 'center'},
+                                selected_style={'padding': '6px', 'display': 'flex', 'width': '100px', 'justify-content': 'center'},
+                            ),
+                            dcc.Tab(
+                                label="CVE list", 
+                                value="cve_list", 
+                                style={'padding': '6px', 'display': 'flex', 'width': '90px', 'justify-content': 'center'},
+                                selected_style={'padding': '6px', 'display': 'flex', 'width': '100px', 'justify-content': 'center'},
+                            ),
+                            dcc.Tab(
+                                label="CPE list",
+                                value="cpe_list",
+                                style={'padding': '6px', 'display': 'flex', 'width': '90px', 'justify-content': 'center'},
+                                selected_style={'padding': '6px', 'display': 'flex', 'width': '100px', 'justify-content': 'center'},
+                            ),
+                        ],
+                        value="ip_str",
+                        style={'height': '44px'}
+                    ),
+                    id="header-modal-2b",
+                ),
+                dbc.ModalBody(id="body-modal-2b"),
+            ],
+            id="modal-info-2b",
+            is_open=False,
+            scrollable=True
+        ),
     ]
 
     return q2
@@ -360,7 +397,7 @@ def register_callback_query(dm, app):
     )
     def update_grid2a(date_value, ip_query, org_query, epss_query, cvss_query, product_query, cpe_version_query):
         print("[INFO] query 2 - update_table2a: ", date_value)
-        df = dm.get_view_dataset(date_value, INPUT_DATA_V2a)
+        df = dm.get_view_dataset(date_value, INPUT_DATA_V2)
         if ip_query:
             df = df[df['ip_str'].str.contains(ip_query, case=False)]
 
@@ -372,7 +409,6 @@ def register_callback_query(dm, app):
             df = df[(df['epss'] >= epss_min) & (df['epss'] <= epss_max)]
 
         if cvss_query:
-            print(cvss_query)
             df = df[df['cvss_rank'].isin(cvss_query)]
 
         if product_query:
@@ -401,7 +437,7 @@ def register_callback_query(dm, app):
     def update_graph2a(date_value, epss_query, cvss_query, cpe_version_query, color, type):
         
         print("[INFO] query 2 - update_graph2a: ", date_value)
-        df = dm.get_view_dataset(date_value, INPUT_DATA_V2a)
+        df = dm.get_view_dataset(date_value, INPUT_DATA_V2)
 
         if epss_query:
             epss_min, epss_max = epss_query
@@ -455,18 +491,19 @@ def register_callback_query(dm, app):
 
             fig.add_trace(go.Bar(x=cvss_counts.index, y=cvss_counts.values, name='CVSS Rank'))
 
-            fig.update_layout(title='Distribution of CVSS Rank',
-                    xaxis=dict(title='CVSS Rank'),
-                    yaxis=dict(title='Number of registers'))
+            fig.update_layout(
+                # title='Distribution of CVSS Rank',
+                xaxis=dict(title='CVSS Rank'),
+                yaxis=dict(title='Number of registers'))
 
             if color:
-                print(color)
                 grouped_df = df.groupby(['cvss_rank', 'severity', color.lower()])
                 aggregated_df = grouped_df.size().to_frame(name='count')
                 aggregated_df = aggregated_df.reset_index()
                 aggregated_df = aggregated_df.sort_values('severity')
                 fig = px.bar(aggregated_df, x='cvss_rank', y="count", color=color.lower())
-                fig.update_layout(title='Distribution of CVSS Rank',
+                fig.update_layout(
+                    # title='Distribution of CVSS Rank',
                     xaxis=dict(title='CVSS Rank'),
                     yaxis=dict(title='Number of registers'))
             return fig
@@ -487,20 +524,27 @@ def register_callback_query(dm, app):
     )
     def update_grid2b(date_value, org_query, ip_query, cpe_query, cve_query):
         print("[INFO] query 2 - update_table2b: ", date_value)
-        df = dm.get_view_dataset(date_value, INPUT_DATA_V2b)
+        df = dm.get_view_dataset(date_value, INPUT_DATA_V2)
+        aggregated_df = df.groupby('org_clean').agg({
+            'ip_str': lambda x: list(x),
+            'cve_id': lambda x: list(x),
+            'cpe_product': lambda x: list(x),
+            'epss': 'max'
+        }).reset_index()
+
         
 
         if org_query:
-            df = df[df['org_clean'].str.contains(org_query, case=False)]
+            aggregated_df = aggregated_df[aggregated_df['org_clean'].str.contains(org_query, case=False)]
         if ip_query:
-            df = df[df['ip_list'].str.contains(ip_query, case=False)]
+            aggregated_df = aggregated_df[aggregated_df['ip_str'].str.contains(ip_query, case=False)]
         if cpe_query:
-            df = df[df['cpe_list'].str.contains(cpe_query, case=False)]
+            aggregated_df = aggregated_df[aggregated_df['cpe_product'].str.contains(cpe_query, case=False)]
         if cve_query:
-            df = df[df['cve_list'].str.contains(cve_query, case=False)]
+            aggregated_df = aggregated_df[aggregated_df['cve_id'].str.contains(cve_query, case=False)]
 
 
-        return df.to_dict('records')
+        return aggregated_df.to_dict('records')
     
     @app.callback(
         [   
@@ -514,17 +558,20 @@ def register_callback_query(dm, app):
     )
     def manage_modals_2b(selection, tab):
         if selection:
+            text = dbc.ListGroup(
+                [dbc.ListGroupItem(i) for i in selection[0]["ip_str"]]
+            )
             if tab == "ip_list":
                 text = dbc.ListGroup(
-                    [dbc.ListGroupItem(i) for i in selection[0]["ip_list"].split(";")]
+                    [dbc.ListGroupItem(i) for i in selection[0]["ip_str"]]
                 )
             elif tab == "cve_list":
                 text = dbc.ListGroup(
-                    [dbc.ListGroupItem(i) for i in selection[0]["cve_list"].split(";")]
+                    [dbc.ListGroupItem(i) for i in selection[0]["cve_id"]]
                 ) 
             elif tab == "cpe_list":
                 text = dbc.ListGroup(
-                    [dbc.ListGroupItem(i) for i in selection[0]["cpe_list"].split(";")]
+                    [dbc.ListGroupItem(i) for i in selection[0]["cpe_product"]]
                 )
             return True, text
         return no_update, no_update
@@ -537,13 +584,18 @@ def register_callback_query(dm, app):
     )
     def update_graph2b(date_value, org_query, type):
         print("[INFO] query 2 - update_graph2b: ", date_value)
-        df = dm.get_view_dataset(date_value, INPUT_DATA_V2b)
-
-        df["n_ips"] = df["ip_list"].apply(contar_virgulas)
-        df = df.sort_values("n_ips")
+        df = dm.get_view_dataset(date_value, INPUT_DATA_V2)
+        aggregated_df = df.groupby('org_clean').agg({
+            'ip_str': lambda x: list(x),
+            'cve_id': lambda x: list(x),
+            'cpe_product': lambda x: list(x),
+            'epss': 'max'
+        }).reset_index()
+        aggregated_df["n_ips"] = aggregated_df["ip_str"].apply(len)
+        aggregated_df = aggregated_df.sort_values("n_ips")
 
         if type == "CDF":
-            stats_df = df \
+            stats_df = aggregated_df \
                 .groupby('n_ips') \
                 ['n_ips'] \
                 .agg('count') \
@@ -567,9 +619,9 @@ def register_callback_query(dm, app):
                             xaxis_range=[1,100])
             return fig
         else:
-            ips_cont = df['n_ips'].value_counts()
+            ips_cont = aggregated_df['n_ips'].value_counts()
             if org_query:
-                df = df[df['org_clean'].str.contains(org_query, case=False)]
+                aggregated_df = aggregated_df[aggregated_df['org_clean'].str.contains(org_query, case=False)]
                 
             fig = go.Figure()
 
