@@ -124,43 +124,46 @@ def dash_components():
 def register_layout_query(dm):
     component_1 = dash_components()
 
-    tab1_content = [
-        component_1,
-        dbc.Row(
-            dag.AgGrid(
-                id="query-3-ag",
-                columnDefs=[
-                    {"field": 'cve_id', "headerName": 'CVE'},
-                    {"field": 'cvss_score', "headerName": 'CVSS', "tooltipField": "cvss_version"},  #TODO cvss_rank
-                    {"field": 'epss_rank', "headerName": 'EPSS Rank', "tooltipField": "epss"},
-                    {"field": 'n_ips', "headerName": "# IPs"},
-                    {"field": 'n_orgs', "headerName": "# Organizations"},
-                ],
-                defaultColDef={"flex": 1},
-                columnSize="responsiveSizeToFit",
-                columnSizeOptions={"skipHeader": False},
-                dashGridOptions={
-                    'tooltipInteraction': True,
-                    'tooltipShowDelay': 10,
-                    'tooltipHideDelay': 10000
-                }
-            )
-        ),
+    columnDefs = [
+        {"field": 'cve_id', "headerName": 'CVE', "cellRenderer": "StockLink", "tooltipValueGetter":
+            {"function": "'Click on the cell for more details'"}},
+        {"field": 'cvss_score', "headerName": 'CVSS', 'tooltipValueGetter': {"function": "'CVSS Version: ' + "
+                                                                                         "params.data.cvss_version"}},
+        {"field": 'epss_rank', "headerName": 'EPSS Rank', 'tooltipValueGetter': {"function": "'EPSS: ' + "
+                                                                                             "params.data.epss"}},
+        {"field": 'n_ips', "headerName": "# IPs"},
+        {"field": 'n_orgs', "headerName": "# Organizations"},
+    ]
 
-        html.Div(style={'height': '50px'}),
+    grid = dag.AgGrid(
+        id="query-3-ag",
+        columnDefs=columnDefs,
+        rowData=[],
+        columnSize="sizeToFit",
+        dashGridOptions={'enableBrowserTooltips': True}
+
+    )
+
+    layout = [
+        component_1,
+        html.Div(grid),
+
+        html.Div(style={'height': '40px'}),
 
         html.H4(children="Choose the type of chart", style={'text-align': 'Left'}),
+
         dbc.Row(
             dcc.Dropdown(
                 id='dropdown-query3',
                 options=[
                     {'label': 'Scatter plot - EPSS by CVSS Score', 'value': 'epss_cvss'},
                     {'label': 'Confusion Matrix - EPSS Rank by CVSS Rank', 'value': 'epss_rank_cvss_rank'},
-                    {'label': 'Line plot - # IPS by CVSS', 'value': 'ips_cvss'},
+                    {'label': 'Line plot - # IPs by CVSS', 'value': 'ips_cvss'},
                     {'label': 'Line plot - # IPs by EPSS', 'value': 'ips_epss'},
                     {'label': 'Line plot - # Organizations by CVSS', 'value': 'orgs_cvss'},
                     {'label': "Line plot - # Organizations by EPSS", 'value': 'orgs_epss'},
                 ],
+                clearable=False,
                 value='epss_cvss'
             ),
             style={'marginTop': '32px'}
@@ -176,17 +179,17 @@ def register_layout_query(dm):
     ]
 
     q3 = [
-        html.H1(children="View 3 - More detaisl by CVE", className='wrapper'),
+        html.H1(children="View 3 - More details by CVE", className='wrapper'),
+
+        html.Div(style={'height': '40px'}),
+
         html.H2(
             children="This visualization allows the analysis of the distribution of CVEs "
                      "in relation to IPs and organizations accessible on the Internet",
             style={'font-size': '20px'}
         ),
-        dbc.Tabs(
-            [
-                dbc.Tab(tab1_content, label="Table")
-            ]
-        )
+
+        dbc.Tab(layout, label="Table")
     ]
 
     return q3
@@ -205,13 +208,13 @@ def find_expression(string):
 def register_callback_query(dm, app):
     @app.callback(
         Output('query-3-ag', "rowData"),
-        Input('date-picker-single', 'date'),
-        Input('search-bar-cve', 'value'),
-        Input('dropdown-cvss-version', 'value'),
-        Input('cvss-range-slider', 'value'),
-        Input('epss-range-query3-slider', 'value'),
-        Input('search-bar-query3-org', 'value'),
-        Input('search-bar-query3-ip', 'value')
+        [Input('date-picker-single', 'date'),
+         Input('search-bar-cve', 'value'),
+         Input('dropdown-cvss-version', 'value'),
+         Input('cvss-range-slider', 'value'),
+         Input('epss-range-query3-slider', 'value'),
+         Input('search-bar-query3-org', 'value'),
+         Input('search-bar-query3-ip', 'value')]
     )
     def update_table3(date_value, cve_query, dropdown_query_cvss, cvss_range_query,
                       epss_range_query, org_query, ip_query):
