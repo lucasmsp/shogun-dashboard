@@ -44,3 +44,5 @@ diskcache
 dash[diskcache]
 multiprocess
 psutil
+psycopg2-binary
+flask_sqlalchemy

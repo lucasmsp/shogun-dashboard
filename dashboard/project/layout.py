@@ -45,6 +45,22 @@ def register_layout(dm, username):
         className="mt-3",
     )
 
+    # Iframe to embed the HTML page
+    iframe_content = dbc.Card(
+        dbc.CardBody(
+            html.Div(
+                children=[
+                    html.Iframe(
+                        src="/details_ip",
+                        style={"width": "100%", "height": "2000px"}
+                    )
+                ],
+                className="wrapper_table"
+            ),
+        ),
+        className="mt-3",
+    )
+
     layout = html.Div(
         children=[
             html.Div(
@@ -141,6 +157,7 @@ def register_layout(dm, username):
                     dbc.Tab(tab3_content, label="View 3 - More details by CVE"),
                     dbc.Tab(tab4_content, label="View 4 - IP Data"),
                     dbc.Tab(tab5_content, label="View 5 - Maps"),
+                    dbc.Tab(iframe_content, label="View 6 - Details"), 
                 ],
                 style={
                     "paddingLeft": "20px"
