@@ -12,8 +12,7 @@ RESULT_FOLDER = os.environ.get("RESULT_FOLDER", "/opt/output_data/")
 
 output_filepath = RESULT_FOLDER + "/tlhop-epss-dashboard.delta"
 output_filepath_view1 = RESULT_FOLDER + "/tlhop-epss-dashboard-view1.delta"
-output_filepath_view2a = RESULT_FOLDER + "/tlhop-epss-dashboard-view2a.delta"
-output_filepath_view2b = RESULT_FOLDER + "/tlhop-epss-dashboard-view2b.delta"
+output_filepath_view2 = RESULT_FOLDER + "/tlhop-epss-dashboard-view2.delta"
 output_filepath_view3 = RESULT_FOLDER + "/tlhop-epss-dashboard-view3.delta"
 
 def run_dummy(timestamp):
@@ -50,19 +49,12 @@ def run(day_str, first_execution=False):
     v1 = algorithm.gen_extra_query1()
     v1.write.format("delta").mode("overwrite").option("mergeSchema", "true").save(output_filepath_view1)
 
-    v2a = algorithm.gen_extra_query2a()
-    v2a.write.format("delta").mode("overwrite").option("mergeSchema", "true").save(output_filepath_view2a)
-
-    v2b = algorithm.gen_extra_query2b()
-    v2b.write.format("delta").mode("overwrite").option("mergeSchema", "true").save(output_filepath_view2b)
+    v2 = algorithm.gen_extra_query2()
+    v2.write.format("delta").mode("overwrite").option("mergeSchema", "true").save(output_filepath_view2)
 
     v3 = algorithm.gen_extra_query3()
     v3.write.format("delta").mode("overwrite").option("mergeSchema", "true").save(output_filepath_view3)
 
     spark.stop()
     t2 = time.time()
-    print("Process completed in {0:.1f}s".format(t2-t1))
-
-    dm = DatasetManager()
-    dm.check_available_datasets()
-    dm.remove_old_data()
+    print("[Computation] Process completed in {0:.1f}s".format(t2-t1), flush=True)

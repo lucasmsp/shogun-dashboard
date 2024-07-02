@@ -6,16 +6,8 @@ import dash_bootstrap_components as dbc
 
 from project.layout import register_layout
 from project.callbacks import register_callbacks
-from project.base import User, users, waiting_next_execution
+from project.base import User, users
 from project.storage import DatasetManager
-
-from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
-import sys
-
-if len(sys.argv) > 1:
-    dev_mode = sys.argv[1] == 'dev'
-else:
-    dev_mode = False
 
 server = Flask(__name__)
 server.secret_key = 'super secret key'
@@ -78,11 +70,5 @@ app.title = "TLHOP/SAM Analytics on EPSS"
 app.layout = register_layout(dm, current_user)
 register_callbacks(dm, app)
 
-executor = ThreadPoolExecutor(max_workers=1)
-executor.submit(waiting_next_execution, dev_mode)
-
 if __name__ == '__main__':
-    if dev_mode:
-        app.run_server(debug=True, host="0.0.0.0", port=8080, use_reloader=False)
-    else:
-        app.run_server(debug=False, host="0.0.0.0", port=8080, use_reloader=False)
+    app.run_server(debug=True, host="0.0.0.0", port=8080, use_reloader=False)

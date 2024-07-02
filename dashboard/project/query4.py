@@ -44,10 +44,13 @@ def register_layout_query(dm):
 def register_callback_query(dm, app):
     @app.callback(
         Output('query-4-table', 'data'),
-        Input('date-picker-single', 'date')
+        Input('date-picker-single', 'value'), 
+        Input("general-tabs", "active_tab")
     )
-    def update_table4(date_value):
-        print("[INFO] update_table4: ", date_value, flush=True)
+    def update_table4(date_value, active_tab):
+        if active_tab != "tab-3":
+            return None
+        print("[INFO][query4] update_table4: ", date_value, flush=True)
 
         df = dm.get_report_dataset(date_value, columns=["meta_id", "ip_str", "os", "org", "hostnames", "domains"])
         df['hostnames'] = df["hostnames"].str.join(", ") 
@@ -61,10 +64,13 @@ def register_callback_query(dm, app):
         Output("output", "children"),
         Input("query-4-table", "active_cell"),
         State('query-4-table', 'data'),
-        State('date-picker-single', 'date')
+        State('date-picker-single', 'value'), 
+        Input("general-tabs", "active_tab")
     )
-    def update_graph(active_cell, table_data, date_value):
-
+    def update_graph(active_cell, table_data, date_value, active_tab):
+        if active_tab != "tab-3":
+            return None
+            
         if active_cell:
 
             row = active_cell['row']

@@ -28,7 +28,7 @@ def register_layout_query(dm):
                 html.H4(children="Choose the type of chart", style={'text-align': 'Left'}),
                 dbc.Row(
                     dcc.Dropdown(
-                        id='dropdown-query',
+                        id='query5-dropdown-query',
                         options=[
                             {'label': 'Choropleth Map of brazilian states - # IPs with vulnerabilities', 'value': 'ip_str'},
                             {'label': 'Choropleth Map of brazilian states - Average of CVSS by state', 'value': 'cvss_score'},
@@ -41,10 +41,33 @@ def register_layout_query(dm):
                     ),
                     style={'marginTop': '32px'}
                 ),
+                dbc.Row(
+                    html.Div([
+                        html.Div(style={'height': '40px'}),
+                        html.Label(
+                            children='Choose the CVSS range',
+                            style={
+                                "marginLeft": "30px",
+                                "marginBottom": "10px",
+                            }
+                        ), 
+                        dcc.RangeSlider(
+                            id='query5-cvss-range-slider',
+                            min=0,
+                            max=10,
+                            count=1,
+                            value=[0, 10],
+                            tooltip={
+                                'placement': 'top',
+                            },
+                            allowCross=False,
+                        )
+                        ], 
+                        id="query5-div-to-hide",
+                        style={ 'display': 'none'})
+                ),
 
-                html.Div(id='cvss-range-slider'),
-
-                dcc.Store(id='range-slider-values'),
+                #dcc.Store(id='query5-range-slider-values'),
 
                 html.Div(style={'height': '40px'}),
 
@@ -74,56 +97,34 @@ def register_callback_query(dm, app):
         state_id_map[feature['properties']['sigla']] = feature['id']
 
     @app.callback(
-        Output('cvss-range-slider', 'children'),
-        Input('dropdown-query', 'value')
+        Output(component_id="query5-div-to-hide", component_property='style'),
+        Input('query5-dropdown-query', 'value')
     )
     def update_range_slider(value):
         if value == 'ip_cvss':
-            return [
-                html.Div(style={'height': '40px'}),
-                html.Label(
-                    children='Choose the CVSS range',
-                    style={
-                        "marginLeft": "30px",
-                        "marginBottom": "10px",
-                    }
-                ), dcc.RangeSlider(
-                    id='cvss-range',
-                    min=0,
-                    max=10,
-                    count=1,
-                    value=[0, 10],
-                    tooltip={
-                        'placement': 'top',
-                        'always_visible': True,
-                    },
-                    allowCross=False,
-                ),
-            ]
+            return {'display': 'block'}
         else:
-            return None
-
-    @app.callback(
-        Output('range-slider-values', 'data'),
-        Input('cvss-range', 'value')
-    )
-    def store_range_slider_cvss(cvss_range):
-        return cvss_range
+            return {'display': 'none'}
 
     @app.callback(
         Output('query-5-graph', 'figure'),
-        Input('date-picker-single', 'date'),
-        Input("dropdown-query", 'value'),
-        Input('range-slider-values', 'data')
+        Input('date-picker-single', 'value'),
+        Input("query5-dropdown-query", 'value'),
+        Input('query5-cvss-range-slider', 'value'), 
+        Input("general-tabs", "active_tab"), prevent_initial_call=True
     )
-    def update_choropleth_map(date_value, value, cvss_range_query=[0,10]):
+    def update_choropleth_map(date_value, value, cvss_range_query=[0,10], active_tab=None):
+        fig = {}
+        if "tab-4" != active_tab:
+            return fig
 
-        print("[INFO] update_table4: ", date_value, flush=True)
-
+        print("[INFO][query5][update_choropleth_map] ", date_value, flush=True)
+        
         if value == 'ip_str':
 
-            df = dm.get_report_dataset(date_value,
-                                       columns=["ip_str", "region_code"])
+            df = dm.get_report_dataset(date_value, columns=["ip_str", "region_code"])
+            if df.empty:
+                return fig
 
             df['name'] = df['region_code'].map(state_id_map)
             df['n_ips'] = df.groupby('region_code')['ip_str'].transform(lambda x: x.nunique(dropna=True))
@@ -155,6 +156,9 @@ def register_callback_query(dm, app):
 
             df = dm.get_report_dataset(date_value,
                                        columns=["ip_str", "region_code", "vulns_scores"])
+            if df.empty:
+                return fig
+
             df['name'] = df['region_code'].map(state_id_map)
             df['cvss_new'] = df['vulns_scores'].apply(lambda x: x['cvss_score'])
             df = df.drop('vulns_scores', axis=1)\
@@ -195,6 +199,8 @@ def register_callback_query(dm, app):
 
             df = dm.get_report_dataset(date_value,
                                        columns=['ip_str', "region_code", "vulns_scores"])
+            if df.empty:
+                return fig
 
             df['name'] = df['region_code'].map(state_id_map)
             df['epss_new'] = df['vulns_scores'].apply(lambda x: x['epss'])            
@@ -236,6 +242,8 @@ def register_callback_query(dm, app):
 
             df = dm.get_report_dataset(date_value,
                                        columns=["region_code", "vulns_scores"])
+            if df.empty:
+                return fig
 
             df['name'] = df['region_code'].map(state_id_map)
             df['cve_new'] = df['vulns_scores'].apply(lambda x: x['cve_id'])
@@ -268,10 +276,11 @@ def register_callback_query(dm, app):
             return fig
 
         elif value == 'ip_cvss':
-
+            print("[INFO][query5][update_choropleth_map] ip_cvss: ", cvss_range_query)
             df = dm.get_report_dataset(date_value,
                                        columns=["ip_str", "region_code", "vulns_scores"])
-
+            if df.empty:
+                return fig
             df['name'] = df['region_code'].map(state_id_map)
             df['cvss_new'] = df['vulns_scores'].apply(lambda x: x['cvss_score'])
 
@@ -279,16 +288,14 @@ def register_callback_query(dm, app):
 
             df['cvss_new'] = df['cvss_new'].apply(lambda x: float(x))
             df = df.groupby(['region_code', "name", 'ip_str']).max('cvss_new').reset_index()
-
             df = df[(df['cvss_new'] >= cvss_range_query[0]) & (df['cvss_new'] <= cvss_range_query[1])]
 
             df = df.groupby(by=['region_code', "name"]).agg(n_ips=('ip_str', pd.Series.nunique)).reset_index()
-
             fig = px.choropleth_mapbox(
                 df,
                 locations="name",
                 geojson=brazil,
-                color="cvss_new",
+                color="n_ips",
                 color_continuous_scale="Rainbow",
                 hover_name="region_code",
                 hover_data=["n_ips"],
@@ -299,7 +306,7 @@ def register_callback_query(dm, app):
                 opacity=0.5,
             )
             fig.update_layout(
-                title="CVSS values by states",
+                title="Number of IPs with CVEs within CVSS range by states",
                 margin={'r': 1, 'l': 1, 'b': 1, 't': 40},
                 font=dict(size=12),
             )

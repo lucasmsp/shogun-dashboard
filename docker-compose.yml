@@ -3,7 +3,7 @@ version: "3"
 services:
   dashboard:
     build: .
-    image: lucasmsp/tlhop-dashboard:1.0
+    image: lucasmsp/tlhop-dashboard:latest
     volumes:
       - ./input_data:/opt/input_data/
       - ./output_data:/opt/output_data/
@@ -13,14 +13,14 @@ services:
     - 8080:8080
     - 4040:4040
     command: ["python3", "app.py"]
-    # command: ["python3", "app.py", "dev"]
+    #command: ["python3", "app.py", "dev"]
     environment:
       # each 1 minute  
       - CRON_EXPRESSION=*/1 * * * *
       # "0 8 * * *"  # each day at 8h AM
       - SPARK_UI_PORT=4040
-      - SPARK_VCORES=8
-      - SPARK_MEMORY=6g  
+      - SPARK_VCORES=6
+      - SPARK_MEMORY=4g  
       - SHODAN_FOLDER=/opt/input_data/
       - RESULT_FOLDER=/opt/output_data/
       - TLHOP_DATASETS_PATH=/opt/output_data/tlhop_datasets/

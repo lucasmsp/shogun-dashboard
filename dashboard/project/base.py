@@ -41,37 +41,22 @@ def get_release():
     return day
 
 def waiting_next_file():
+    next_date = get_release().replace("-", "")
 
-    current_day = get_release().replace("-", "")
-    next_date = current_day
+    filepath =  SHODAN_FOLDER + "/BR.{pattern}.json.bz2"
+    available_dates = [os.path.basename(s)[3:-9] for s in sorted(glob.glob(filepath.format(pattern="*")))]
 
-    while next_date == current_day:
-        filepath =  SHODAN_FOLDER + "/BR.{pattern}.json.bz2"
-        available_dates = [os.path.basename(s)[3:-9] for s in sorted(glob.glob(filepath.format(pattern="*")))]
-        for day in available_dates:
-            if next_date < day:
-                day = day[0:4]+"-"+day[4:6]+"-"+day[6:8]
-                print("[INFO] Found a new Shodan dump for day: ", day)
-                return day
-                break
-    
-        print(f"[INFO]  New dataset not found. Retrying in {RETRY_TIME} seconds")
-        time.sleep(RETRY_TIME)
+    for day in available_dates:
+        if next_date < day:
+            day = day[0:4]+"-"+day[4:6]+"-"+day[6:8]
+            print("[INFO][waiting_next_file] Found a new Shodan dump for day: ", day, flush=True)
+            return day
+    return None
 
-
-def waiting_next_execution(dev_mode):
-    while True:
-        scheduler = croniter(CRON_EXPRESSION, datetime.now())
+def compute_next_dump(last_date_commit):
+    if last_date_commit:
+        scheduler = croniter(CRON_EXPRESSION, last_date_commit)
         next_run = scheduler.get_next(datetime)
-        waiting_time = (next_run - datetime.now()).total_seconds()
-        print(f"[INFO] - waiting_next_execution - Next run will be at {next_run} - ({waiting_time})s", flush=True)
-        time.sleep(waiting_time)
-
-        day_fmt1 = waiting_next_file()
-        print("[INFO] - waiting_next_execution - Starting new run ...")
-        if dev_mode:
-            r.run_dummy(next_run)
-        else:
-            r.run(day_str=day_fmt1)
-        print("Finished")
-        commit_release(day_fmt1)
+    else:
+        next_run = datetime.now()
+    return next_run

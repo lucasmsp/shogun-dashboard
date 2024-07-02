@@ -386,18 +386,23 @@ def register_callback_query(dm, app):
     @app.callback(
         Output('query-2a-grid', "rowData"),
         [
-            Input('date-picker-single', 'date'),
+            Input('date-picker-single', 'value'),
             Input("search-bar-ip", 'value'),
             Input("search-bar-org", 'value'),
             Input("epss-range-slider", 'value'),
             Input("cvss-rank-checklist", 'value'),
             Input("search-bar-cpe-product", 'value'),
-            Input("search-bar-cpe-version", 'value'),
-        ]
+            Input("search-bar-cpe-version", 'value'), 
+            Input("general-tabs", "active_tab"),
+        ], prevent_initial_call=True
     )
-    def update_grid2a(date_value, ip_query, org_query, epss_query, cvss_query, product_query, cpe_version_query):
+    def update_grid2a(date_value, ip_query, org_query, epss_query, cvss_query, product_query, cpe_version_query, active_tab):
+        if "tab-1" != active_tab:
+            return [{}]
         print("[INFO] query 2 - update_table2a: ", date_value)
         df = dm.get_view_dataset(date_value, INPUT_DATA_V2)
+        if df.empty:
+            return [{}]
         if ip_query:
             df = df[df['ip_str'].str.contains(ip_query, case=False)]
 
@@ -426,18 +431,22 @@ def register_callback_query(dm, app):
     @app.callback(
         Output('query-2a-graph', 'figure'),
         [
-            Input('date-picker-single', 'date'),
+            Input('date-picker-single', 'value'),
             Input("epss-range-slider", 'value'),
             Input("cvss-rank-checklist", 'value'),
             Input("search-bar-cpe-version", 'value'),
             Input("dropdown-color-2a", 'value'),
-            Input("dropdown-type-2a", 'value'),
-        ]
+            Input("dropdown-type-2a", 'value'), 
+            Input("general-tabs", "active_tab"),
+        ], prevent_initial_call=True
     )
-    def update_graph2a(date_value, epss_query, cvss_query, cpe_version_query, color, type):
-        
+    def update_graph2a(date_value, epss_query, cvss_query, cpe_version_query, color, type, active_tab):
+        if "tab-1" != active_tab:
+            return {}
         print("[INFO] query 2 - update_graph2a: ", date_value)
         df = dm.get_view_dataset(date_value, INPUT_DATA_V2)
+        if df.empty:
+            return {}
 
         if epss_query:
             epss_min, epss_max = epss_query
@@ -515,16 +524,22 @@ def register_callback_query(dm, app):
         
         Output("query-2b-grid", "rowData"),
         [
-            Input('date-picker-single', 'date'),
+            Input('date-picker-single', 'value'),
             Input("search-bar-org-2b", 'value'),
             Input("search-bar-ip-2b", 'value'),
             Input("search-bar-cpe-2b", 'value'),
-            Input("search-bar-cve-2b", 'value'),
-        ]
+            Input("search-bar-cve-2b", 'value'), 
+            Input("general-tabs", "active_tab"),
+        ], prevent_initial_call=True
     )
-    def update_grid2b(date_value, org_query, ip_query, cpe_query, cve_query):
+    def update_grid2b(date_value, org_query, ip_query, cpe_query, cve_query, active_tab):
+        if "tab-1" != active_tab:
+            return [{}]
+
         print("[INFO] query 2 - update_table2b: ", date_value)
         df = dm.get_view_dataset(date_value, INPUT_DATA_V2)
+        if df.empty:
+            return [{}]
         aggregated_df = df.groupby('org_clean').agg({
             'ip_str': lambda x: list(x),
             'cve_id': lambda x: list(x),
@@ -553,7 +568,7 @@ def register_callback_query(dm, app):
         ],
         [
             Input("query-2b-grid", "selectedRows"),
-            Input("tabs-modal-2b", "value"),
+            Input("tabs-modal-2b", "value")
         ]
     )
     def manage_modals_2b(selection, tab):
@@ -574,17 +589,25 @@ def register_callback_query(dm, app):
                     [dbc.ListGroupItem(i) for i in selection[0]["cpe_product"]]
                 )
             return True, text
-        return no_update, no_update
+        return False, dbc.ListGroup(
+                    [dbc.ListGroupItem(i) for i in [""]]
+                )
 
     @app.callback(
         Output('query-2b-graph', 'figure'),
-        Input('date-picker-single', 'date'),
+        Input('date-picker-single', 'value'),
         Input("search-bar-org-2b", 'value'),
-        Input("dropdown-type-2b", 'value'),
+        Input("dropdown-type-2b", 'value'), 
+        Input("general-tabs", "active_tab"),
+        prevent_initial_call=True
     )
-    def update_graph2b(date_value, org_query, type):
+    def update_graph2b(date_value, org_query, type, active_tab):
+        if "tab-1" != active_tab:
+            return {}
         print("[INFO] query 2 - update_graph2b: ", date_value)
         df = dm.get_view_dataset(date_value, INPUT_DATA_V2)
+        if df.empty:
+            return {}
         aggregated_df = df.groupby('org_clean').agg({
             'ip_str': lambda x: list(x),
             'cve_id': lambda x: list(x),

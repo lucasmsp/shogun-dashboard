@@ -208,20 +208,24 @@ def find_expression(string):
 def register_callback_query(dm, app):
     @app.callback(
         Output('query-3-ag', "rowData"),
-        [Input('date-picker-single', 'date'),
+        [Input('date-picker-single', 'value'),
          Input('search-bar-cve', 'value'),
          Input('dropdown-cvss-version', 'value'),
          Input('cvss-range-query3-slider', 'value'),
          Input('epss-range-query3-slider', 'value'),
          Input('search-bar-query3-org', 'value'),
-         Input('search-bar-query3-ip', 'value')]
+         Input('search-bar-query3-ip', 'value'), 
+         Input("general-tabs", "active_tab")], prevent_initial_call=True
     )
     def update_table3(date_value, cve_query, dropdown_query_cvss, cvss_range_query,
-                      epss_range_query, org_query, ip_query):
-        print("[INFO] query 3 - update_table3: ", date_value)
+                      epss_range_query, org_query, ip_query, active_tab=None):
+        if "tab-2" != active_tab:
+            return [{}]              
+        print("[INFO][query3] - update_table3: ", date_value)
 
         df = dm.get_view_dataset(date_value, INPUT_DATA)
-
+        if df.empty:
+            return [{}]
         if cve_query:
             df = df[df['cve_id'].str.contains(cve_query, case=False)]
 
@@ -296,14 +300,19 @@ def register_callback_query(dm, app):
 
     @app.callback(
         Output('query3-graph', "figure"),
-        Input('date-picker-single', 'date'),
-        Input('dropdown-query3', 'value')
+        Input('date-picker-single', 'value'),
+        Input('dropdown-query3', 'value'), 
+        Input("general-tabs", "active_tab"), prevent_initial_call=True
     )
-    def update_graphs(date_value, value):
-        print("[INFO] update_graphs: ", date_value)
+    def update_graphs(date_value, value, active_tab=None):
+        if "tab-2" != active_tab:
+            return {}
+        print("[INFO][query3] update_graphs: ", date_value)
 
         df = dm.get_view_dataset(date_value, INPUT_DATA)
-
+        if df.empty:
+            return {}
+            
         if value == 'epss_cvss':
             fig = px.scatter(df, x=df["cvss_score"], y=df['epss'], title="Scatter plot - EPSS by CVSS score",
                              color='epss_rank')

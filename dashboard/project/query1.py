@@ -68,22 +68,33 @@ def register_layout_query(dm):
 def register_callback_query(dm, app):
     @app.callback(
         Output('query-1-table', "rowData"),
-        Input('date-picker-single', 'date'),
+        Input('date-picker-single', 'value'),
+        Input("general-tabs", "active_tab")
     )
-    def update_table1(date_value):
-        print("[INFO] update_table1: ", date_value)
-        df = dm.get_view_dataset(date_value, INPUT_DATA)
-        return df.to_dict('records')
+    def update_table1(date_value, active_tab):
+        if "tab-0" == active_tab:
+            print(f"[INFO][query1] update_table1: {date_value} and '{active_tab}'")
+            df = dm.get_view_dataset(date_value, INPUT_DATA)
+            return df.to_dict('records')
+        return []
+            
     
     @app.callback(
         Output("query-1-graph", "figure"), 
-        Input('date-picker-single', 'date'),
-        Input("query-1-dropdown", "value")
+        Input('date-picker-single', 'value'),
+        Input("query-1-dropdown", "value"),
+        Input("general-tabs", "active_tab")
     )
-    def update_chart1(date_value, metric):
-        print("[INFO] update_chart1", date_value)
-        df = dm.get_view_dataset(date_value, INPUT_DATA)
+    def update_chart1(date_value, metric, active_tab):
+        fig = {}
+        if "tab-0" != active_tab:
+            return fig
+        print(f"[INFO][query1] update_chart1: {date_value} and '{active_tab}'")
 
+        df = dm.get_view_dataset(date_value, INPUT_DATA)
+        if df.empty:
+            return fig
+        
         y_column = "n_cves"
         y_label = "# CVEs"
         graph_type = "bar plot"

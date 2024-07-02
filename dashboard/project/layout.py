@@ -87,29 +87,34 @@ def register_layout(dm, username):
                                 [
                                     dbc.Col(
                                         html.Div(
-                                            html.H3(
-                                                children="Analysis day: "
+                                            dcc.Dropdown(
+                                                options=[], 
+                                                value=None, 
+                                                id='date-picker-single', 
+                                                placeholder="Analysis day",
+                                                clearable=False,
+                                                multi=False,
+                                                style={'minWidth': '100%'}
                                             ),
-                                            className='alignright'
+                                            className='alignright',
+                                            style={'width': '100%', 'display': 'inline-block'}
                                         ),
-                                        # width={"size": 5}
+                                        width=5
                                     ),
                                     dbc.Col(
                                         html.Div(
-                                            dcc.DatePickerSingle(
-                                                id='date-picker-single',
-                                                min_date_allowed=dm.first_day,
-                                                max_date_allowed=dm.last_day,
-                                                initial_visible_month=dm.first_day,
-                                                date=dm.last_day,
+                                            html.H5(
+                                                id='last_dump_message',
+                                                children="Last dump: ??. Checking for new data at ??."
                                             ),
                                             className='alignleft'
                                         ),
-                                        # width={"size": 3, "order": "last"}
+                                        width=5
                                     )
                                 ],
                                 align="center",
-                            )
+                            ),
+                            dcc.Interval(id='last_dump_check', interval=15 * 1000, n_intervals=0),
                         ]
                     ),
                 ],
@@ -139,7 +144,9 @@ def register_layout(dm, username):
                 ],
                 style={
                     "paddingLeft": "20px"
-                }
+                },
+                id="general-tabs",
+                active_tab='tab-0'
             )
         ]
     )
