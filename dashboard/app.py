@@ -170,6 +170,13 @@ app.title = "TLHOP/SAM Analytics on EPSS"
 app.layout = register_layout(dm, current_user)
 register_callbacks(dm, app)
 
+@app.callback(
+    Output('last_dump_message', 'children'),
+    Input('date-picker-single', 'value')
+)
+def update_output(date_value):
+    return date_value
+
 if __name__ == '__main__':
     with server.app_context():
         db.create_all()

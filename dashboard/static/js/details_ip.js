@@ -339,5 +339,4 @@ cvssGraphWrapper.classList.add('active');
 }
 }
 
-// Initially show the CVSS graph and hide the EPSS graph
 document.getElementById('cvss-graph-wrapper').classList.add('active');

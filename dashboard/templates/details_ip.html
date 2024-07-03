@@ -118,7 +118,7 @@
                 </tr>
             </thead>
             <tbody id="tableBody">
-                <!-- Data will be appended here dynamically -->
+
             </tbody>
         </table>
     </div>
@@ -271,10 +271,9 @@ document.querySelector('.info-content .label-domains').textContent = data.domain
         createEPSSChart(vulnerabilities);
         vulnerabilitiesTable.draw();
 
-        // Sort vulnerabilities by CVSS score in descending order
+
         vulnerabilities.sort((a, b) => b.cvss_score - a.cvss_score);
 
-        // Add CVE tags to the info container
         const cveTagsContainer = document.getElementById('cve-tags-container');
         cveTagsContainer.innerHTML = ''; // Clear previous tags
 
@@ -292,7 +291,6 @@ document.querySelector('.info-content .label-domains').textContent = data.domain
                 cveTag.target = '_blank';
                 cveTag.className = 'cve-tag';
 
-                // Set class based on CVSS score
                 if (vuln.cvss_score < 4.0) {
                     cveTag.classList.add('low-score');
                 } else if (vuln.cvss_score < 7.0) {
@@ -466,7 +464,6 @@ cvssGraphWrapper.classList.add('active');
 }
 }
 
-// Initially show the CVSS graph and hide the EPSS graph
 document.getElementById('cvss-graph-wrapper').classList.add('active');</script>
 
 

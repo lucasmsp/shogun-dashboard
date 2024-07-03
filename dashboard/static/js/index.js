@@ -104,13 +104,13 @@ async function renderTable(data) {
         [button1, button2, button3].forEach(button => {
             button.addEventListener('click', async () => {
                 if (button.classList.contains('selected')) {
-                    // If the button is already selected, remove the vote
+
                     voteTd.querySelectorAll('.vote-button').forEach(btn => {
                         btn.classList.remove('selected');
                     });
                     await saveVote(row.meta_id, null);
                 } else {
-                    // If the button is not selected, add/update the vote
+
                     voteTd.querySelectorAll('.vote-button').forEach(btn => {
                         btn.classList.remove('selected');
                     });
@@ -131,7 +131,6 @@ async function renderTable(data) {
             });
         });
 
-        // Verificar e aplicar o voto do usuário
         if (row.meta_id in userVotes) {
             if (userVotes[row.meta_id] === 1) {
                 button1.classList.add('selected');
