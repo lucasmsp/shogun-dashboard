@@ -38,6 +38,10 @@ body {
     
 }
 
+.wrapper_table {
+    background-color: #FFFFFF;
+}
+
 .card {
     margin-bottom: 24px;
 }

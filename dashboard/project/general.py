@@ -55,7 +55,7 @@ def register_callback_query(dm, app):
     
         if not value:
             if len(options) > 0:
-                value = options[-1]
+                value = options[0]
         
         return msg, options, value
 

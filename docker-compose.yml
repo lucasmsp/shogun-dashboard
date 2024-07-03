@@ -12,8 +12,8 @@ services:
     ports:
     - 8080:8080
     - 4040:4040
-    command: ["python3", "app.py"]
-    #command: ["python3", "app.py", "dev"]
+    #command: ["python3", "app.py"]
+    command: ["python3", "app.py", "dev"]
     environment:
       # each 1 minute  
       - CRON_EXPRESSION=*/1 * * * *
@@ -24,7 +24,34 @@ services:
       - SHODAN_FOLDER=/opt/input_data/
       - RESULT_FOLDER=/opt/output_data/
       - TLHOP_DATASETS_PATH=/opt/output_data/tlhop_datasets/
+      - PIP_DEFAULT_TIMEOUT=1200
+      - POSTGRES_URL=postgres:5432
+      - POSTGRES_USER=postgres
+    env_file: local/env
+    depends_on:
+      postgres:
+        condition: service_healthy
 
 #    restart: always
+
+  postgres:
+    container_name: tlhop_postgres
+    image: postgres:latest
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - default
+    env_file: local/env
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres", "-d", "postgres"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  postgres_data:
+    driver: local
+
+
 
 

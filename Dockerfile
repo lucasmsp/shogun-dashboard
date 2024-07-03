@@ -25,4 +25,4 @@ RUN pip install --default-timeout=1000 --user -r /tmp/requirements.txt --no-cach
 ENV DASHBOARD_APP=/opt/dashboard
 COPY dashboard $DASHBOARD_APP 
 WORKDIR $DASHBOARD_APP
-ENTRYPOINT ["python3", "app.py"]
+ENTRYPOINT ["python3", "-u", "app.py"]

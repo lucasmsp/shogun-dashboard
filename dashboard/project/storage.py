@@ -6,6 +6,8 @@ import pandas as pd
 import os
 import re
 
+import numpy as np
+
 RESULT_FOLDER = os.environ.get("RESULT_FOLDER", "/opt/output_data/")
 
 class DatasetManager(object):
@@ -75,6 +77,40 @@ class DatasetManager(object):
         else:
             df = pd.DataFrame()
         return df
+    
+    def get_report_dataset_new(self, day, columns=None, condition=None, single_output=False, start=0, finish=10, sort_by='epss', ascending=False):
+        commit = self.retrive_commit(day)
+        df = None
+        if commit >= 0:
+            filepath = self.tlhop_epss_report_path
+
+            print(f"Reading report of day {day}")
+            dt = DeltaTable(filepath, version=commit).to_pyarrow_dataset()
+
+            if single_output:
+                df = dt.filter(condition).head(1).to_pydict()
+            else:
+                table = dt.to_table(filter=condition, columns=columns)
+
+                df = table.to_pandas()
+                df['epss'] = df['vulns_scores'].apply(lambda x: x.get('epss', []) if isinstance(x, dict) else [])
+                df['epss'] = df['epss'].apply(lambda probs: 1 - np.prod([1 - p for p in probs]))
+                df = df.drop(columns=['vulns_scores'])
+                df = df.sort_values(by=sort_by, ascending=ascending).iloc[start:finish]
+
+        return df
+
+    def get_total_entries_new(self, day, condition=None):
+        commit = self.retrive_commit(day)
+        total_entries = 0
+        if commit >= 0:
+            filepath = self.tlhop_epss_report_path
+            dt = DeltaTable(filepath, version=commit).to_pyarrow_dataset()
+            if condition:
+                total_entries = dt.filter(condition).count_rows()
+            else:
+                total_entries = dt.count_rows()
+        return total_entries
 
     def remove_old_data(self):
         # default of 1 week
