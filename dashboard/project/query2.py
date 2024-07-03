@@ -13,6 +13,7 @@ import project.base as base
 
 
 INPUT_DATA_V2 = '2'
+TAB_VIEW = "tab-1"
 
 def register_layout_query(dm):
     # visualização 2a
@@ -270,20 +271,20 @@ def register_layout_query(dm):
                             dcc.Tab(
                                 label="IP list", 
                                 value="ip_str", 
-                                style={'padding': '6px', 'display': 'flex', 'width': '90px', 'justify-content': 'center'},
-                                selected_style={'padding': '6px', 'display': 'flex', 'width': '100px', 'justify-content': 'center'},
+                                style={'padding': '6px', 'display': 'flex', 'width': '90px', 'justifyContent': 'center'},
+                                selected_style={'padding': '6px', 'display': 'flex', 'width': '100px', 'justifyContent': 'center'},
                             ),
                             dcc.Tab(
                                 label="CVE list", 
                                 value="cve_list", 
-                                style={'padding': '6px', 'display': 'flex', 'width': '90px', 'justify-content': 'center'},
-                                selected_style={'padding': '6px', 'display': 'flex', 'width': '100px', 'justify-content': 'center'},
+                                style={'padding': '6px', 'display': 'flex', 'width': '90px', 'justifyContent': 'center'},
+                                selected_style={'padding': '6px', 'display': 'flex', 'width': '100px', 'justifyContent': 'center'},
                             ),
                             dcc.Tab(
                                 label="CPE list",
                                 value="cpe_list",
-                                style={'padding': '6px', 'display': 'flex', 'width': '90px', 'justify-content': 'center'},
-                                selected_style={'padding': '6px', 'display': 'flex', 'width': '100px', 'justify-content': 'center'},
+                                style={'padding': '6px', 'display': 'flex', 'width': '90px', 'justifyContent': 'center'},
+                                selected_style={'padding': '6px', 'display': 'flex', 'width': '100px', 'justifyContent': 'center'},
                             ),
                         ],
                         value="ip_list",
@@ -338,43 +339,7 @@ def register_layout_query(dm):
                 dbc.Tab(tab1_content, label="List of vulnerable products for each org/IP"),
                 dbc.Tab(tab2_content, label="Highest EPSS for each org/IP"),
             ]
-        ),
-        dbc.Modal(
-            [
-                dbc.ModalHeader(
-                    dcc.Tabs(
-                        id="tabs-modal-2b",
-                        children=[
-                            dcc.Tab(
-                                label="IP list", 
-                                value="ip_str", 
-                                style={'padding': '6px', 'display': 'flex', 'width': '90px', 'justify-content': 'center'},
-                                selected_style={'padding': '6px', 'display': 'flex', 'width': '100px', 'justify-content': 'center'},
-                            ),
-                            dcc.Tab(
-                                label="CVE list", 
-                                value="cve_list", 
-                                style={'padding': '6px', 'display': 'flex', 'width': '90px', 'justify-content': 'center'},
-                                selected_style={'padding': '6px', 'display': 'flex', 'width': '100px', 'justify-content': 'center'},
-                            ),
-                            dcc.Tab(
-                                label="CPE list",
-                                value="cpe_list",
-                                style={'padding': '6px', 'display': 'flex', 'width': '90px', 'justify-content': 'center'},
-                                selected_style={'padding': '6px', 'display': 'flex', 'width': '100px', 'justify-content': 'center'},
-                            ),
-                        ],
-                        value="ip_str",
-                        style={'height': '44px'}
-                    ),
-                    id="header-modal-2b",
-                ),
-                dbc.ModalBody(id="body-modal-2b"),
-            ],
-            id="modal-info-2b",
-            is_open=False,
-            scrollable=True
-        ),
+        )
     ]
 
     return q2
@@ -397,7 +362,7 @@ def register_callback_query(dm, app):
         ], prevent_initial_call=True
     )
     def update_grid2a(date_value, ip_query, org_query, epss_query, cvss_query, product_query, cpe_version_query, active_tab):
-        if "tab-1" != active_tab:
+        if TAB_VIEW != active_tab:
             return [{}]
         print("[INFO] query 2 - update_table2a: ", date_value)
         df = dm.get_view_dataset(date_value, INPUT_DATA_V2)
@@ -441,7 +406,7 @@ def register_callback_query(dm, app):
         ], prevent_initial_call=True
     )
     def update_graph2a(date_value, epss_query, cvss_query, cpe_version_query, color, type, active_tab):
-        if "tab-1" != active_tab:
+        if TAB_VIEW != active_tab:
             return {}
         print("[INFO] query 2 - update_graph2a: ", date_value)
         df = dm.get_view_dataset(date_value, INPUT_DATA_V2)
@@ -533,7 +498,7 @@ def register_callback_query(dm, app):
         ], prevent_initial_call=True
     )
     def update_grid2b(date_value, org_query, ip_query, cpe_query, cve_query, active_tab):
-        if "tab-1" != active_tab:
+        if TAB_VIEW != active_tab:
             return [{}]
 
         print("[INFO] query 2 - update_table2b: ", date_value)
@@ -602,7 +567,7 @@ def register_callback_query(dm, app):
         prevent_initial_call=True
     )
     def update_graph2b(date_value, org_query, type, active_tab):
-        if "tab-1" != active_tab:
+        if TAB_VIEW != active_tab:
             return {}
         print("[INFO] query 2 - update_graph2b: ", date_value)
         df = dm.get_view_dataset(date_value, INPUT_DATA_V2)

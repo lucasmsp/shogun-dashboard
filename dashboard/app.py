@@ -16,8 +16,11 @@ import pyarrow.dataset as ds
 server = Flask(__name__)
 server.secret_key = 'super secret key'
 
-password = os.environ.get('POSTGRES_PASSWORD')
-server.config['SQLALCHEMY_DATABASE_URI'] = f"postgresql://postgres:{password}@postgres:5432/postgres"
+postgres_url = os.environ.get("POSTGRES_URL","postgres:5432")
+postgres_user = os.environ.get('POSTGRES_USER', "postgres")
+postgres_password = os.environ.get('POSTGRES_PASSWORD')
+
+server.config['SQLALCHEMY_DATABASE_URI'] = f"postgresql://{postgres_user}:{postgres_password}@{postgres_url}/postgres"
 server.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db.init_app(server)
@@ -166,7 +169,7 @@ def register():
     return render_template('signup.html')
 
 app = Dash(__name__, server=server, external_stylesheets=external_stylesheets)
-app.title = "TLHOP/SAM Analytics on EPSS"
+app.title = "TLHOP/SAM Cybersecurity Dashboards"
 app.layout = register_layout(dm, current_user)
 register_callbacks(dm, app)
 

@@ -7,7 +7,7 @@ import plotly.express as px
 import plotly.figure_factory as ff
 
 INPUT_DATA = '3'
-
+TAB_VIEW = "tab-2"
 
 def dash_components():
     components_1 = html.Div([
@@ -150,7 +150,7 @@ def register_layout_query(dm):
 
         html.Div(style={'height': '40px'}),
 
-        html.H4(children="Choose the type of chart", style={'text-align': 'Left'}),
+        html.H4(children="Choose the type of chart", style={'textAlign': 'Left'}),
 
         dbc.Row(
             dcc.Dropdown(
@@ -186,7 +186,7 @@ def register_layout_query(dm):
         html.H2(
             children="This visualization allows the analysis of the distribution of CVEs "
                      "in relation to IPs and organizations accessible on the Internet",
-            style={'font-size': '20px'}
+            style={'fontSize': '20px'}
         ),
 
         dbc.Tab(layout, label="Table")
@@ -219,7 +219,7 @@ def register_callback_query(dm, app):
     )
     def update_table3(date_value, cve_query, dropdown_query_cvss, cvss_range_query,
                       epss_range_query, org_query, ip_query, active_tab=None):
-        if "tab-2" != active_tab:
+        if TAB_VIEW != active_tab:
             return [{}]              
         print("[INFO][query3] - update_table3: ", date_value)
 
@@ -305,7 +305,7 @@ def register_callback_query(dm, app):
         Input("general-tabs", "active_tab"), prevent_initial_call=True
     )
     def update_graphs(date_value, value, active_tab=None):
-        if "tab-2" != active_tab:
+        if TAB_VIEW != active_tab:
             return {}
         print("[INFO][query3] update_graphs: ", date_value)
 

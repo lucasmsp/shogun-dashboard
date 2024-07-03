@@ -9,6 +9,7 @@ import dash_ag_grid as dag
 import project.base as base
 
 INPUT_DATA = '1'
+TAB_VIEW = "tab-0"
 
 def register_layout_query(dm):
     # visualização 1
@@ -72,7 +73,7 @@ def register_callback_query(dm, app):
         Input("general-tabs", "active_tab")
     )
     def update_table1(date_value, active_tab):
-        if "tab-0" == active_tab:
+        if TAB_VIEW == active_tab:
             print(f"[INFO][query1] update_table1: {date_value} and '{active_tab}'")
             df = dm.get_view_dataset(date_value, INPUT_DATA)
             return df.to_dict('records')
@@ -87,7 +88,7 @@ def register_callback_query(dm, app):
     )
     def update_chart1(date_value, metric, active_tab):
         fig = {}
-        if "tab-0" != active_tab:
+        if TAB_VIEW != active_tab:
             return fig
         print(f"[INFO][query1] update_chart1: {date_value} and '{active_tab}'")
 

@@ -24,6 +24,9 @@ services:
       - SHODAN_FOLDER=/opt/input_data/
       - RESULT_FOLDER=/opt/output_data/
       - TLHOP_DATASETS_PATH=/opt/output_data/tlhop_datasets/
+      - PIP_DEFAULT_TIMEOUT=1200
+      - POSTGRES_URL=postgres:5432
+      - POSTGRES_USER=postgres
     env_file: local/env
     depends_on:
       postgres:
