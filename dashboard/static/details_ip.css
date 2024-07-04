@@ -2,8 +2,8 @@ body {
     font-family: Arial, sans-serif;
 }
 .scale-down {
-    transform: scale(0.75); /* Scale down to 75% */
-    transform-origin: 0 0; /* Scale from top left */
+    transform: scale(0.75);
+    transform-origin: 0 0;
 }
 .container {
     display: flex;
