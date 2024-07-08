@@ -6,6 +6,7 @@ from dash import Dash, dcc, html, Input, Output, callback
 import plotly.figure_factory as ff
 import numpy as np
 import pandas as pd
+import os
 
 TAB_VIEW = "tab-3"
 
@@ -85,11 +86,10 @@ def register_layout_query(dm):
 
 
 def register_callback_query(dm, app):
-
-
-    with urlopen("https://raw.githubusercontent.com/codeforamerica/click_that_hood/"
-                    "master/public/data/brazil-states.geojson") as response:
-        brazil = json.load(response)
+    
+    brazil_states_geojson = os.environ.get("TLHOP_DATASETS_PATH","")+"/brazil-states.geojson"
+    with open(brazil_states_geojson) as f:
+        brazil = json.load(f)
 
     state_id_map = {}
     for feature in brazil['features']:

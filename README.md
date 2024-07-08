@@ -26,3 +26,9 @@ The project is available at DockerHub through the image `lucasmsp/dashboards`, b
 - **TLHOP_DATASETS_PATH**: Directory where the TLHOP library will save its auxiliary files.
 
 **NOTE**: When using containers, it is advisable to map volumes for *SHODAN_FOLDER*, *RESULT_FOLDER*, and *TLHOP_DATASETS_PATH* to ensure data persistence.
+
+
+
+## Developer's Guide
+
+Developing activities in Docker containers may not be very user-friendly, in this case, we recommend using only the PostgreSQL database as a container, running the dashboard locally during this development stage. To do this, developers can start the database using the command `docker compose up postgres`, then using the command `bash start-dev.sh` to start the dashboard server responsible to communicate with the PostgreSQL.
