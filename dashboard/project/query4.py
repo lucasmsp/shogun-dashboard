@@ -19,14 +19,14 @@ def register_layout_query(dm):
                     style={'textAlign': 'center'}
                 ),
 
-                html.Div(style={'height': '100px'}),
+                html.Div(style={'height': '40px'}),
 
                 html.H2(
                     children="This visualization allows the analysis of the data through the maps",
                     style={'fontSize': '20px'}
                 ),
 
-                html.Div(style={'height': '100px'}),
+                html.Div(style={'height': '40px'}),
 
                 html.H4(children="Choose the type of chart", style={'textAlign': 'Left'}),
                 dbc.Row(
@@ -34,10 +34,12 @@ def register_layout_query(dm):
                         id='query4-dropdown-query',
                         options=[
                             {'label': 'Choropleth Map of brazilian states - # IPs with vulnerabilities', 'value': 'ip_str'},
-                            {'label': 'Choropleth Map of brazilian states - Average of CVSS by state', 'value': 'cvss_score'},
-                            {'label': 'Choropleth Map of brazilian states - Average of EPSS by state', 'value': 'epss_score'},
+                            {'label': 'Choropleth Map of brazilian states - Average CVSS by state (only the major CVE '
+                                      'per IP)', 'value': 'cvss_score'},
+                            {'label': 'Choropleth Map of brazilian states - Average EPSS by state (only the major CVE '
+                                      'per IP)', 'value': 'epss_score'},
                             {'label': 'Choropleth Map of brazilian states - Number of different CVEs per state', 'value': 'cve_id'},
-                            {'label': 'Choropleth Map of brazilian states - CVSS values by states', 'value': 'ip_cvss'}
+                            {'label': 'Choropleth Map of brazilian states - Number of IPs with CVEs within CVSS range by states', 'value': 'ip_cvss'}
                         ],
                         clearable=False,
                         value='ip_str'
@@ -289,27 +291,50 @@ def register_callback_query(dm, app):
             df['cvss_new'] = df['cvss_new'].apply(lambda x: float(x))
             df = df.groupby(['region_code', "name", 'ip_str']).max('cvss_new').reset_index()
             df = df[(df['cvss_new'] >= cvss_range_query[0]) & (df['cvss_new'] <= cvss_range_query[1])]
-
             df = df.groupby(by=['region_code', "name"]).agg(n_ips=('ip_str', pd.Series.nunique)).reset_index()
-            fig = px.choropleth_mapbox(
-                df,
-                locations="name",
-                geojson=brazil,
-                color="n_ips",
-                color_continuous_scale="Rainbow",
-                hover_name="region_code",
-                hover_data=["n_ips"],
-                mapbox_style="carto-positron",
-                labels={'cvss_new': 'CVSS range'},
-                center={"lat": -14, "lon": -55},
-                zoom=2,
-                opacity=0.5,
-            )
-            fig.update_layout(
-                title="Number of IPs with CVEs within CVSS range by states",
-                margin={'r': 1, 'l': 1, 'b': 1, 't': 40},
-                font=dict(size=12),
-            )
-            return fig
+
+            value = df['n_ips'].empty
+
+            if value:
+
+                fig = px.choropleth_mapbox(
+                    df,
+                    locations="name",
+                    geojson=brazil,
+                    color=None,
+                    mapbox_style="carto-positron",
+                    labels={'cvss_new': 'CVSS range'},
+                    center={"lat": -14, "lon": -55},
+                    zoom=2,
+                    opacity=0.5,
+                )
+                fig.update_layout(
+                    title="Number of IPs with CVEs within CVSS range by states",
+                    margin={'r': 1, 'l': 1, 'b': 1, 't': 40},
+                    font=dict(size=12),
+                )
+                return fig
+            else:
+
+                fig = px.choropleth_mapbox(
+                    df,
+                    locations="name",
+                    geojson=brazil,
+                    color="n_ips",
+                    color_continuous_scale="Rainbow",
+                    hover_name="region_code",
+                    hover_data=["n_ips"],
+                    mapbox_style="carto-positron",
+                    labels={'cvss_new': 'CVSS range'},
+                    center={"lat": -14, "lon": -55},
+                    zoom=2,
+                    opacity=0.5,
+                )
+                fig.update_layout(
+                    title="Number of IPs with CVEs within CVSS range by states",
+                    margin={'r': 1, 'l': 1, 'b': 1, 't': 40},
+                    font=dict(size=12),
+                )
+                return fig
 
 

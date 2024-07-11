@@ -9,6 +9,7 @@ import plotly.figure_factory as ff
 INPUT_DATA = '3'
 TAB_VIEW = "tab-2"
 
+
 def dash_components():
     components_1 = html.Div([
         html.Div(children=[
@@ -66,7 +67,7 @@ def dash_components():
                 dcc.Input(
                     id='search-bar-query3-org',
                     type="search",
-                    placeholder="Org filter expression ('>', '<', '=','>=', '<=') e.g., '> 30'",
+                    placeholder="Org filter expression ('>', '<', '=','>=', '<=', '!=') e.g., '> 30'",
                     style={
                         "width": "100%",
                         "margin": "15px"
@@ -78,7 +79,7 @@ def dash_components():
                 dcc.Input(
                     id='search-bar-query3-ip',
                     type="search",
-                    placeholder="IP filter expression ('>', '<', '=','>=', '<=') e.g., '> 30'",
+                    placeholder="IP filter expression ('>', '<', '=','>=', '<=', '!=') e.g., '> 30'",
                     style={
                         "width": "100%",
                         "margin": "15px"
@@ -120,33 +121,35 @@ def dash_components():
     return components_1
 
 
-#constructs the layout for View 3
+# constructs the layout for View 3
 def register_layout_query(dm):
     component_1 = dash_components()
-
-    columnDefs = [
-        {"field": 'cve_id', "headerName": 'CVE', "cellRenderer": "StockLink", "tooltipValueGetter":
-            {"function": "'Click on the cell for more details'"}},
-        {"field": 'cvss_score', "headerName": 'CVSS', 'tooltipValueGetter': {"function": "'CVSS Version: ' + "
-                                                                                         "params.data.cvss_version"}},
-        {"field": 'epss', "headerName": 'EPSS', 'tooltipValueGetter': {"function": "'EPSS: ' + "
-                                                                                             "params.data.epss_rank"}},
-        {"field": 'n_ips', "headerName": "# IPs"},
-        {"field": 'n_orgs', "headerName": "# Organizations"},
-    ]
-
-    grid = dag.AgGrid(
-        id="query-3-ag",
-        columnDefs=columnDefs,
-        rowData=[],
-        columnSize="responsiveSizeToFit",
-        dashGridOptions={'enableBrowserTooltips': True}
-
-    )
-
     layout = [
         component_1,
-        html.Div(grid),
+        dbc.Row(
+            dag.AgGrid(
+                id="query-3-ag",
+                columnDefs=[
+                    {"field": 'cve_id', "headerName": 'CVE', "cellRenderer": "StockLink", "tooltipValueGetter":
+                        {"function": "'Click on the cell for more details'"}},
+                    {"field": 'cvss_score', "headerName": 'CVSS',
+                     'tooltipValueGetter': {"function": "'CVSS Version: ' + "
+                                                        "params.data.cvss_version"}},
+                    {"field": 'epss', "headerName": 'EPSS', 'tooltipValueGetter': {"function": "'EPSS: ' + "
+                                                                                               "params.data.epss_rank"}},
+                    {"field": 'n_ips', "headerName": "# IPs"},
+                    {"field": 'n_orgs', "headerName": "# Organizations"},
+                ],
+                defaultColDef={"flex": 1},
+                columnSize="responsiveSizeToFit",
+                columnSizeOptions={"skipHeader": False},
+                dashGridOptions={
+                    'tooltipInteraction': True,
+                    'tooltipShowDelay': 10,
+                    'tooltipHideDelay': 1000
+                }
+            )
+        ),
 
         html.Div(style={'height': '40px'}),
 
@@ -208,24 +211,27 @@ def find_expression(string):
 def register_callback_query(dm, app):
     @app.callback(
         Output('query-3-ag', "rowData"),
-        [Input('date-picker-single', 'value'),
-         Input('search-bar-cve', 'value'),
-         Input('dropdown-cvss-version', 'value'),
-         Input('cvss-range-query3-slider', 'value'),
-         Input('epss-range-query3-slider', 'value'),
-         Input('search-bar-query3-org', 'value'),
-         Input('search-bar-query3-ip', 'value'), 
-         Input("general-tabs", "active_tab")], prevent_initial_call=True
+        [
+            Input('date-picker-single', 'value'),
+            Input('search-bar-cve', 'value'),
+            Input('dropdown-cvss-version', 'value'),
+            Input('cvss-range-query3-slider', 'value'),
+            Input('epss-range-query3-slider', 'value'),
+            Input('search-bar-query3-org', 'value'),
+            Input('search-bar-query3-ip', 'value'),
+            Input("general-tabs", "active_tab")
+        ], prevent_initial_call=True
     )
     def update_table3(date_value, cve_query, dropdown_query_cvss, cvss_range_query,
                       epss_range_query, org_query, ip_query, active_tab=None):
         if TAB_VIEW != active_tab:
-            return [{}]              
+            return [{}]
         print("[INFO][query3] - update_table3: ", date_value)
 
         df = dm.get_view_dataset(date_value, INPUT_DATA)
         if df.empty:
             return [{}]
+
         if cve_query:
             df = df[df['cve_id'].str.contains(cve_query, case=False)]
 
@@ -247,26 +253,34 @@ def register_callback_query(dm, app):
 
             if result_expression in ['>=', '<=', '!=']:
                 info = op.split('=')
-                value = int(info[1])
-                if result_expression == ">=":
-                    df = df[df['n_orgs'] >= value]
-
-                elif result_expression == '<=':
-                    df = df[df['n_orgs'] <= value]
-
-                elif result_expression == '!=':
-                    df = df[df['n_orgs'] != value]
+                value = info[1]
+                if value.isnumeric():
+                    value = int(value)
+                    if result_expression == ">=":
+                        df = df[df['n_orgs'] >= value]
+                    elif result_expression == '<=':
+                        df = df[df['n_orgs'] <= value]
+                    elif result_expression == '!=':
+                        df = df[df['n_orgs'] != value]
+                else:
+                    pass
 
             else:
-                operator = op[0]
-                value = op[1:].strip()
-                value = int(value)
-                if operator == '=':
-                    df = df[df['n_orgs'] == value]
-                elif operator == '>':
-                    df = df[df['n_orgs'] > value]
-                elif operator == '<':
-                    df = df[df['n_orgs'] < value]
+                if op != '':
+                    operator = op[0]
+                    value = op[1:].strip()
+                    if value.isnumeric():
+                        value = int(value)
+                        if operator == '=':
+                            df = df[df['n_orgs'] == value]
+                        elif operator == '>':
+                            df = df[df['n_orgs'] > value]
+                        elif operator == '<':
+                            df = df[df['n_orgs'] < value]
+                    else:
+                        pass
+                else:
+                    pass
 
         if ip_query:
             op = str(ip_query)
@@ -275,33 +289,41 @@ def register_callback_query(dm, app):
 
             if result_expression in ['>=', '<=', '!=']:
                 info = op.split('=')
-                value = int(info[1])
-                if result_expression == ">=":
-                    df = df[df['n_ips'] >= value]
-
-                elif result_expression == '<=':
-                    df = df[df['n_ips'] <= value]
-
-                elif result_expression == '!=':
-                    df = df[df['n_ips'] != value]
+                value = info[1]
+                if value.isnumeric():
+                    value = int(value)
+                    if result_expression == ">=":
+                        df = df[df['n_ips'] >= value]
+                    elif result_expression == '<=':
+                        df = df[df['n_ips'] <= value]
+                    elif result_expression == '!=':
+                        df = df[df['n_ips'] != value]
+                else:
+                    pass
 
             else:
-                operator = op[0]
-                value = op[1:].strip()
-                value = int(value)
-                if operator == '=':
-                    df = df[df['n_ips'] == value]
-                elif operator == '>':
-                    df = df[df['n_ips'] > value]
-                elif operator == '<':
-                    df = df[df['n_ips'] < value]
+                if op != '':
+                    operator = op[0]
+                    value = op[1:].strip()
+                    if value.isnumeric():
+                        value = int(value)
+                        if operator == '=':
+                            df = df[df['n_ips'] == value]
+                        elif operator == '>':
+                            df = df[df['n_ips'] > value]
+                        elif operator == '<':
+                            df = df[df['n_ips'] < value]
+                    else:
+                        pass
+                else:
+                    pass
 
         return df.to_dict('records')
 
     @app.callback(
         Output('query3-graph', "figure"),
         Input('date-picker-single', 'value'),
-        Input('dropdown-query3', 'value'), 
+        Input('dropdown-query3', 'value'),
         Input("general-tabs", "active_tab"), prevent_initial_call=True
     )
     def update_graphs(date_value, value, active_tab=None):
@@ -312,7 +334,7 @@ def register_callback_query(dm, app):
         df = dm.get_view_dataset(date_value, INPUT_DATA)
         if df.empty:
             return {}
-            
+
         if value == 'epss_cvss':
             fig = px.scatter(df, x=df["cvss_score"], y=df['epss'], title="Scatter plot - EPSS by CVSS score",
                              color='epss_rank')
