@@ -36,7 +36,7 @@ def register_layout_query(dm):
                 ),
                 dbc.Row(
                     [
-                        html.H4(children="Choose a type of graph: ", className='wrapper'),
+                        html.H4(children="Choose a type of graph: ", className='wrapper', style={'textAlign': 'Left'}),
                         dcc.Dropdown(
                             id="query-1-dropdown",
                             options=[
