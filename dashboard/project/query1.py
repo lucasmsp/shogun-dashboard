@@ -137,6 +137,7 @@ def register_callback_query(dm, app):
             fig = px.line(df,
                 x="epss_rank", 
                 y='pdf',
+                range_y=(0,1)
                 )
 
         else:
@@ -146,6 +147,7 @@ def register_callback_query(dm, app):
             fig = px.line(df,
                 x="epss_rank", 
                 y='cdf',
+                range_y=(0,1)
                 )
 
         return fig
