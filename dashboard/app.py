@@ -19,8 +19,9 @@ server.secret_key = 'super secret key'
 postgres_url = os.environ.get("POSTGRES_URL","postgres:5432")
 postgres_user = os.environ.get('POSTGRES_USER', "postgres")
 postgres_password = os.environ.get('POSTGRES_PASSWORD')
+postgres_db = os.environ.get('POSTGRES_DB', 'postgres')
 
-server.config['SQLALCHEMY_DATABASE_URI'] = f"postgresql://{postgres_user}:{postgres_password}@{postgres_url}/postgres"
+server.config['SQLALCHEMY_DATABASE_URI'] = f"postgresql://{postgres_user}:{postgres_password}@{postgres_url}/{postgres_db}"
 server.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db.init_app(server)
