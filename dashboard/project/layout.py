@@ -61,7 +61,7 @@ def register_layout(dm, username):
                     html.P(children="📊", className="header-emoji"),
                     html.Div(
                         children=[
-                            html.H1(children="TLHOP/SAM Analytics on EPSS", className="header-title"),
+                            html.H1(children="TLHOP/SAM Cybersecurity Dashboards", className="header-title"),
                             html.H3(f"Logged in as: {username}", className="header-logged-as")
                         ],
                         style={"flex": "1"}

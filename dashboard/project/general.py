@@ -28,27 +28,30 @@ def register_callback_query(dm, app):
     def update_dump_message(n_intervals, value):
         print("[INFO][update_dump_message] Checking for new any changes.")
 
-        msg = "Last dump: {last}.\nChecking for new data at {new}{note}."
+        
         obs = ""
         last_date_commit = dm.last_commit()
-        next_run = base.compute_next_dump(last_date_commit)   
-        print(f"[INFO][update_dump_message] waiting_next_execution - Last dump {last_date_commit}. Next run will be at {next_run}", flush=True)
-        
-        if datetime.now() >= next_run:
-            day_fmt1 = base.waiting_next_file()
-            if day_fmt1:
-                msg = f"Processing dump {day_fmt1}. It may take a while..."
-            else:
-                msg = "Last dump: {last}.\nAt {new} none dump was found. Retrying in 15s."
 
+        next_run = base.compute_next_dump(last_date_commit) 
 
         if not last_date_commit:
             last_date_commit = "Empty"
         else:
             last_date_commit = last_date_commit.strftime("%Y-%m-%d %H:%M:%S")
 
+        print(f"[INFO][update_dump_message] - ", app.scan_enabled)
+        if app.scan_enabled:
+            print(f"[INFO][update_dump_message] waiting_next_execution - Last dump {last_date_commit}. Next run will be at {next_run}", flush=True)
+            if datetime.now() >= next_run:
+                day_fmt1 = base.waiting_next_file()
+                if day_fmt1:
+                    msg = f"Processing dump {day_fmt1}. It may take a while..."
+                else:
+                    msg = "Last dump: {last}.\nAt {new} none dump was found. Retrying in 15s."
 
-        msg = msg.format(last=last_date_commit, new=next_run)
+            msg = "Last dump: {last}.\nChecking for new data at {new}.".format(last=last_date_commit, new=next_run)
+        else:
+            msg = "Last dump: {last}.".format(last=last_date_commit)
 
         dm.check_available_datasets()
         options = sorted(list(dm.available_datasets.keys()), reverse=True)
@@ -74,10 +77,6 @@ def register_callback_query(dm, app):
         if "Processing dump" in msg:
             day_fmt1 = base.waiting_next_file()
             if day_fmt1:
-                if len(sys.argv) > 1:
-                    dev_mode = sys.argv[1] == 'dev'
-                else:
-                    dev_mode = False
                 
                 last_date_commit = datetime.now()
                 print(f"[INFO][processing_new_dump] - Starting new run (dev={dev_mode}) - day_fmt1: {day_fmt1}...", flush=True)
