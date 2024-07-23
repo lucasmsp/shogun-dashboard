@@ -10,21 +10,17 @@ services:
     networks:
       - default
     ports:
-    - 8080:8080
-    - 4040:4040
-    #command: ["python3", "app.py"]
-    command: ["python3", "app.py", "dev"]
+      - 8080:8080
+      - 4040:4040
+    command: python3 app.py --host 127.0.0.1 --port 8080 --scan False
     environment:
-      # each 1 minute  
       - CRON_EXPRESSION=*/1 * * * *
-      # "0 8 * * *"  # each day at 8h AM
       - SPARK_UI_PORT=4040
       - SPARK_VCORES=6
       - SPARK_MEMORY=4g  
       - SHODAN_FOLDER=/opt/input_data/
       - RESULT_FOLDER=/opt/output_data/
       - TLHOP_DATASETS_PATH=/opt/output_data/tlhop_datasets/
-      - PIP_DEFAULT_TIMEOUT=1200
       - POSTGRES_URL=postgres:5432
       - POSTGRES_USER=postgres
       - POSTGRES_DB=postgres
@@ -33,15 +29,13 @@ services:
       postgres:
         condition: service_healthy
 
-#    restart: always
-
   postgres:
     container_name: tlhop_postgres
     image: postgres:latest
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
-    - 5432:5432
+      - 5432:5432
     networks:
       - default
     env_file: local/env
@@ -54,7 +48,3 @@ services:
 volumes:
   postgres_data:
     driver: local
-
-
-
-
