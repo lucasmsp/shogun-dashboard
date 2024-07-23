@@ -54,95 +54,61 @@ def register_layout(dm, username):
         className="mt-3",
     )
 
+    if username == "admin":
+        nav_opts = [
+            dbc.DropdownMenuItem(username, header=True),
+            dbc.DropdownMenuItem("Profile", href="#"),
+            dbc.DropdownMenuItem("Administrator", href="#"),
+            dbc.DropdownMenuItem("Logout", href="#"),
+        ]
+    else:
+        nav_opts = [
+            dbc.DropdownMenuItem(username, header=True),
+            dbc.DropdownMenuItem("Profile", href="#"),
+            dbc.DropdownMenuItem("Logout", href="#"),
+        ]
+
+    navbar = dbc.Navbar(
+                dbc.Container(
+                    [
+                        dbc.Row([
+                            html.H1(children=["📊 TLHOP/SAM Cybersecurity Dashboards"])
+                            ], className="g-0",
+                        ),
+                        dbc.NavItem(
+                            dbc.Col(
+                                html.Div(
+                                    dcc.Dropdown(
+                                        options=[], 
+                                        value=None, 
+                                        id='date-picker-single', 
+                                        placeholder="Analysis day",
+                                        clearable=False,
+                                        multi=False,
+                                        style={'minWidth': '100%'}
+                                    ),                                    
+                                )
+                            ), class_name="ms-4", style={'width': '10vh', 'display': 'inline-block', "color": "black"}
+                        ),
+                        dbc.DropdownMenu(
+                            children=nav_opts,
+                            nav=True,
+                            in_navbar=True,
+                            label=username,
+                            align_end=True
+                        ),
+                        dcc.Interval(id='last_dump_check', interval=15 * 1000, n_intervals=0),
+                ]),
+                color="dark",
+                dark=True,
+                style={"flex": "1", "color": "white"}
+            )
+
     layout = html.Div(
         children=[
-            html.Div(
-                children=[
-                    html.P(children="📊", className="header-emoji"),
-                    html.Div(
-                        children=[
-                            html.H1(children="TLHOP/SAM Cybersecurity Dashboards", className="header-title"),
-                            html.H3(f"Logged in as: {username}", className="header-logged-as")
-                        ],
-                        style={"flex": "1"}
-                    ),
-                ],
-                className="header",
-            ),
 
-            html.Div(
-                children=[
-                    dbc.Row([
-                        html.Br(),
-                    ])
-                ]
-            ),
+            navbar,
             html.Br(),
-            html.Div(
-                [
-                    dbc.Container(
-                        [
-                            dbc.Row([
-                                dbc.Col(html.Div(
-                                    html.H3(
-                                        children=(
-                                            "This dashboard is intended for vulnerability analysis using EPSS as a risk score."
-                                        ),
-                                        className="menu-title"
-                                    )
-                                ), width={"size": 12})
-                            ]),
-                            dbc.Row(
-                                [
-                                    dbc.Col(
-                                        html.Div(
-                                            dcc.Dropdown(
-                                                options=[], 
-                                                value=None, 
-                                                id='date-picker-single', 
-                                                placeholder="Analysis day",
-                                                clearable=False,
-                                                multi=False,
-                                                style={'minWidth': '100%'}
-                                            ),
-                                            className='alignright',
-                                            style={'width': '100%', 'display': 'inline-block'}
-                                        ),
-                                        width=5
-                                    ),
-                                    dbc.Col(
-                                        html.Div(
-                                            html.H5(
-                                                id='last_dump_message',
-                                                children="Last dump: ??. Checking for new data at ??."
-                                            ),
-                                            className='alignleft'
-                                        ),
-                                        width=5
-                                    )
-                                ],
-                                align="center",
-                            ),
-                            dcc.Interval(id='last_dump_check', interval=15 * 1000, n_intervals=0),
-                        ]
-                    ),
-                ],
-                className="menu",
-                style={
-                    "padding": "15px 15px 150px 15px"
-                }
-            ),
-
-            html.Div(
-                children=[
-                    dbc.Row([
-                        html.Br(),
-                    ])
-                ]
-            ),
-
-            html.Br(),
-
             dbc.Tabs(
                 [
                     dbc.Tab(tab1_content, label="View 1 - EPSS summary"),
@@ -156,6 +122,30 @@ def register_layout(dm, username):
                 },
                 id="general-tabs",
                 active_tab='tab-0'
+            ),
+
+            html.Footer([
+                html.Div(
+                    html.H5(
+                            id='last_dump_message',
+                            children="Last dump: ??. Checking for new data at ??."
+                        ),
+                        style={'float': 'left', 'textAlign': 'left'}
+                ),
+                html.H3(children=(
+                    html.A(
+                        html.I(className="fab fa-github"), # Icon from font awesome
+                        href="https://github.com/lucasmsp/tlhop-epss-app" ,
+                        target="_blank"
+                    ), 
+                    " Thread-Limiting Holistic Open Platform (TLHOP) Project - DCC/UFMG - CERT.br  | 2024"))
+                ],
+                style={
+                        'border': '1px solid #ccc',     # Add a border at the top
+                        'textAlign': 'center',         # Center-align the text
+                        'padding': '30px',              # Add some padding for spacing
+                        'background-color': '#f2f2f2'   # Set a background color
+                }
             )
         ]
     )

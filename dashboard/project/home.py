@@ -78,7 +78,8 @@ def start_dash(host='127.0.0.1', port=8080, scan_enabled=True):
             ),
             "rel": "stylesheet",
         },
-        dbc.themes.BOOTSTRAP
+        dbc.themes.BOOTSTRAP,
+        "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"
     ]
 
     # Iframe

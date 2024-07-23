@@ -51,7 +51,7 @@ def register_callback_query(dm, app):
 
             msg = "Last dump: {last}.\nChecking for new data at {new}.".format(last=last_date_commit, new=next_run)
         else:
-            msg = "Last dump: {last}.".format(last=last_date_commit)
+            msg = "Last dump: {last}".format(last=last_date_commit)
 
         dm.check_available_datasets()
         options = sorted(list(dm.available_datasets.keys()), reverse=True)
@@ -93,7 +93,7 @@ def register_callback_query(dm, app):
                 next_run = base.compute_next_dump(last_date_commit)
 
                 last_date_commit = last_date_commit.strftime("%Y-%m-%d %H:%M:%S")
-                msg = "Last dump: {last}.\nChecking for new data at {new}.".format(last=last_date_commit, new=next_run)
+                msg = "Last dump: {last}.\nChecking for new data at {new}".format(last=last_date_commit, new=next_run)
         return msg
 
 
