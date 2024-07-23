@@ -15,7 +15,7 @@ import pyarrow.dataset as ds
 
 def start_dash(host='127.0.0.1', port=8080, scan_enabled=True):
 
-    server = Flask(__name__)
+    server = Flask(__name__, template_folder='../templates')
     server.secret_key = 'super secret key'
 
     postgres_url = os.environ.get("POSTGRES_URL","postgres:5432")
@@ -65,7 +65,7 @@ def start_dash(host='127.0.0.1', port=8080, scan_enabled=True):
     @server.route('/dashboard/')
     @login_required
     def dashboard():
-        app.layout = register_layout(dm, current_user)
+        app.layout = register_layout(dm, current_user.username)
         return app.index()
 
 
@@ -160,7 +160,6 @@ def start_dash(host='127.0.0.1', port=8080, scan_enabled=True):
             
             # Check if the user already exists
             if User.query.filter_by(username=username).first():
-                flash('Registration failed: user already exists')
                 return redirect('/signup')
             
             # If the user does not exist, then add them to the database
