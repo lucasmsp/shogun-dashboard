@@ -12,7 +12,7 @@ services:
     ports:
       - 8080:8080
       - 4040:4040
-    command: ["python3", "app.py"]
+    command: python3 app.py --host 127.0.0.1 --port 8080 --scan False
     environment:
       - CRON_EXPRESSION=*/1 * * * *
       - SPARK_UI_PORT=4040
@@ -21,13 +21,9 @@ services:
       - SHODAN_FOLDER=/opt/input_data/
       - RESULT_FOLDER=/opt/output_data/
       - TLHOP_DATASETS_PATH=/opt/output_data/tlhop_datasets/
-      - PIP_DEFAULT_TIMEOUT=1200
       - POSTGRES_URL=postgres:5432
       - POSTGRES_USER=postgres
       - POSTGRES_DB=postgres
-      - APP_HOST=0.0.0.0
-      - APP_PORT=8080
-      - APP_SCAN=true
     env_file: local/env
     depends_on:
       postgres:
