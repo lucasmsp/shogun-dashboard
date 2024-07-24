@@ -56,11 +56,12 @@ def register_layout(dm, username):
     nav_opts = [
         dbc.DropdownMenuItem(username, header=True),
         dbc.DropdownMenuItem("Profile", id="profile-menu-item"),
+        dbc.DropdownMenuItem("Administrator", id="admin-menu-item", style={'display': 'none'}),
         dbc.DropdownMenuItem("Logout", id="logout-menu-item"),
     ]
 
     if username == "admin":
-        nav_opts.insert(2, dbc.DropdownMenuItem("Administrator", id="admin-menu-item"))
+        nav_opts[2].style = {'display': 'block'}
 
     navbar = dbc.Navbar(
                 dbc.Container(

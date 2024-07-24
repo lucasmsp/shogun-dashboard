@@ -36,17 +36,25 @@ def start_dash(host='127.0.0.1', port=8080, scan_enabled=True):
 
     @login_manager.user_loader
     def load_user(user_id):
-        return User.query.get(int(user_id))
+        try:
+            result = User.query.get(int(user_id))
+        except User.DoesNotExist:
+            result = None
+        return result
 
     @server.route('/login', methods=['GET', 'POST'])
     def login():
         if request.method == 'POST':
-            username = request.form['username']
-            password = request.form['password']
-            user = User.query.filter_by(username=username).first()
-            if user and user.check_password(password):
-                login_user(user)
-                return redirect('/dashboard/')
+            try:
+                username = request.form['username']
+                password = request.form['password']
+                user = User.query.filter_by(username=username).first()
+                if user and user.check_password(password):
+                    print(user)
+                    login_user(user)
+                    return redirect('/dashboard/')
+            except:
+                pass
         return render_template('login.html')
 
     @server.route('/logout')
@@ -110,8 +118,11 @@ def start_dash(host='127.0.0.1', port=8080, scan_enabled=True):
     @server.route('/api/user_votes', methods=['GET'])
     @login_required
     def get_user_votes():
-        votes = Vote.query.filter_by(user_id=current_user.id).all()
-        votes_dict = {vote.meta_id: vote.vote for vote in votes}
+        try:
+            votes = Vote.query.filter_by(user_id=current_user.id).all()
+            votes_dict = {vote.meta_id: vote.vote for vote in votes}
+        except:
+            votes_dict = {}
         return jsonify(votes_dict)
 
     @server.route('/details/<meta_id>')
@@ -120,54 +131,45 @@ def start_dash(host='127.0.0.1', port=8080, scan_enabled=True):
 
     @server.route('/api/details/<meta_id>')
     def get_details_json(meta_id):
-        day = request.args.get('day', '2024-05-02')
-        condition = ds.field("meta_id") == meta_id
-        filtered_data = dm.get_report_dataset_new(day, condition=condition, single_output=True)
+        try:
+            day = request.args.get('day')
+            condition = ds.field("meta_id") == meta_id
+            filtered_data = dm.get_report_dataset_new(day, condition=condition, single_output=True)
+        except:
+            filtered_data = {}
         return jsonify(filtered_data)
 
     @server.route('/api/data_count', methods=['GET'])
     def get_data_count():
-        date_value = request.args.get('date', '2024-05-02')
-        total_entries = dm.get_total_entries_new(date_value)
+        try:
+            date_value = request.args.get('date', '2024-05-02')
+            total_entries = dm.get_total_entries_new(date_value)
+        except:
+            total_entries = -1
         return jsonify({'total_entries': total_entries})
 
     @server.route('/api/data/<page>', methods=['GET'])
     def get_details(page):
-        date_value = request.args.get('date', '2024-05-02')
-        page_size = 10
-        page_int = int(page)
-        start = (page_int - 1) * page_size
-        finish = page_int * page_size
+        try:
+            date_value = request.args.get('date', '2024-05-02')
+            page_size = 10
+            page_int = int(page)
+            start = (page_int - 1) * page_size
+            finish = page_int * page_size
 
-        df = dm.get_report_dataset_new(
-            date_value, 
-            columns=["data", "ip_str", "port", "city", "os", "org", "hostnames", "domains", "meta_id", "vulns_scores"], 
-            start=start, 
-            finish=finish,
-            sort_by='epss',
-            ascending=False
-        )
+            df = dm.get_report_dataset_new(
+                date_value, 
+                columns=["data", "ip_str", "port", "city", "os", "org", "hostnames", "domains", "meta_id", "vulns_scores"], 
+                start=start, 
+                finish=finish,
+                sort_by='epss',
+                ascending=False
+            )
 
-        partial = df.to_json(orient='records')
+            partial = df.to_json(orient='records')
+        except:
+            partial = {}
         return partial
-
-    @server.route('/signup', methods=['GET', 'POST'])
-    def register():
-        if request.method == 'POST':
-            username = request.form['username']
-            password = request.form['password']
-            
-            # Check if the user already exists
-            if User.query.filter_by(username=username).first():
-                return redirect('/signup')
-            
-            # If the user does not exist, then add them to the database
-            new_user = User(username=username)
-            new_user.set_password(password)
-            db.session.add(new_user)
-            db.session.commit()
-            return redirect('/login')
-        return render_template('signup.html')
     
     @server.route('/admin')
     @login_required
