@@ -8,7 +8,6 @@ import project.query4 as query4
 
 import project.base as base
 
-
 def register_layout(dm, username):
 
     tab1_content = dbc.Card(
@@ -54,19 +53,14 @@ def register_layout(dm, username):
         className="mt-3",
     )
 
+    nav_opts = [
+        dbc.DropdownMenuItem(username, header=True),
+        dbc.DropdownMenuItem("Profile", id="profile-menu-item"),
+        dbc.DropdownMenuItem("Logout", id="logout-menu-item"),
+    ]
+
     if username == "admin":
-        nav_opts = [
-            dbc.DropdownMenuItem(username, header=True),
-            dbc.DropdownMenuItem("Profile", href="#"),
-            dbc.DropdownMenuItem("Administrator", href="#"),
-            dbc.DropdownMenuItem("Logout", href="#"),
-        ]
-    else:
-        nav_opts = [
-            dbc.DropdownMenuItem(username, header=True),
-            dbc.DropdownMenuItem("Profile", href="#"),
-            dbc.DropdownMenuItem("Logout", href="#"),
-        ]
+        nav_opts.insert(2, dbc.DropdownMenuItem("Administrator", id="admin-menu-item"))
 
     navbar = dbc.Navbar(
                 dbc.Container(
@@ -106,7 +100,7 @@ def register_layout(dm, username):
 
     layout = html.Div(
         children=[
-
+            dcc.Location(id='url-redirect', refresh=True),
             navbar,
             html.Br(),
             dbc.Tabs(

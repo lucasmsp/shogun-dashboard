@@ -68,8 +68,6 @@ def start_dash(host='127.0.0.1', port=8080, scan_enabled=True):
         app.layout = register_layout(dm, current_user.username)
         return app.index()
 
-
-
     external_stylesheets = [
         {
             "href": (
@@ -170,6 +168,66 @@ def start_dash(host='127.0.0.1', port=8080, scan_enabled=True):
             db.session.commit()
             return redirect('/login')
         return render_template('signup.html')
+    
+    @server.route('/admin')
+    @login_required
+    def admin_page():
+        if current_user.username != 'admin':
+            return redirect(url_for('root'))
+        return render_template('admin.html')
+    
+    @server.route('/create_user', methods=['POST'])
+    @login_required
+    def create_user():
+        if current_user.username != 'admin':
+            return jsonify({'status': 'error', 'message': 'Unauthorized access'}), 403
+
+        data = request.get_json()
+        username = data.get('username')
+        password = data.get('password')
+
+        if User.query.filter_by(username=username).first():
+            return jsonify({'status': 'error', 'message': 'User already exists'}), 400
+
+        new_user = User(username=username)
+        new_user.set_password(password)
+        db.session.add(new_user)
+        db.session.commit()
+        return jsonify({'status': 'success', 'message': 'User created successfully!'}), 200
+    
+    @server.route('/get_users', methods=['GET'])
+    @login_required
+    def get_users():
+        if current_user.username != 'admin':
+            return jsonify({'status': 'error', 'message': 'Unauthorized access'}), 403
+
+        users = User.query.all()
+        users_list = [{'username': user.username} for user in users]
+        return jsonify(users_list), 200
+
+    @server.route('/change_password', methods=['POST'])
+    @login_required
+    def change_password():
+        if current_user.username != 'admin':
+            return jsonify({'status': 'error', 'message': 'Unauthorized access'}), 403
+
+        data = request.get_json()
+        username = data.get('username')
+        new_password = data.get('newPassword')
+
+        user = User.query.filter_by(username=username).first()
+        if not user:
+            return jsonify({'status': 'error', 'message': 'User not found'}), 404
+
+        user.set_password(new_password)
+        db.session.commit()
+        return jsonify({'status': 'success', 'message': 'Password changed successfully!'}), 200
+    
+    @server.route('/profile')
+    @login_required
+    def profile():
+        user = current_user
+        return render_template('profile.html', user=user)
 
     app = Dash(__name__, server=server, external_stylesheets=external_stylesheets)
     app.scan_enabled = scan_enabled 

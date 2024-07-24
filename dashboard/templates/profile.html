@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Profile</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        .profile-header {
+            text-align: center;
+            margin-top: 50px;
+        }
+        .profile-details {
+            margin-top: 30px;
+        }
+        .profile-container {
+            max-width: 600px;
+            margin: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container profile-container">
+        <div class="profile-header">
+            <h1>User Profile</h1>
+            <h2>{{ user.username }}</h2>
+        </div>
+        <div class="profile-details">
+            <ul class="list-group">
+                <li class="list-group-item"><strong>Username:</strong> {{ user.username }}</li>
+                <li class="list-group-item"><strong>User ID:</strong> {{ user.id }}</li>
+                <li class="list-group-item"><strong>Password Hash:</strong> {{ user.password }}</li>
+            </ul>
+        </div>
+        <div class="text-center mt-4">
+            <a href="/dashboard/" class="btn btn-primary">Back to Dashboard</a>
+            <a href="/logout" class="btn btn-danger">Logout</a>
+        </div>
+    </div>
+</body>
+</html>
