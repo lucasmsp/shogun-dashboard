@@ -1,13 +1,18 @@
 from deltalake import DeltaTable
-
+from croniter import croniter
 from datetime import datetime
 import pyarrow.dataset as ds
 import pandas as pd
+import numpy as np
+import glob
 import os
 import re
 
-import numpy as np
+RESULT_FOLDER = os.environ.get("RESULT_FOLDER", "/opt/output_data/")
+RELEASE_FILE = RESULT_FOLDER + "/RELEASE"
 
+CRON_EXPRESSION = os.environ.get("CRON_EXPRESSION", "*/1 * * * *")
+SHODAN_FOLDER = os.environ.get("SHODAN_FOLDER", "/opt/input_data/")
 RESULT_FOLDER = os.environ.get("RESULT_FOLDER", "/opt/output_data/")
 
 class DatasetManager(object):
@@ -43,7 +48,6 @@ class DatasetManager(object):
             last_timestamp = datetime.fromtimestamp(commit['timestamp'] / 1e3)
             return last_timestamp
         return None
-
 
     def retrive_commit(self, day):
         return self.available_datasets.get(day, -1)
@@ -126,5 +130,41 @@ class DatasetManager(object):
             except:
                 print(f"[ERROR][DatasetManager][remove_old_data] - error to vacuum file '{filepath}'",flush=True)
 
+    def get_current_date(self):
+        return datetime.today().strftime('%Y-%m-%d')
 
+    def new_file_is_found(self):
+        return os.path.isfile(filepath)
+
+    def commit_release(self, day):
+        with open(RELEASE_FILE, "w") as f:
+            f.write(day)
+
+    def get_release(self):
+        day = "19910615"
+        if os.path.exists(RELEASE_FILE):
+            with open(RELEASE_FILE, "r") as f:
+                day = f.read()
+        return day
+
+    def waiting_next_file(self):
+        next_date = self.get_release().replace("-", "")
+
+        filepath =  SHODAN_FOLDER + "/BR.{pattern}.json.bz2"
+        available_dates = [os.path.basename(s)[3:-9] for s in sorted(glob.glob(filepath.format(pattern="*")))]
+
+        for day in available_dates:
+            if next_date < day:
+                day = day[0:4]+"-"+day[4:6]+"-"+day[6:8]
+                print("[INFO][waiting_next_file] Found a new Shodan dump for day: ", day, flush=True)
+                return day
+        return None
+
+    def compute_next_dump(self, last_date_commit):
+        if last_date_commit:
+            scheduler = croniter(CRON_EXPRESSION, last_date_commit)
+            next_run = scheduler.get_next(datetime)
+        else:
+            next_run = datetime.now()
+        return next_run
 

@@ -11,4 +11,4 @@ if __name__ == '__main__':
     parser.add_argument('--scan', required=False, default=False, help="When true, the application will try to scan for new Shodan dumps (default, True).", type=lambda x: (str(x).lower() == 'true'))
     args, _ = parser.parse_known_args()
 
-    start_dash(host=args.host, port=args.port, scan_enabled=args.scan)
+    app = start_dash(host=args.host, port=args.port, scan_enabled=args.scan)

@@ -20,9 +20,6 @@
 <body>
   <nav class="navbar">
     <div class="navbar-brand">IP Details</div>
-    <div class="navbar-user">
-        Logged in as: <span id="current-user"></span>
-    </div>
 </nav>
 <div id="mapid"></div>
 <div class="container">
@@ -128,8 +125,6 @@
 });
 document.addEventListener('DOMContentLoaded', async (event) => {
     const meta_id = "{{ meta_id }}";
-    const current_user = "{{ user.username }}";
-    document.getElementById("current-user").textContent = current_user;
     let jsonData;
 
     var mymap = L.map('mapid', {

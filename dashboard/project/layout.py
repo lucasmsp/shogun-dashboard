@@ -6,8 +6,6 @@ import project.query2 as query2
 import project.query3 as query3
 import project.query4 as query4
 
-import project.base as base
-
 def register_layout(dm, username):
 
     tab1_content = dbc.Card(
@@ -92,7 +90,7 @@ def register_layout(dm, username):
                             label=username,
                             align_end=True
                         ),
-                        dcc.Interval(id='last_dump_check', interval=15 * 1000, n_intervals=0),
+                        dcc.Interval(id='last_dump_check', interval=60 * 1000, n_intervals=0),
                 ]),
                 color="dark",
                 dark=True,

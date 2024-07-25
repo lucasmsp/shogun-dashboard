@@ -6,8 +6,6 @@ import pandas as pd
 import plotly.express as px
 import dash_ag_grid as dag
 
-import project.base as base
-
 INPUT_DATA = '1'
 TAB_VIEW = "tab-0"
 
