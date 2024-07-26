@@ -81,6 +81,7 @@ async function renderTable(data) {
                 ipLink.href = `/details/${row['meta_id']}`;
                 ipLink.textContent = row[key];
                 ipLink.style.color = '#007bff';
+                ipLink.target = '_blank';
 
                 td.appendChild(ipLink);
             } else {

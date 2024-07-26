@@ -1,5 +1,6 @@
 from flask import Flask, redirect, url_for, request, render_template, jsonify
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
+from werkzeug.security import check_password_hash, generate_password_hash
 from project.models import db, User, Vote
 from project.layout import register_layout
 import pyarrow.dataset as ds
@@ -10,7 +11,7 @@ def start_flask(dm):
     Starts the custom flask server to handle authentication and the advanced queries.
     """
 
-    server = Flask("TLHOP/SAM Cybersecurity Dashboards", template_folder='./dashboard/templates', static_folder="./dashboard/templates/static")
+    server = Flask("TLHOP/SAM Cybersecurity Dashboards", template_folder='./templates', static_folder="./templates/static")
     # During the process of signing a cookie, the SECRET_KEY is used in a way similar to how a "salt" would be used to muddle a password before hashing it. 
     # Do not set the SECRET_KEY directly with a function that generates a different key each time it's called. Otherwise, each time your application is
     # restarted it will be given a new key, thus invalidating the previous. A good recipe to generate FLASK_SECRET is copy the content of `import os; os.urandom(24)`
@@ -83,6 +84,15 @@ def set_routes(server, db, login_manager, app):
     @login_required
     def serve_details_ip():
         return render_template('panel.html', user=current_user)
+    
+    ### FEATURE FLAG
+
+    @server.route('/profile2')
+    @login_required
+    def feature_flag():
+        return render_template('feature_flag_profile.html', user="teste")    
+    
+    ### FEATURE FLAG END
 
     @server.route('/save_vote', methods=['POST'])
     @login_required
@@ -200,6 +210,24 @@ def set_routes(server, db, login_manager, app):
         db.session.commit()
         return jsonify({'status': 'success', 'message': 'User created successfully!'}), 200
     
+    @server.route('/change_password', methods=['POST'])
+    @login_required
+    def change_password():
+        data = request.get_json()
+        current_password = data.get('currentPassword')
+        new_password = data.get('newPassword')
+
+        if not current_password or not new_password:
+            return jsonify({'message': 'Current and new passwords are required'}), 400
+
+        if not check_password_hash(current_user.password, current_password):
+            return jsonify({'message': 'Current password is incorrect'}), 400
+
+        current_user.password = generate_password_hash(new_password)
+        db.session.commit()
+
+        return jsonify({'message': 'Password successfully changed'}), 200
+    
     @server.route('/get_users', methods=['GET'])
     @login_required
     def get_users():
@@ -209,24 +237,6 @@ def set_routes(server, db, login_manager, app):
         users = User.query.all()
         users_list = [{'username': user.username} for user in users]
         return jsonify(users_list), 200
-
-    @server.route('/change_password', methods=['POST'])
-    @login_required
-    def change_password():
-        if current_user.username != 'admin':
-            return jsonify({'status': 'error', 'message': 'Unauthorized access'}), 403
-
-        data = request.get_json()
-        username = data.get('username')
-        new_password = data.get('newPassword')
-
-        user = User.query.filter_by(username=username).first()
-        if not user:
-            return jsonify({'status': 'error', 'message': 'User not found'}), 404
-
-        user.set_password(new_password)
-        db.session.commit()
-        return jsonify({'status': 'success', 'message': 'Password changed successfully!'}), 200
     
     @server.route('/profile')
     @login_required
