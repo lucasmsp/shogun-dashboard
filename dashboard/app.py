@@ -1,5 +1,6 @@
 import argparse
-from project.home import start_dash 
+
+from project.dash_server import app
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(prog="tlhop-dashboard",
@@ -11,4 +12,5 @@ if __name__ == '__main__':
     parser.add_argument('--scan', required=False, default=False, help="When true, the application will try to scan for new Shodan dumps (default, True).", type=lambda x: (str(x).lower() == 'true'))
     args, _ = parser.parse_known_args()
 
-    app = start_dash(host=args.host, port=args.port, scan_enabled=args.scan)
+    app.scan_enabled = args.scan 
+    app.run(debug=False, host=args.host, port=args.port, use_reloader=False)
