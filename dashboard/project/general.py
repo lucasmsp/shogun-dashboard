@@ -2,9 +2,8 @@ from dash.dependencies import Output, Input
 from dash.long_callback import DiskcacheLongCallbackManager
 
 from datetime import datetime
-import sys
-
 import project.computation as spark
+import sys
 
 ## Diskcache
 import diskcache
@@ -37,6 +36,7 @@ def register_callback_query(dm, app):
             if datetime.now() >= next_run:
                 day_fmt1 = dm.waiting_next_file()
                 if day_fmt1:
+                    day_fmt1 = day_fmt1[0]
                     msg = f"Processing dump {day_fmt1}. It may take a while..."
                 else:
                     msg = "Last dump: {last}.\nAt {new} none dump was found."
@@ -47,7 +47,7 @@ def register_callback_query(dm, app):
             msg = "Last dump: {last}".format(last=last_date_commit)
 
         dm.check_available_datasets()
-        options = sorted(list(dm.available_datasets.keys()), reverse=True)
+        options = dm.get_date_dumps()
         if not value:
             if len(options) > 0:
                 value = options[0]
@@ -69,18 +69,11 @@ def register_callback_query(dm, app):
         if "Processing dump" in msg:
             day_fmt1 = dm.waiting_next_file()
             if day_fmt1:
-                
+                day_fmt1 = day_fmt1[0]
                 last_date_commit = datetime.now()
-                print(f"[INFO][processing_new_dump] - Starting computation - day_fmt1: {day_fmt1}...", flush=True)
-
-                spark.run(day_str=day_fmt1)
-                dm.commit_release(day_fmt1)
-                dm.remove_old_data()
-                dm.check_available_datasets()
-
-                print("[INFO][processing_new_dump] - Finished", flush=True)
+                status = spark.start_processing(dm, day_fmt1)
+                # TODO: status
                 next_run = dm.compute_next_dump(last_date_commit)
-
                 last_date_commit = last_date_commit.strftime("%Y-%m-%d %H:%M:%S")
                 msg = "Last dump: {last}.\nChecking for new data at {new}".format(last=last_date_commit, new=next_run)
         return msg

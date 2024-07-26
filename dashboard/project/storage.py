@@ -9,8 +9,6 @@ import os
 import re
 
 RESULT_FOLDER = os.environ.get("RESULT_FOLDER", "/opt/output_data/")
-RELEASE_FILE = RESULT_FOLDER + "/RELEASE"
-
 CRON_EXPRESSION = os.environ.get("CRON_EXPRESSION", "*/1 * * * *")
 SHODAN_FOLDER = os.environ.get("SHODAN_FOLDER", "/opt/input_data/")
 RESULT_FOLDER = os.environ.get("RESULT_FOLDER", "/opt/output_data/")
@@ -41,6 +39,10 @@ class DatasetManager(object):
         print(f"[INFO][DatasetManager] Commits found: {self.available_datasets}")
 
     def last_commit(self):
+        """
+        Return the timestamp where the last dump was processed. 
+        This information is not directly related to the timestamp dump itself.
+        """
 
         if os.path.exists(self.tlhop_epss_report_path):
             dt = DeltaTable(self.tlhop_epss_report_path)
@@ -48,6 +50,21 @@ class DatasetManager(object):
             last_timestamp = datetime.fromtimestamp(commit['timestamp'] / 1e3)
             return last_timestamp
         return None
+    
+    def get_date_dumps(self):
+        """
+        """
+        dates = sorted(list(self.available_datasets.keys()), reverse=True)
+        return dates
+    
+    def last_dump_date(self):
+        """
+        Returns the timestamp of the newest dump
+        """
+        dates = sorted(list(self.available_datasets.keys()), reverse=True)
+        if len(dates) > 0:
+            return dates[0]
+        return "1991-06-15"
 
     def retrive_commit(self, day):
         return self.available_datasets.get(day, -1)
@@ -130,34 +147,21 @@ class DatasetManager(object):
             except:
                 print(f"[ERROR][DatasetManager][remove_old_data] - error to vacuum file '{filepath}'",flush=True)
 
-    def get_current_date(self):
-        return datetime.today().strftime('%Y-%m-%d')
-
-    def new_file_is_found(self):
-        return os.path.isfile(filepath)
-
-    def commit_release(self, day):
-        with open(RELEASE_FILE, "w") as f:
-            f.write(day)
-
-    def get_release(self):
-        day = "19910615"
-        if os.path.exists(RELEASE_FILE):
-            with open(RELEASE_FILE, "r") as f:
-                day = f.read()
-        return day
-
-    def waiting_next_file(self):
-        next_date = self.get_release().replace("-", "")
+    def waiting_next_file(self, mode="latest"):
+        next_date = self.last_dump_date().replace("-", "")
 
         filepath =  SHODAN_FOLDER + "/BR.{pattern}.json.bz2"
         available_dates = [os.path.basename(s)[3:-9] for s in sorted(glob.glob(filepath.format(pattern="*")))]
 
-        for day in available_dates:
-            if next_date < day:
-                day = day[0:4]+"-"+day[4:6]+"-"+day[6:8]
-                print("[INFO][waiting_next_file] Found a new Shodan dump for day: ", day, flush=True)
-                return day
+        found_files = [day[0:4]+"-"+day[4:6]+"-"+day[6:8] for day in available_dates if next_date < day]
+        if len(found_files) > 0:
+            if mode == "all":
+                print("[INFO][waiting_next_file] Found a new Shodan dump for day: ", found_files, flush=True)
+                return found_files
+            elif mode == "latest":
+                print("[INFO][waiting_next_file] Found a new Shodan dump for day: ", found_files[-1], flush=True)
+                return [found_files[-1]]
+
         return None
 
     def compute_next_dump(self, last_date_commit):

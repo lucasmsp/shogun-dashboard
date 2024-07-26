@@ -20,6 +20,21 @@ def run_dummy(timestamp):
         f.write(str(timestamp))
 
 
+def start_processing(dm, day_fmt1):
+    
+    try:
+        print(f"[INFO][start_processing] - Starting computation - day_fmt1: {day_fmt1}...", flush=True)
+
+        run(day_str=day_fmt1)
+        dm.remove_old_data()
+        dm.check_available_datasets()
+
+        print("[INFO][start_processing] - Finished", flush=True)
+    except:
+        return False
+    return True
+    
+
 def run(day_str, first_execution=False):
     from pyspark.sql import SparkSession
     from tlhop.algorithms import ShodanVulnerabilitiesBanners
