@@ -266,6 +266,28 @@ def set_routes(server, db, login_manager, app):
 
         return jsonify({'message': 'Password successfully changed'}), 200
     
+    @server.route('/admin_change_password', methods=['POST'])
+    @login_required
+    def admin_change_password():
+        if current_user.username != 'admin':
+            return jsonify({'status': 'error', 'message': 'Unauthorized access'}), 403
+
+        data = request.get_json()
+        username = data.get('username')
+        new_password = data.get('newPassword')
+
+        if not username or not new_password:
+            return jsonify({'status': 'error', 'message': 'Username and new password are required'}), 400
+
+        user = User.query.filter_by(username=username).first()
+        if not user:
+            return jsonify({'status': 'error', 'message': 'User does not exist'}), 400
+
+        user.password = generate_password_hash(new_password)
+        db.session.commit()
+
+        return jsonify({'status': 'success', 'message': f'Password for user {username} successfully changed'}), 200
+    
     # User deletion
     @server.route('/delete_user', methods=['POST'])
     @login_required
