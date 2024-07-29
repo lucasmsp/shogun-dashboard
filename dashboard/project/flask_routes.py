@@ -192,8 +192,6 @@ def set_routes(server, db, login_manager, app):
     def get_data_count():
         try:
             date_value = global_date()
-            print("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
-            print(date_value)
             total_entries = dm.get_total_entries_new(date_value)
         except:
             total_entries = -1
