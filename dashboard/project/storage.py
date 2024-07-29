@@ -1,15 +1,18 @@
 from deltalake import DeltaTable
-
-from datetime import datetime
+from croniter import croniter
+from datetime import datetime, timedelta
 import pyarrow.dataset as ds
 import pandas as pd
+import numpy as np
+import glob
 import os
 import re
 
-import numpy as np
-
 RESULT_FOLDER = os.environ.get("RESULT_FOLDER", "/opt/output_data/")
-
+CRON_EXPRESSION = os.environ.get("CRON_EXPRESSION", "*/1 * * * *")
+SHODAN_FOLDER = os.environ.get("SHODAN_FOLDER", "/opt/input_data/")
+RESULT_FOLDER = os.environ.get("RESULT_FOLDER", "/opt/output_data/")
+RETENTION_VACUUM_HOURS = 24*7
 class DatasetManager(object):
     
     def __init__(self):
@@ -20,15 +23,30 @@ class DatasetManager(object):
 
     def check_available_datasets(self):
         available_datasets = {}
+        last_vacuum_timestamp = None
+
         if os.path.exists(self.tlhop_epss_report_path):
             dt = DeltaTable(self.tlhop_epss_report_path)
             for commit in dt.history():
-                if 'userMetadata' in commit:
-                    day = re.findall("\d+", os.path.basename(commit['userMetadata']))[0]
-                    date_commit = day[0:4]+"-"+day[4:6]+"-"+day[6:8]
-                else:
-                    date_commit = datetime.fromtimestamp(commit['timestamp'] / 1e3).strftime("%Y-%m-%d")
-                available_datasets[date_commit] = commit['version']
+                if commit.get("operation", "") == "WRITE":
+                    timestamp_commit = datetime.fromtimestamp(commit['timestamp'] / 1e3)
+
+                    if 'userMetadata' in commit:
+                        day = re.findall("\d+", os.path.basename(commit['userMetadata']))[0]
+                        date_commit = day[0:4]+"-"+day[4:6]+"-"+day[6:8]
+                    else:
+                        date_commit = timestamp_commit.strftime("%Y-%m-%d")
+
+                    if not last_vacuum_timestamp:   
+                        available_datasets[date_commit] = commit['version']
+                    elif timestamp_commit > last_vacuum_timestamp:
+                        available_datasets[date_commit] = commit['version']
+                    else:
+                        # print(f"[date_commit] {timestamp_commit} (dump: {date_commit}) is already removed.")
+                        pass
+
+                elif (commit.get("operation", "") == "VACUUM END") and (not last_vacuum_timestamp):
+                    last_vacuum_timestamp = datetime.fromtimestamp(commit['timestamp'] / 1e3) - timedelta(hours=RETENTION_VACUUM_HOURS)
         else:
             print(f"[ERROR][DatasetManager] File '{self.tlhop_epss_report_path}' not found")
 
@@ -36,14 +54,33 @@ class DatasetManager(object):
         print(f"[INFO][DatasetManager] Commits found: {self.available_datasets}")
 
     def last_commit(self):
+        """
+        Return the timestamp where the last dump was processed. 
+        This information is not directly related to the timestamp dump itself.
+        """
 
         if os.path.exists(self.tlhop_epss_report_path):
             dt = DeltaTable(self.tlhop_epss_report_path)
-            commit = dt.history()[0]
-            last_timestamp = datetime.fromtimestamp(commit['timestamp'] / 1e3)
-            return last_timestamp
+            for commit in dt.history():
+                if commit.get("operation", "") == "WRITE":
+                    last_timestamp = datetime.fromtimestamp(commit['timestamp'] / 1e3)
+                    return last_timestamp
         return None
-
+    
+    def get_date_dumps(self):
+        """
+        """
+        dates = sorted(list(self.available_datasets.keys()), reverse=True)
+        return dates
+    
+    def last_dump_date(self):
+        """
+        Returns the timestamp of the newest dump
+        """
+        dates = sorted(list(self.available_datasets.keys()), reverse=True)
+        if len(dates) > 0:
+            return dates[0]
+        return "1991-06-15"
 
     def retrive_commit(self, day):
         return self.available_datasets.get(day, -1)
@@ -122,9 +159,32 @@ class DatasetManager(object):
             print(f"[INFO][DatasetManager][remove_old_data] - checking file {filepath}", flush=True)
             try:
                 dt = DeltaTable(filepath)
-                dt.vacuum(retention_hours=24*7, dry_run=False,  enforce_retention_duration=False)                
+                dt.vacuum(retention_hours=RETENTION_VACUUM_HOURS, dry_run=False,  enforce_retention_duration=False)                
             except:
                 print(f"[ERROR][DatasetManager][remove_old_data] - error to vacuum file '{filepath}'",flush=True)
 
+    def waiting_next_file(self, mode="latest"):
+        next_date = self.last_dump_date().replace("-", "")
 
+        filepath =  SHODAN_FOLDER + "/BR.{pattern}.json.bz2"
+        available_dates = [os.path.basename(s)[3:-9] for s in sorted(glob.glob(filepath.format(pattern="*")))]
+
+        found_files = [day[0:4]+"-"+day[4:6]+"-"+day[6:8] for day in available_dates if next_date < day]
+        if len(found_files) > 0:
+            if mode == "all":
+                print("[INFO][waiting_next_file] Found a new Shodan dump for day: ", found_files, flush=True)
+                return found_files
+            elif mode == "latest":
+                print("[INFO][waiting_next_file] Found a new Shodan dump for day: ", found_files[-1], flush=True)
+                return [found_files[-1]]
+
+        return None
+
+    def compute_next_dump(self, last_date_commit):
+        if last_date_commit:
+            scheduler = croniter(CRON_EXPRESSION, last_date_commit)
+            next_run = scheduler.get_next(datetime)
+        else:
+            next_run = datetime.now()
+        return next_run
 

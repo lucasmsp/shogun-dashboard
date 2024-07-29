@@ -21,6 +21,10 @@ async function fetchUserVotes() {
 }
 
 async function fetchData(page) {
+    // var e = document.getElementById("date-picker-single");
+    // const current_date = e.options[e.selectedIndex].text;
+    // console.error("Current Date: ",current_date)
+
     const response = await fetch(`/api/data/${page}`);
     const result = await response.json();
     return result;
@@ -77,6 +81,7 @@ async function renderTable(data) {
                 ipLink.href = `/details/${row['meta_id']}`;
                 ipLink.textContent = row[key];
                 ipLink.style.color = '#007bff';
+                ipLink.target = '_blank';
 
                 td.appendChild(ipLink);
             } else {

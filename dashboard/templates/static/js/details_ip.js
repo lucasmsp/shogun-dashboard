@@ -3,8 +3,6 @@ $(document).ready(function() {
 });
 document.addEventListener('DOMContentLoaded', async (event) => {
     const meta_id = "{{ meta_id }}";
-    const current_user = "{{ user.username }}";
-    document.getElementById("current-user").textContent = current_user;
     let jsonData;
 
     var mymap = L.map('mapid', {
@@ -35,19 +33,19 @@ document.addEventListener('DOMContentLoaded', async (event) => {
     }
 
     function getEntries(data) {
-const table = document.getElementById('dataTable');
-const thead = table.querySelector('thead tr');
-const tbody = table.querySelector('tbody');
-thead.innerHTML = '';  // Clear existing headers
-tbody.innerHTML = '';  // Clear existing rows
+        const table = document.getElementById('dataTable');
+        const thead = table.querySelector('thead tr');
+        const tbody = table.querySelector('tbody');
+        thead.innerHTML = '';  // Clear existing headers
+        tbody.innerHTML = '';  // Clear existing rows
 
-for (const key in data) {
-if (data.hasOwnProperty(key) && key !== 'vulns') {
-  const th = document.createElement('th');
-  th.textContent = capitalizeFirstLetter(key);
-  thead.appendChild(th);
-}
-}
+        for (const key in data) {
+            if (data.hasOwnProperty(key) && key !== 'vulns') {
+                const th = document.createElement('th');
+                th.textContent = capitalizeFirstLetter(key);
+                thead.appendChild(th);
+            }
+        }
 
 const rowCount = Math.max(...Object.values(data).map(array => Array.isArray(array) ? array.length : 0));
 let latitude = null;

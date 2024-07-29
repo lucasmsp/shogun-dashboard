@@ -9,8 +9,6 @@ import plotly.graph_objs as go
 import pandas as pd
 import re
 
-import project.base as base
-
 
 INPUT_DATA_V2 = '2'
 TAB_VIEW = "tab-1"
