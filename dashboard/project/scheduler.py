@@ -1,7 +1,7 @@
 from project.storage import DatasetManager
-import project.computation as spark
-
+from project.computation import start_processing
 from datetime import datetime
+import multiprocessing
 import argparse
 import time
 
@@ -26,7 +26,9 @@ def external_scheduler(mode="latest"):
                 for day_fmt1 in new_files:
                     new_files_exists = True
                     print(f"[INFO][external_scheduler] - Processing file {day_fmt1}")
-                    status = spark.start_processing(dm, day_fmt1)
+                    proc = multiprocessing.Process(target=start_processing, args=(dm, day_fmt1))
+                    proc.start()
+                    proc.join()
 
             if not new_files_exists:
                 print(f"[INFO][external_scheduler] - New files not found. Retrying in 60 seconds.")
