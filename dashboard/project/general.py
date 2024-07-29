@@ -75,7 +75,7 @@ def register_callback_query(dm, app):
                 # TODO: status
                 next_run = dm.compute_next_dump(last_date_commit)
                 last_date_commit = last_date_commit.strftime("%Y-%m-%d %H:%M:%S")
-                msg = "Last dump: {last}.\nChecking for new data at {new}".format(last=last_date_commit, new=next_run)
+                msg = "Last dump: {last}.".format(last=last_date_commit)
         return msg
 
 
