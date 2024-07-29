@@ -42,7 +42,8 @@ def register_layout(dm, username):
                 children=[
                     html.Iframe(
                         src="/details_ip",
-                        style={"width": "100%", "height": "2000px"}
+                        style={"width": "100%", "height": "2000px"},
+                        id="details-iframe"
                     )
                 ],
                 className="wrapper_table"
@@ -139,7 +140,8 @@ def register_layout(dm, username):
                         'padding': '30px',              # Add some padding for spacing
                         'background-color': '#f2f2f2'   # Set a background color
                 }
-            )
+            ),
+            dcc.Store(id='store-date')
         ]
     )
     return layout

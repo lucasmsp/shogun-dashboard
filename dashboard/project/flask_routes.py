@@ -4,8 +4,19 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from project.models import db, User, Vote
 from project.layout import register_layout
 import pyarrow.dataset as ds
+import pandas as pd
 import os
 from datetime import datetime
+
+def global_date():
+    file_path = os.path.join('date', 'selected_date.csv')
+    if not os.path.exists('date'):
+        os.makedirs('date')
+    if os.path.exists(file_path):
+        df = pd.read_csv(file_path)
+        if not df.empty and 'date' in df.columns:
+            return df['date'].iloc[0].strip()
+    return None
 
 def start_flask(dm):
     """
@@ -169,7 +180,7 @@ def set_routes(server, db, login_manager, app):
             print(request.form)
             print(request.data)
 
-            day = request.args.get('date')
+            day = global_date()
             condition = ds.field("meta_id") == meta_id
             filtered_data = dm.get_report_dataset_new(day, condition=condition, single_output=True)
         except:
@@ -180,8 +191,9 @@ def set_routes(server, db, login_manager, app):
     @login_required
     def get_data_count():
         try:
-            date_value = request.args.get('date')
-            date_value = "2024-06-26"
+            date_value = global_date()
+            print("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+            print(date_value)
             total_entries = dm.get_total_entries_new(date_value)
         except:
             total_entries = -1
@@ -191,8 +203,7 @@ def set_routes(server, db, login_manager, app):
     @login_required
     def get_details(page):
         try:
-            date_value = request.args.get('date')
-            date_value = "2024-06-26"
+            date_value = global_date()
             page_size = 10
             page_int = int(page)
             start = (page_int - 1) * page_size

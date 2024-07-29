@@ -1,5 +1,6 @@
-from dash import Input, Output, callback_context
-
+from dash import Input, Output, callback_context, State
+import pandas as pd
+import os
 
 def register_callback_query(dm, app):
 
@@ -26,3 +27,35 @@ def register_callback_query(dm, app):
             return "/profile"
         
         return None
+    
+    @app.callback(
+        Output('store-date', 'data'),
+        Input('date-picker-single', 'value')
+    )
+    def global_date(date_value):
+        if date_value:
+            file_path = os.path.join('date', 'selected_date.csv')
+            if not os.path.exists('date'):
+                os.makedirs('date')
+            
+            df = pd.DataFrame({'date': [date_value]})
+            
+            df.to_csv(file_path, index=False, mode='w')
+            
+            if os.path.exists(file_path):
+                print(f"File found: {file_path}")
+                content = pd.read_csv(file_path)
+                print(f"File content:\n{content}")
+            else:
+                print("File not found.")
+            
+            return date_value
+        
+    @app.callback(
+        Output('details-iframe', 'src'),
+        Input('date-picker-single', 'value')
+    )
+    def update_iframe_src(selected_date):
+        if selected_date is not None:
+            return f"/details_ip?date={selected_date}"
+        return "/details_ip"
