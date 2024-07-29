@@ -1,5 +1,6 @@
 body {
     font-family: Arial, sans-serif;
+    zoom: 88%;
 }
 .scale-down {
     transform: scale(0.75);
@@ -56,18 +57,31 @@ white-space: pre-line;
 text-align: left;
 line-height: 1.8;
 }
-.cve-tag {
-display: inline-block;
-padding: 8px;
-margin: 2px;
-font-size: 10px;
-font-weight: bold;
-color: #fff;
-border-radius: 2px;
-text-decoration: none;
-text-align: center;
-position: relative;
+
+.domain-tag, .hostname-tag {
+    display: inline-block;
+    padding: 8px;
+    font-size: 18px;
+    color: #fff;
+    border-radius: 2px;
+    text-decoration: none;
+    text-align: center;
+    position: relative;
 }
+
+.cve-tag {
+    display: inline-block;
+    padding: 8px;
+    margin: 2px;
+    font-size: 10px;
+    font-weight: bold;
+    color: #fff;
+    border-radius: 2px;
+    text-decoration: none;
+    text-align: center;
+    position: relative;
+}
+
 .low-score {
 background-color: #4CAF50; 
 }
@@ -80,6 +94,9 @@ background-color: #FF9800;
 .critical-score {
 background-color: #f44336; 
 }
+
+.domain-tag { background-color: #007bff; }
+.hostname-tag { background-color: #007bff; }
 
 .show-more-btn {
 display: block;

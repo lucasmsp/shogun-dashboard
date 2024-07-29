@@ -6,7 +6,12 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/2.0.8/js/dataTables.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='dataTables.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='details_ip.css') }}">
     <title>IP Details</title>
     <style>
       
@@ -18,108 +23,131 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='details_ip.css') }}">
 </head>
 <body>
-  <nav class="navbar">
-    <div class="navbar-brand">IP Details</div>
-</nav>
-<div id="mapid"></div>
-<div class="container">
-    <div class="two-buttons">
-        <div class="ip-info-wrapper">
-            <p id="ip_str"></p>
-            <p id="timestamp"></p>
-        </div>
-    </div>
-    <div class="ip-score-wrapper">
-        <p id="score">Score: n</p>
-        <button class="checkmark-btn blue" id="up-btn">⬆</button>
-        <button class="checkmark-btn" id="checkmark-btn">✓</button>
-        <button class="checkmark-btn orange" id="down-btn">⬇</button>
-        <div id="vote-message" class="vote-message"></div>
-    </div>
-    <div class="separator-bar"></div>
-</div>
-<div class="container">
-    <div class="info-container">
-        <div class="info-title">
-            <i class="fas fa-info-circle"></i>
-            <h2>IP Info</h2>
-        </div>
-        <div class="info-content">
-            <div><span class="label">City:</span> <span class="label-city">N/A</span></div>
-            <hr>
-            <div><span class="label">Organization:</span> <span class="label-organization">N/A</span></div>
-            <hr>
-            <div><span class="label">Operating System:</span> <span class="label-operating-system">N/A</span></div>
-            <hr>
-            <div><span class="label">Hostnames:</span> <span class="label-hostnames">N/A</span></div>
-            <hr>
-            <div><span class="label">Domains:</span> <span class="label-domains">N/A</span></div>
-            <div id="cve-tags-container"></div>
-            <button id="show-more-btn" class="show-more-btn">Show More</button>
-        </div>
-    </div>
-    <div class="info-container">
-        <div class="info-title">
-            <i class="fas fa-database"></i>
-            <h2>Data</h2>
-        </div>
-        <div class="info-content">
-            <p id="data"></p>
-        </div>
-    </div>
-</div>
-<div class="container">
-    <div class="info-container info-container-graphs">
-        <div class="info-title">
-            <i class="fas fa-chart-bar"></i>
-            <h2>Charts</h2>
-        </div>
-        <div class="info-content">
-            <div class="graph-navigation">
-                <button id="prev-graph-btn" class="nav-arrow">&lt;</button>
-                <div class="graph-container" id="graphs-container">
-                    <div class="graph-wrapper" id="cvss-graph-wrapper">
-                        <div class="graph-content">
-                            <canvas id="barCVSS"></canvas>
-                        </div>
-                        <div class="info-container" id="infoContainer">
-                            <h3></h3>
-                            <p></p>
-                        </div>
-                    </div>
-                    <div class="graph-wrapper" id="epss-graph-wrapper">
-                        <div class="graph-content">
-                            <canvas id="barEPSS"></canvas>
-                        </div>
-                        <div class="info-container2" id="infoContainer2">
-                            <h3></h3>
-                            <p></p>
-                        </div>
-                    </div>
-                </div>
-                <button id="next-graph-btn" class="nav-arrow">&gt;</button>
+    <nav class="navbar">
+        <div class="navbar-brand">IP Details</div>
+      </nav>
+      <div id="mapid"></div>
+      <div class="container">
+          <div class="two-buttons">
+              <div class="ip-info-wrapper">
+                  <p id="ip_str"></p>
+                  <p id="timestamp"></p>
+              </div>
+          </div>
+          <div class="ip-score-wrapper">
+              <p id="score">Score: 1</p>
+              <button class="checkmark-btn blue" id="up-btn">⬆</button>
+              <button class="checkmark-btn" id="checkmark-btn">✓</button>
+              <button class="checkmark-btn orange" id="down-btn">⬇</button>
+              <div id="vote-message" class="vote-message"></div>
+          </div>
+          <div class="separator-bar"></div>
+      </div>
+      <div class="container">
+          <div class="info-container">
+              <div class="info-title">
+                  <i class="fas fa-info-circle"></i>
+                  <h2>IP Info</h2>
+              </div>
+              <div class="info-content">
+                  <div><span class="label">City:</span> <span class="label-city">N/A</span></div>
+                  <hr>
+                  <div><span class="label">Organization:</span> <span class="label-organization">N/A</span></div>
+                  <hr>
+                  <div><span class="label">Operating System:</span> <span class="label-operating-system">N/A</span></div>
+                  <hr>
+                  <div><span class="label">Hostnames:</span></div>
+                  <div id="hostnames-container"></div>
+                  <hr>
+                  <div><span class="label">Domains:</span></div>
+                  <div id="domains-container"></div>
+                  <div id="cve-tags-container"></div>
+                  <button id="show-more-btn" class="show-more-btn">Show More</button>
+              </div>
+          </div>
+          <div class="info-container">
+              <div class="info-title">
+                  <i class="fas fa-database"></i>
+                  <h2>Data</h2>
+              </div>
+              <div class="info-content">
+                  <p id="data"></p>
+              </div>
+          </div>
+      </div>
+      <div class="container">
+          <div class="info-container">
+              <div class="info-title">
+                  <i class="fas fa-network-wired"></i>
+                  <h2>HTTP</h2>
+              </div>
+              <div class="info-content">
+                  <iframe id="data-iframe" style="width:100%; height:500px;" frameborder="0"></iframe>
+              </div>
+          </div>
+      </div>
+      <div class="container">
+        <div class="info-container">
+            <div class="info-title">
+                <i class="fas fa-code"></i>
+                <h2>Raw JSON</h2>
+            </div>
+            <div class="info-content">
+                <pre id="raw-json-content" style="white-space: pre-wrap;"></pre>
             </div>
         </div>
     </div>
-</div>
-
-<div class="table-wrapper">
-    <div class="table-container">
-        <table id="dataTable">
-            <thead>
-                <tr>
-                    <th>CVE ID</th>
-                    <th>Description</th>
-                    <th>CVSS Score</th>
-                    <th>EPSS</th>
-                </tr>
-            </thead>
-            <tbody id="tableBody">
-
-            </tbody>
-        </table>
+    <div class="container" style="display: none;">
+        <div class="info-container info-container-graphs">
+            <div class="info-title">
+                <i class="fas fa-chart-bar"></i>
+                <h2>Charts</h2>
+            </div>
+            <div class="info-content">
+                <div class="graph-navigation">
+                    <button id="prev-graph-btn" class="nav-arrow">&lt;</button>
+                    <div class="graph-container" id="graphs-container">
+                        <div class="graph-wrapper" id="cvss-graph-wrapper">
+                            <div class="graph-content">
+                                <canvas id="barCVSS"></canvas>
+                            </div>
+                            <div class="info-container" id="infoContainer">
+                                <h3></h3>
+                                <p></p>
+                            </div>
+                        </div>
+                        <div class="graph-wrapper" id="epss-graph-wrapper">
+                            <div class="graph-content">
+                                <canvas id="barEPSS"></canvas>
+                            </div>
+                            <div class="info-container2" id="infoContainer2">
+                                <h3></h3>
+                                <p></p>
+                            </div>
+                        </div>
+                    </div>
+                    <button id="next-graph-btn" class="nav-arrow">&gt;</button>
+                </div>
+            </div>
+        </div>
     </div>
-</div>
+    <div class="table-wrapper" style="display: none;">
+        <div class="table-container">
+            <table id="dataTable">
+                <thead>
+                    <tr>
+                        <th>CVE ID</th>
+                        <th>Description</th>
+                        <th>CVSS Score</th>
+                        <th>EPSS</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+
+                </tbody>
+            </table>
+        </div>
+    </div>
 <script>$(document).ready(function() {
     $('#vulnerabilitiesTable').DataTable();
 });
@@ -154,78 +182,191 @@ document.addEventListener('DOMContentLoaded', async (event) => {
         console.error('There was a problem with the fetch operation:', error);
     }
 
-    function getEntries(data) {
-const table = document.getElementById('dataTable');
-const thead = table.querySelector('thead tr');
-const tbody = table.querySelector('tbody');
-thead.innerHTML = '';  // Clear existing headers
-tbody.innerHTML = '';  // Clear existing rows
-
-for (const key in data) {
-if (data.hasOwnProperty(key) && key !== 'vulns') {
-  const th = document.createElement('th');
-  th.textContent = capitalizeFirstLetter(key);
-  thead.appendChild(th);
-}
-}
-
-const rowCount = Math.max(...Object.values(data).map(array => Array.isArray(array) ? array.length : 0));
-let latitude = null;
-let longitude = null;
-for (let i = 0; i < rowCount; i++) {
-const tr = document.createElement('tr');
-for (const key in data) {
-  if (key == 'ip_str') {
-    document.getElementById("ip_str").textContent = data[key];
-  }
-  if (key == 'data') {
-    document.getElementById("data").textContent = data[key];
-  }
-  if (key == 'timestamp') {
-    document.getElementById("timestamp").textContent = data[key];
-  }
-  if (key == 'latitude') {
-    latitude = data[key];
-    }
-    if (key == 'longitude') {
-        longitude = data[key];
-    }
-if (Array.isArray(latitude)) {
-    latitude = latitude[0];
-    }
-    if (Array.isArray(longitude)) {
-    longitude = longitude[0];
+    // Retrieve vote
+    try {
+        const voteResponse = await fetch(`/api/user_vote_single?meta_id=${meta_id}`);
+        if (!voteResponse.ok) {
+            throw new Error('Network response was not ok');
+        }
+        const voteData = await voteResponse.json();
+        if (voteData.vote !== undefined) {
+            let voteText;
+            switch (voteData.vote) {
+                case -1:
+                    voteText = "down";
+                    $('#down-btn').addClass('active');
+                    break;
+                case 0:
+                    voteText = "ok";
+                    $('#checkmark-btn').addClass('active');
+                    break;
+                case 1:
+                    voteText = "up";
+                    $('#up-btn').addClass('active');
+                    break;
+                default:
+                    voteText = "unknown";
+            }
+        } else {
+        }
+    } catch (error) {
+        console.error('There was a problem with the fetch operation:', error);
     }
 
-  if (latitude !== null && longitude !== null) {
-    console.log(latitude, longitude);
-    const marker = L.marker([latitude, longitude]).addTo(mymap);
-    mymap.setView([latitude, longitude], 8);
-  }
+    const buttons = document.querySelectorAll('.checkmark-btn');
+    const voteMessage = document.getElementById('vote-message');
 
+    buttons.forEach(button => {
+        button.addEventListener('click', async () => {
+            const voteValue = button.id === 'up-btn' ? 1 : button.id === 'checkmark-btn' ? 0 : -1;
 
-  if (data.hasOwnProperty(key) && key !== 'vulns') {
-    const td = document.createElement('td');
-    const array = data[key];
-    if (Array.isArray(array) && i < array.length) {
-      if (typeof array[i] === 'object') {
-        td.innerHTML = `<pre>${JSON.stringify(array[i], null, 2)}</pre>`;
-      } else {
-        td.textContent = array[i];
-      }
+            if (button.classList.contains('active')) {
+                button.classList.remove('active');
+                await saveVote(meta_id, null);
+                return;
+            }
+            buttons.forEach(btn => btn.classList.remove('active'));
+            button.classList.add('active');
+
+            await saveVote(meta_id, voteValue);
+
+            let voteText;
+            switch (voteValue) {
+                case 1:
+                    voteText = "up";
+                    break;
+                case 0:
+                    voteText = "ok";
+                    break;
+                case -1:
+                    voteText = "down";
+                    break;
+            }
+        });
+    });
+
+    async function saveVote(meta_id, voteValue) {
+        try {
+            const response = await fetch('/save_vote', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ meta_id, vote: voteValue }),
+            });
+            const result = await response.json();
+            if (result.status !== 'success') {
+                console.error('Failed to save vote:', result.message);
+            }
+        } catch (error) {
+            console.error('Error saving vote:', error);
+        }
+    }
+
+function getEntries(data) {
+    const table = document.getElementById('dataTable');
+    const thead = table.querySelector('thead tr');
+    const tbody = table.querySelector('tbody');
+    thead.innerHTML = '';  // Clear existing headers
+    tbody.innerHTML = '';  // Clear existing rows
+
+    for (const key in data) {
+        if (data.hasOwnProperty(key) && key !== 'vulns') {
+            const th = document.createElement('th');
+            th.textContent = capitalizeFirstLetter(key);
+            thead.appendChild(th);
+        }
+    }
+
+    const rowCount = Math.max(...Object.values(data).map(array => Array.isArray(array) ? array.length : 0));
+    let latitude = null;
+    let longitude = null;
+    for (let i = 0; i < rowCount; i++) {
+        const tr = document.createElement('tr');
+        for (const key in data) {
+            if (key == 'ip_str') {
+                document.getElementById("ip_str").textContent = data[key];
+            }
+            if (key == 'data') {
+                document.getElementById("data").textContent = data[key];
+            }
+            if (key == 'timestamp') {
+                document.getElementById("timestamp").textContent = data[key];
+            }
+            if (key == 'latitude') {
+                latitude = data[key];
+            }
+            if (key == 'longitude') {
+                longitude = data[key];
+            }
+            if (key === 'http') {
+                console.log('Setting iframe src to:', data[key]);
+                // Properly decode HTML content and set it inside the iframe
+                const iframe = document.getElementById("data-iframe");
+                iframe.contentWindow.document.open();
+                iframe.contentWindow.document.write(data[key]);
+                iframe.contentWindow.document.close();
+            }
+            if (Array.isArray(latitude)) {
+                latitude = latitude[0];
+            }
+            if (Array.isArray(longitude)) {
+                longitude = longitude[0];
+            }
+            if (latitude !== null && longitude !== null) {
+                console.log(latitude, longitude);
+                const marker = L.marker([latitude, longitude]).addTo(mymap);
+                mymap.setView([latitude, longitude], 8);
+            }
+            if (data.hasOwnProperty(key) && key !== 'vulns') {
+                const td = document.createElement('td');
+                const array = data[key];
+                if (Array.isArray(array) && i < array.length) {
+                    if (typeof array[i] === 'object') {
+                        td.innerHTML = `<pre>${JSON.stringify(array[i], null, 2)}</pre>`;
+                    } else {
+                        td.textContent = array[i];
+                    }
+                } else {
+                    td.textContent = 'N/A';
+                }
+                tr.appendChild(td);
+            }
+        }
+        tbody.appendChild(tr);
+    }
+
+    document.querySelector('.info-content .label-organization').textContent = data.org_clean || 'N/A';
+    document.querySelector('.info-content .label-operating-system').textContent = data.operating_system || 'N/A';
+
+    const hostnamesContainer = document.getElementById('hostnames-container');
+    hostnamesContainer.innerHTML = '';  // Clear previous tags
+    if (data.hostnames) {
+        data.hostnames.forEach(hostname => {
+            const hostnameTag = document.createElement('span');
+            hostnameTag.className = 'hostname-tag';
+            hostnameTag.textContent = hostname;
+            hostnamesContainer.appendChild(hostnameTag);
+        });
     } else {
-      td.textContent = 'N/A';
+        hostnamesContainer.textContent = 'N/A';
     }
-    tr.appendChild(td);
-  }
-}
-tbody.appendChild(tr);
-}
 
-document.querySelector('.info-content .label-organization').textContent = data.org_clean || 'N/A';
-document.querySelector('.info-content .label-operating-system').textContent = data.operating_system || 'N/A';
-document.querySelector('.info-content .label-hostnames').textContent = data.hostnames ? data.hostnames.join(', ') : 'N/A';
-document.querySelector('.info-content .label-domains').textContent = data.domains ? data.domains.join(', ') : 'N/A';
+    const domainsContainer = document.getElementById('domains-container');
+    domainsContainer.innerHTML = '';  // Clear previous tags
+    if (data.domains) {
+        data.domains.forEach(domain => {
+            const domainTag = document.createElement('span');
+            domainTag.className = 'domain-tag';
+            domainTag.textContent = domain;
+            domainsContainer.appendChild(domainTag);
+        });
+    } else {
+        domainsContainer.textContent = 'N/A';
+    }
+
+    const rawJsonContainer = document.getElementById('raw-json-content');
+    rawJsonContainer.textContent = JSON.stringify(data, null, 2);
 }
 
     function capitalizeFirstLetter(string) {
@@ -316,34 +457,6 @@ document.querySelector('.info-content .label-domains').textContent = data.domain
 
         updateCveTags();
     }
-
-    const buttons = document.querySelectorAll('.checkmark-btn');
-    const voteMessage = document.getElementById('vote-message');
-    const voteContainer = document.querySelector('.vote-container');
-
-    buttons.forEach(button => {
-        button.addEventListener('click', () => {
-            if (button.classList.contains('active')) {
-                button.classList.remove('active');
-                voteMessage.textContent = 'Vote removed';
-                return;
-            }
-            buttons.forEach(btn => btn.classList.remove('active'));
-            
-            button.classList.add('active');
-
-            let voteText = '';
-            if (button.id === 'up-btn') {
-                voteText = 'Voted as higher';
-            } else if (button.id === 'checkmark-btn') {
-                voteText = 'Voted as ok';
-            } else if (button.id === 'down-btn') {
-                voteText = 'Voted as lower';
-            }
-
-            voteMessage.textContent = voteText;
-        });
-    });
 
     function createCVSSChart(vulnerabilities) {
         const ctx1 = document.getElementById('barCVSS').getContext('2d');

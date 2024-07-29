@@ -116,6 +116,7 @@ class DatasetManager(object):
         return df
     
     def get_report_dataset_new(self, day, columns=None, condition=None, single_output=False, start=0, finish=10, sort_by='epss', ascending=False):
+        day = "2024-06-26"
         commit = self.retrive_commit(day)
         df = None
         if commit >= 0:

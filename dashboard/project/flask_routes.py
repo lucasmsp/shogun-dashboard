@@ -5,6 +5,7 @@ from project.models import db, User, Vote
 from project.layout import register_layout
 import pyarrow.dataset as ds
 import os
+from datetime import datetime
 
 def start_flask(dm):
     """
@@ -29,6 +30,13 @@ def start_flask(dm):
 
     with server.app_context():
         db.create_all()
+
+        if not User.query.filter_by(username='admin').first():
+            admin_password = generate_password_hash(os.environ.get('ADMIN_PASSWORD', 'admin'))
+            admin_user = User(username='admin', password=admin_password)
+            db.session.add(admin_user)
+            db.session.commit()
+            print("Admin user created with username 'admin'")
 
     login_manager = LoginManager()
     login_manager.init_app(server)
@@ -107,10 +115,11 @@ def set_routes(server, db, login_manager, app):
                 if vote_value is None:
                     db.session.delete(existing_vote)
                 else:
-                    existing_vote.vote = vote_value 
+                    existing_vote.vote = vote_value
+                    existing_vote.vote_date = datetime.utcnow()  # Update vote_date
             else:
                 if vote_value is not None:
-                    new_vote = Vote(user_id=current_user.id, meta_id=meta_id, vote=vote_value)
+                    new_vote = Vote(user_id=current_user.id, meta_id=meta_id, vote=vote_value, vote_date=datetime.utcnow())
                     db.session.add(new_vote)
 
             db.session.commit()
@@ -126,6 +135,26 @@ def set_routes(server, db, login_manager, app):
         except:
             votes_dict = {}
         return jsonify(votes_dict)
+    
+    @server.route('/api/user_vote_single', methods=['GET'])
+    @login_required
+    def get_user_vote():
+        meta_id = request.args.get('meta_id')
+        if not meta_id:
+            return jsonify({"error": "meta_id is required"}), 400
+        try:
+            vote = Vote.query.filter_by(user_id=current_user.id, meta_id=meta_id).first()
+            if vote:
+                vote_dict = {
+                    "meta_id": vote.meta_id,
+                    "vote": vote.vote,
+                    "vote_type": type(vote.vote).__name__
+                }
+            else:
+                vote_dict = {"message": "No vote found for the given meta_id"}
+        except Exception as e:
+            vote_dict = {"error": str(e)}
+        return jsonify(vote_dict)
 
     @server.route('/details/<meta_id>')
     @login_required
@@ -135,19 +164,16 @@ def set_routes(server, db, login_manager, app):
     @server.route('/api/details/<meta_id>')
     @login_required
     def get_details_json(meta_id):
-        print(meta_id)
         try:
             print(request.args)
             print(request.form)
             print(request.data)
 
             day = request.args.get('date')
-            print(day)
             condition = ds.field("meta_id") == meta_id
             filtered_data = dm.get_report_dataset_new(day, condition=condition, single_output=True)
         except:
             filtered_data = {}
-        print(filtered_data)
         return jsonify(filtered_data)
 
     @server.route('/api/data_count', methods=['GET'])
@@ -155,6 +181,7 @@ def set_routes(server, db, login_manager, app):
     def get_data_count():
         try:
             date_value = request.args.get('date')
+            date_value = "2024-06-26"
             total_entries = dm.get_total_entries_new(date_value)
         except:
             total_entries = -1
@@ -165,6 +192,7 @@ def set_routes(server, db, login_manager, app):
     def get_details(page):
         try:
             date_value = request.args.get('date')
+            date_value = "2024-06-26"
             page_size = 10
             page_int = int(page)
             start = (page_int - 1) * page_size
@@ -224,9 +252,32 @@ def set_routes(server, db, login_manager, app):
             return jsonify({'message': 'Current password is incorrect'}), 400
 
         current_user.password = generate_password_hash(new_password)
+
         db.session.commit()
 
         return jsonify({'message': 'Password successfully changed'}), 200
+    
+    # User deletion
+    @server.route('/delete_user', methods=['POST'])
+    @login_required
+    def delete_user():
+        data = request.get_json()
+        username = data.get('username')
+
+        # Block admin removal
+        if username == 'admin':
+            return jsonify({'status': 'error', 'message': 'The admin user cannot be deleted.'}), 403
+
+        if current_user.username != 'admin':
+            return jsonify({'status': 'error', 'message': 'Unauthorized access'}), 403
+
+        user = User.query.filter_by(username=username).first()
+        if not user:
+            return jsonify({'status': 'error', 'message': 'User does not exist'}), 400
+
+        db.session.delete(user)
+        db.session.commit()
+        return jsonify({'status': 'success', 'message': 'User deleted successfully!'}), 200
     
     @server.route('/get_users', methods=['GET'])
     @login_required
