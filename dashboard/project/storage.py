@@ -115,7 +115,7 @@ class DatasetManager(object):
             df = pd.DataFrame()
         return df
     
-    def get_report_dataset_new(self, day, columns=None, condition=None, single_output=False, start=0, finish=10, sort_by='epss', ascending=False):
+    def get_report_dataset_new(self, day, columns=None, condition=None, single_output=False, start=0, finish=-1, sort_by='score', ascending=False):
         commit = self.retrive_commit(day)
         df = None
         if commit >= 0:
@@ -130,10 +130,13 @@ class DatasetManager(object):
                 table = dt.to_table(filter=condition, columns=columns)
 
                 df = table.to_pandas()
-                df['epss'] = df['vulns_scores'].apply(lambda x: x.get('epss', []) if isinstance(x, dict) else [])
-                df['epss'] = df['epss'].apply(lambda probs: 1 - np.prod([1 - p for p in probs]))
+                df['score'] = df['vulns_scores'].apply(lambda x: x.get('epss', []) if isinstance(x, dict) else [])
+                df['score'] = df['score'].apply(lambda probs: 1 - np.prod([1 - p for p in probs]))
                 df = df.drop(columns=['vulns_scores'])
-                df = df.sort_values(by=sort_by, ascending=ascending).iloc[start:finish]
+                df = df.sort_values(by=sort_by, ascending=ascending)
+                
+                if finish > 0:
+                    df = df.iloc[start:finish]
 
         return df
 

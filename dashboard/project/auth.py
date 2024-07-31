@@ -51,11 +51,11 @@ def register_callback_query(dm, app):
             
             return date_value
         
-    @app.callback(
-        Output('details-iframe', 'src'),
-        Input('date-picker-single', 'value')
-    )
-    def update_iframe_src(selected_date):
-        if selected_date is not None:
-            return f"/details_ip?date={selected_date}"
-        return "/details_ip"
+    # @app.callback(
+    #     Output('details-iframe', 'src'),
+    #     Input('date-picker-single', 'value')
+    # )
+    # def update_iframe_src(selected_date):
+    #     if selected_date is not None:
+    #         return f"/details_ip?date={selected_date}"
+    #     return "/details_ip"

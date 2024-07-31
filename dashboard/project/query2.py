@@ -48,7 +48,7 @@ def register_layout_query(dm):
                 }
             ),
             dcc.RangeSlider(
-                id="epss-range-slider",
+                id="query2-epss-range-slider",
                 min=0,
                 max=1,
                 step=0.01,
@@ -170,14 +170,18 @@ def register_layout_query(dm):
     ], style={'display': 'flex', 'flexDirection': 'row'})
 
     tab1_content = [
-        html.H2(children="List of vulnerable products for each org/IP", className='wrapper'),
+        html.H2(children="List of vulnerable products for each IP", className='wrapper'),
+        html.H2(
+            children="This visualization allows for assessing the higher vulnerability of an IP based on the EPSS score.",
+            style={'fontSize': '20px', 'padding': 10,}
+        ),
         filters_2a,
         dbc.Row(
             dag.AgGrid(
                 id="query-2a-grid",
                 columnDefs=[
                     {"field": 'org_clean', "headerName": 'Organization (clean)'},
-                    {"field": 'ip_str', "headerName": 'IP', },
+                    {"field": 'ip_str', "headerName": 'IP'},
                     {"field": 'epss', "headerName": 'EPSS', "tooltipField": "epss_rank"},
                     {"field": 'cvss_rank', "headerName": 'CVSS Rank', "tooltipField": "cvss_rank"},
                     {
@@ -204,32 +208,21 @@ def register_layout_query(dm):
                     dcc.Dropdown(
                         id="dropdown-color-2a",
                         options=[
-                            {'label': 'EPSS', 'value': 'epss_rank'},
-                            {'label': 'CVE', 'value': 'cve_id'},
+                            "Scatter plot - EPSS by CVSS score",
+                            "Bar plot - Number of CVE by CVSS Rank",
+                            "PDF/CDF plot - EPSS Distribution",
+                            "Bar plot - Top 10 vulnerable products"
+                            
                         ],
-                        placeholder="Group by...",
+                        clearable=False,
                         style={
                             "width": "90%",
                             "margin": "15px",
                         },
-                        value='epss_rank'
-                    ),
-                ),
-                dbc.Col(
-                    dcc.Dropdown(
-                        id="dropdown-type-2a",
-                        options=[
-                            {'label': 'Bars', 'value': 'Bars'},
-                            {'label': 'PDF/CDF', 'value': 'CDF'},
-                        ],
-                        placeholder="Type of graph...",
-                        style={
-                            "width": "90%",
-                            "margin": "15px",
-                        },
-                        value='Bars'
+                        value='Scatter plot - EPSS by CVSS score'
                     ),
                 )
+                
             ]
         ),
         dcc.Graph(
@@ -245,7 +238,11 @@ def register_layout_query(dm):
     ]
 
     tab2_content = [
-        html.H2(children="Highest EPSS for each org/IP", className='wrapper'),
+        html.H2(children="Highest EPSS for each org", className='wrapper'),
+        html.H2(
+            children="This visualization allows for assessing the higher vulnerability of an Organization based on the EPSS score.",
+            style={'fontSize': '20px', 'padding': 10,}
+        ),
         filters_2b,
         dbc.Row(
             dag.AgGrid(
@@ -334,8 +331,8 @@ def register_layout_query(dm):
         html.Br(),
         dbc.Tabs(
             [
-                dbc.Tab(tab1_content, label="List of vulnerable products for each org/IP"),
-                dbc.Tab(tab2_content, label="Highest EPSS for each org/IP"),
+                dbc.Tab(tab1_content, label="List of vulnerable products for each IP"),
+                dbc.Tab(tab2_content, label="Highest EPSS for each org"),
             ]
         )
     ]
@@ -352,7 +349,7 @@ def register_callback_query(dm, app):
             Input('date-picker-single', 'value'),
             Input("search-bar-ip", 'value'),
             Input("search-bar-org", 'value'),
-            Input("epss-range-slider", 'value'),
+            Input("query2-epss-range-slider", 'value'),
             Input("cvss-rank-checklist", 'value'),
             Input("search-bar-cpe-product", 'value'),
             Input("search-bar-cpe-version", 'value'), 
@@ -395,15 +392,14 @@ def register_callback_query(dm, app):
         Output('query-2a-graph', 'figure'),
         [
             Input('date-picker-single', 'value'),
-            Input("epss-range-slider", 'value'),
+            Input("query2-epss-range-slider", 'value'),
             Input("cvss-rank-checklist", 'value'),
             Input("search-bar-cpe-version", 'value'),
             Input("dropdown-color-2a", 'value'),
-            Input("dropdown-type-2a", 'value'), 
             Input("general-tabs", "active_tab"),
         ], prevent_initial_call=True
     )
-    def update_graph2a(date_value, epss_query, cvss_query, cpe_version_query, color, type, active_tab):
+    def update_graph2a(date_value, epss_query, cvss_query, cpe_version_query, metric, active_tab):
         if TAB_VIEW != active_tab:
             return {}
         print("[INFO] query 2 - update_graph2a: ", date_value)
@@ -421,8 +417,8 @@ def register_callback_query(dm, app):
         if cpe_version_query:
             df = df[df['cpe_version'].str.contains(cpe_version_query)]
 
-        
-        if type == "CDF":
+        fig = go.Figure()
+        if metric == "PDF/CDF plot - EPSS Distribution":
             stats_df = df \
                 .groupby('epss') \
                 ['epss'] \
@@ -437,48 +433,69 @@ def register_callback_query(dm, app):
             stats_df['cdf'] = stats_df['pdf'].cumsum()
             stats_df = stats_df.reset_index()
 
-            fig = go.Figure()
             fig.add_trace(go.Scatter(x=stats_df['epss'], y=stats_df['pdf'], mode='lines', name='PDF'))
             fig.add_trace(go.Scatter(x=stats_df['epss'], y=stats_df['cdf'], mode='lines', name='CDF'))
-            fig.update_layout(title='PDF and CDF',
-                            xaxis_title='Value',
+            fig.update_layout(title='PDF and CDF of EPSS Score',
+                            xaxis_title='EPSS',
                             yaxis_title='Probability',
                             showlegend=True)
-            return fig
         
-        else:      
-            df = df.sort_values(by=['cvss_rank'], ascending=True)
+        elif metric == "Bar plot - Number of CVE by CVSS Rank":      
+            
             severity_mapping = {
                 "low": 1,
                 "medium": 2,
                 "high": 3,
                 "critical": 4
             }
-
-            cvss_counts = df['cvss_rank'].value_counts()
             df['severity'] = df['cvss_rank'].map(severity_mapping)
 
+            cvss_counts = df.groupby(['cvss_rank', 'severity'])['cvss_rank'].count().reset_index(name='total_count')
+            cvss_counts = cvss_counts.sort_values(by=['severity'], ascending=True)
 
-            fig = go.Figure()
-
-            fig.add_trace(go.Bar(x=cvss_counts.index, y=cvss_counts.values, name='CVSS Rank'))
+            fig.add_trace(go.Bar(x=cvss_counts.cvss_rank, y=cvss_counts.total_count, name='CVSS Rank'))
 
             fig.update_layout(
                 # title='Distribution of CVSS Rank',
                 xaxis=dict(title='CVSS Rank'),
-                yaxis=dict(title='Number of registers'))
+                yaxis=dict(title='Number of IPs'))
 
-            if color:
-                grouped_df = df.groupby(['cvss_rank', 'severity', color.lower()])
-                aggregated_df = grouped_df.size().to_frame(name='count')
-                aggregated_df = aggregated_df.reset_index()
-                aggregated_df = aggregated_df.sort_values('severity')
-                fig = px.bar(aggregated_df, x='cvss_rank', y="count", color=color.lower())
-                fig.update_layout(
-                    # title='Distribution of CVSS Rank',
-                    xaxis=dict(title='CVSS Rank'),
-                    yaxis=dict(title='Number of registers'))
-            return fig
+        elif metric == "Scatter plot - EPSS by CVSS score": 
+
+            fig = px.scatter(df, 
+                             x=df["cvss_score"],
+                             y=df['epss'], 
+                             title="Scatter plot - EPSS by CVSS score",
+                             color='epss_rank')
+            fig.update_layout(
+                xaxis_title="CVSS Score",
+                yaxis_title="EPSS Score",
+                # xaxis=dict(showticklabels=False),
+                xaxis=dict(
+                    tickmode='array',
+                    tickvals=[0, 2, 4, 6, 8, 10],
+                    range=[0, 10]
+                )
+            )
+
+        elif metric == "Bar plot - Top 10 vulnerable products":
+            number_ips = df['ip_str'].nunique()
+            top_products = df.groupby(['cpe_product'])['cvss_rank'].count().reset_index(name='total_count')
+            if len(top_products) > 10:
+                top_products = top_products[:10]
+            top_products['percent'] = 100 * (top_products.total_count / number_ips)
+            top_products = top_products.sort_values(by=['total_count'], ascending=False)
+            
+            fig.add_trace(go.Bar(x=top_products.cpe_product, 
+                                 y=top_products.percent,
+                                 name='Top 10 products'))
+
+            fig.update_layout(
+                xaxis=dict(title='Product'),
+                yaxis=dict(title='Percentage of IPs')
+                )
+
+        return fig
         
     def contar_virgulas(texto):
         return len(re.findall(r";", texto)) + 1
@@ -618,3 +635,20 @@ def register_callback_query(dm, app):
                     yaxis=dict(title='Number of organizations'),
                     xaxis_range=[0,100])
             return fig
+        
+    @app.callback(
+        Output("general-tabs", "active_tab"),
+        Output('query-5-ag', 'filterModel'),
+        Input("general-tabs", "active_tab"),
+        Input("query-2a-grid", "cellClicked"),
+        prevent_initial_call=True
+    )
+    def select_ip(active_tab, cell):
+
+        filter_opt = {}  
+        if (TAB_VIEW == active_tab) and cell:
+            value = cell.get('value', "")
+            filter_opt = {'ip_str': {'filterType': 'text', 'type': 'equals', 'filter': value}}
+
+            return "tab-4", filter_opt            
+        return active_tab, filter_opt

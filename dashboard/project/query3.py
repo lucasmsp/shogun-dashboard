@@ -130,7 +130,7 @@ def register_layout_query(dm):
             dag.AgGrid(
                 id="query-3-ag",
                 columnDefs=[
-                    {"field": 'cve_id', "headerName": 'CVE', "cellRenderer": "StockLink", "tooltipValueGetter":
+                    {"field": 'cve_id', "headerName": 'CVE', "cellRenderer": "GoToMitre", "tooltipValueGetter":
                         {"function": "'Click on the cell for more details'"}},
                     {"field": 'cvss_score', "headerName": 'CVSS',
                      'tooltipValueGetter': {"function": "'CVSS Version: ' + "
