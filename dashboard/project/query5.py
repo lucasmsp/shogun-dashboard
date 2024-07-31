@@ -99,8 +99,12 @@ def register_callback_query(dm, app):
             return [{}]
         
         def format_data(raw):
+
             if not raw:
                 raw = ""
+
+            if len(raw) > 500:
+                raw = raw[0:500]
 
             space_index = raw.find(' ')
             if space_index != -1:
