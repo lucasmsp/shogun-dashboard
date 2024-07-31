@@ -21,13 +21,14 @@ def register_layout_query(dm):
                     dag.AgGrid(
                         id='query-1-table',
                         columnDefs=[
-                            {"headerName": 'EPSS rank', "field": "epss_rank"}, 
-                            {"headerName": '# CVEs', "field": 'n_cves'},
-                            {"headerName": '# IPs', "field": 'n_ips'},
-                            {"headerName": '# organizations', "field": 'n_orgs'}
+                            {"headerName": 'EPSS rank', "field": "epss_rank", "flex": 1}, 
+                            {"headerName": '# CVEs', "field": 'n_cves', "flex": 1},
+                            {"headerName": '# IPs', "field": 'n_ips', "flex": 1},
+                            {"headerName": '# organizations', "field": 'n_orgs', "flex": 1}
                         ],
-                        defaultColDef={"flex": 1},
-                        columnSize="responsiveSizeToFit",
+                        rowData = [{"epss_rank": "Processing...", "n_cves": 0, "n_ips": 0, "field": 0}],
+                        defaultColDef={"flex": 1, "resizable": False},
+                        columnSize="sizeToFit",
                         columnSizeOptions= {"skipHeader": False},
                         style={"height": 260}
                     ),

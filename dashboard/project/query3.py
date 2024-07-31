@@ -131,6 +131,7 @@ def register_layout_query(dm):
         dbc.Row(
             dag.AgGrid(
                 id="query-3-ag",
+                rowData = [{"cve_id": "Processing...", "cvss_score": 0, "epss": 0, "n_ips": 0, 'n_orgs': 0}],
                 columnDefs=[
                     {"field": 'cve_id', "headerName": 'CVE', "cellRenderer": "GoToMitre", "tooltipValueGetter":
                         {"function": "'Click on the cell for more details'"}},
@@ -143,7 +144,7 @@ def register_layout_query(dm):
                     {"field": 'n_orgs', "headerName": "# Organizations"},
                 ],
                 defaultColDef={"flex": 1},
-                columnSize="responsiveSizeToFit",
+                columnSize="sizeToFit",
                 columnSizeOptions={"skipHeader": False},
                 dashGridOptions={
                     'tooltipInteraction': True,

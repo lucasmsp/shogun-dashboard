@@ -16,6 +16,9 @@ def register_layout_query(dm):
         dbc.Row(
             dag.AgGrid(
                 id="query-5-ag",
+                rowData = [{"data": "Processing...", "ip_str": "0", "port": 0, "city": "", "os": "",
+                            "org_clean": "", "hostnames": "", "domains": "", "score": 0, "meta_id": ""
+                            }],
                 columnDefs=[
                     {"field": 'data', "headerName": 'SERVICE', "cellRenderer": "markdown",
                       'width': 300, 'maxWidth': 300, "resizable": False, "wrapText": True, "autoHeight": True},
@@ -28,14 +31,14 @@ def register_layout_query(dm):
                      "resizable": False, 'width': 100, 'maxWidth': 100},
                     {"field": 'city', "headerName": "CITY", 'width': 150, "wrapText": True},
                     {"field": 'os', "headerName": "OS", 'width': 80, "wrapText": True},
-                    {"field": 'org', "headerName": "ORGANIZATION", "wrapText": True},
+                    {"field": 'org_clean', "headerName": "ORGANIZATION", "wrapText": True},
                     {"field": 'hostnames', "headerName": "HOSTNAMES", "wrapText": True, "cellRenderer": "markdown"},
                     {"field": 'domains', "headerName": "DOMAINS", "wrapText": True, "cellRenderer": "markdown"},
                     {"field": 'score', "headerName": "SCORE", "resizable": False, 'width': 100, 'maxWidth': 100, "valueFormatter": {"function": """d3.format(",.4f")(params.value)"""}},
                     {"field": 'meta_id',"headerName": 'VOTE',  "cellRenderer": "launchBtn", "resizable": False,  'width': 170, 'maxWidth': 170, "filter": False, 'sortable': False},
                 ],
                 defaultColDef={"flex": 1, "filter": True},
-                columnSize="responsiveSizeToFit",
+                columnSize="sizeToFit",
                 columnSizeOptions={"skipHeader": False},
                 dashGridOptions={
                     "pagination": True,
@@ -87,7 +90,7 @@ def register_callback_query(dm, app):
 
         df = dm.get_report_dataset_new(
                 date_value,
-                columns=["data", "ip_str", "port", "city", "os", "org", "hostnames", "domains", "meta_id", "vulns_scores"], 
+                columns=["data", "ip_str", "port", "city", "os", "org_clean", "hostnames", "domains", "meta_id", "vulns_scores"], 
                 sort_by='score',
                 ascending=False
             )

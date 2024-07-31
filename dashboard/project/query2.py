@@ -25,6 +25,7 @@ def register_layout_query(dm):
         dbc.Row(
             dag.AgGrid(
                 id="query-2a-grid",
+                rowData = [{"org_clean": "Processing...", "ip_str": "-", "score": 0, "cvss_rank": "-", "cvss_score": "0", "cpe_product": "-", "cve_id": ""}],
                 columnDefs=[
                     {"field": 'org_clean', "headerName": 'Organization (clean)', "filterParams": {"filterOptions": ["equals","notEqual",'contains']}},
                     {"field": 'ip_str', "headerName": 'IP',
@@ -42,7 +43,7 @@ def register_layout_query(dm):
                     },
                 ],
                 defaultColDef={"flex": 1, "filter": True},
-                columnSize="responsiveSizeToFit",
+                columnSize="sizeToFit",
                 columnSizeOptions= {"skipHeader": False},
                 dashGridOptions={
                     'tooltipInteraction': True,
@@ -98,13 +99,14 @@ def register_layout_query(dm):
         dbc.Row(
             dag.AgGrid(
                 id="query-2b-grid",
+                rowData = [{"org_clean": "Processing...", "epss": "-"}],
                 columnDefs=[
                     {"field": 'org_clean', "headerName": 'Organization', "filterParams": {"filterOptions": ["equals","notEqual",'contains']}},
                     {"field": 'epss', "headerName": 'EPSS (major)', 
                      "filter": "agNumberColumnFilter", "filterParams": {"filterOptions": ["equals","notEqual",'lessThan', 'greaterThan', 'inRange']}},
                 ],
                 defaultColDef={"flex": 1, "filter": True},
-                columnSize="responsiveSizeToFit",
+                columnSize="sizeToFit",
                 columnSizeOptions= {"skipHeader": False},
                 dashGridOptions={"rowSelection": "single", "animateRows": False}
             )
