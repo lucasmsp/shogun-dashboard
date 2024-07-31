@@ -21,14 +21,14 @@ def register_layout_query(dm):
                             }],
                 columnDefs=[
                     {"field": 'data', "headerName": 'SERVICE', "cellRenderer": "markdown",
-                      'width': 300, 'maxWidth': 300, "resizable": False, "wrapText": True, "autoHeight": True},
+                      'width': 300, 'maxWidth': 500, "resizable": True, }, #"wrapText": True, "autoHeight": True},
                     {"field": 'ip_str', "headerName": 'IP', "cellRenderer": "IPLink", 
                      "tooltipValueGetter": {"function": "'Click on the cell for more details'"}, 
                      'width': 150, 'maxWidth': 150, "resizable": False
                      },
-                    {"field": 'port', "headerName": 'PORT', 
-                     "cellRenderer": "Button", "cellRendererParams": {"className": "btn btn-primary"},  
-                     "resizable": False, 'width': 100, 'maxWidth': 100},
+                    {"field": 'port', "headerName": 'PORT', "resizable": False, 'width': 100, 'maxWidth': 100,
+                     #"cellRenderer": "Button", "cellRendererParams": {"className": "btn btn-primary"},  
+                     },
                     {"field": 'city', "headerName": "CITY", 'width': 150, "wrapText": True},
                     {"field": 'os', "headerName": "OS", 'width': 80, "wrapText": True},
                     {"field": 'org_clean', "headerName": "ORGANIZATION", "wrapText": True},
@@ -45,7 +45,7 @@ def register_layout_query(dm):
                     'tooltipInteraction': True,
                     'tooltipShowDelay': 10,
                     'tooltipHideDelay': 1000,
-                    "rowHeight": 50,
+                    "rowHeight": 120,
                     'animateRows': False,
                     "suppressColumnMoveAnimation": True,
                     "paginationPageSize": 20
