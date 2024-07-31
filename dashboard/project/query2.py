@@ -299,18 +299,18 @@ def register_callback_query(dm, app):
     @app.callback(
         Output('query-2a-graph', 'figure'),
         [
-            Input('query-2a-grid', "rowData"),
+            Input('date-picker-single', 'value'),
             Input('query-2a-grid', 'filterModel'),
             Input("dropdown-color-2a", 'value'),
             Input("general-tabs", "active_tab"),
         ], prevent_initial_call=True
     )
-    def update_graph2a(data_input, filter_modal, metric, active_tab):
+    def update_graph2a(date_value, filter_modal, metric, active_tab):
         if TAB_VIEW != active_tab:
             return {}
         print("[INFO] query 2 - update_graph2a: ")
 
-        df = pd.DataFrame.from_dict(data_input)
+        df = dm.get_view_dataset(date_value, INPUT_DATA_V2)
         if df.empty:
             return {}
         
@@ -353,18 +353,18 @@ def register_callback_query(dm, app):
     @app.callback(
         Output('query-2b-graph', 'figure'),
 
-        Input("query-2b-grid", "rowData"),
+        Input('date-picker-single', 'value'),
         Input('query-2b-grid', 'filterModel'),
         Input("dropdown-type-2b", 'value'), 
         Input("general-tabs", "active_tab"),
         prevent_initial_call=True
     )
-    def update_graph2b(data_input, filter_modal, metric, active_tab):
+    def update_graph2b(date_value, filter_modal, metric, active_tab):
         if TAB_VIEW != active_tab:
             return {}
         print("[INFO] query 2 - update_graph2b: ")
 
-        aggregated_df = pd.DataFrame.from_dict(data_input)
+        aggregated_df = dm.get_view_dataset(date_value, INPUT_DATA_V2)
         if aggregated_df.empty:
             return {}
 

@@ -326,16 +326,16 @@ def register_callback_query(dm, app):
     @app.callback(
         Output('query3-graph', "figure"),
         Input('dropdown-query3', 'value'), 
-        Input('query-3-ag', "rowData"),
+        Input('date-picker-single', 'value'),
         Input("general-tabs", "active_tab"),
         prevent_initial_call=True
     )
-    def update_graphs(value, data_input, active_tab=None):
+    def update_graphs(value, date_value, active_tab=None):
         if TAB_VIEW != active_tab:
             return {}
         print("[INFO][query3] update_graphs: ")
 
-        df = pd.DataFrame.from_dict(data_input)
+        df = dm.get_view_dataset(date_value, INPUT_DATA)
 
         if df.empty:
             return {}

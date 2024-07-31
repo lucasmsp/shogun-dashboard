@@ -39,9 +39,9 @@ def register_callback_query(dm, app):
                     day_fmt1 = day_fmt1[0]
                     msg = f"Processing dump {day_fmt1}. It may take a while..."
                 else:
-                    msg = "Last dump: {last}.\nAt {new} none dump was found."
+                    msg = "Last dump: {last}."
 
-            msg = "Last dump: {last}.\nChecking for new data at {new}.".format(last=last_date_commit, new=next_run)
+            msg = "Last dump: {last}.".format(last=last_date_commit, new=next_run)
 
         else:
             msg = "Last dump: {last}".format(last=last_date_commit)
