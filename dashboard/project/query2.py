@@ -391,6 +391,12 @@ def register_callback_query(dm, app):
             stats_df['cdf'] = stats_df['pdf'].cumsum()
             stats_df = stats_df.reset_index()
 
+            if len(stats_df) > 1000:
+                stats_df.at[1000, "pdf"] = stats_df[1000:]['pdf'].sum() 
+                stats_df.at[1000, "cdf"] = stats_df[1000:]['cdf'].sum() 
+                stats_df = stats_df[:1001]
+            
+
             fig.add_trace(go.Scatter(x=stats_df['epss'], y=stats_df['pdf'], mode='lines', name='PDF'))
             fig.add_trace(go.Scatter(x=stats_df['epss'], y=stats_df['cdf'], mode='lines', name='CDF'))
             fig.update_layout(title='PDF and CDF of EPSS Score',
@@ -401,7 +407,7 @@ def register_callback_query(dm, app):
         elif metric == "PDF/CDF - Distribution of the number of CVE by Organization":
 
             aggregated_df["n_cves"] = aggregated_df["cve_id"].apply(len)
-            print(aggregated_df)
+
             stats_df = aggregated_df \
                 .groupby('n_cves') \
                 ['n_cves'] \
@@ -415,6 +421,12 @@ def register_callback_query(dm, app):
             stats_df['cdf'] = stats_df['pdf'].cumsum()
             stats_df = stats_df.reset_index()
 
+            if len(stats_df) > 1000:
+                stats_df.at[1000, "pdf"] = stats_df[1000:]['pdf'].sum() 
+                stats_df.at[1000, "cdf"] = stats_df[1000:]['cdf'].sum() 
+                stats_df = stats_df[:1001]
+
+
             fig.add_trace(go.Scatter(x=stats_df['n_cves'], y=stats_df['pdf'], mode='lines', name='PDF'))
             fig.add_trace(go.Scatter(x=stats_df['n_cves'], y=stats_df['cdf'], mode='lines', name='CDF'))
 
@@ -427,7 +439,7 @@ def register_callback_query(dm, app):
         elif metric == "PDF/CDF - Distribution of the number of vulnerable Products by Organization":
 
             aggregated_df["n_products"] = aggregated_df["cpe_product"].apply(len)
-            print(aggregated_df)
+
             stats_df = aggregated_df \
                 .groupby('n_products') \
                 ['n_products'] \
