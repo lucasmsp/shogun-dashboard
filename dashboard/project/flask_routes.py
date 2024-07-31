@@ -98,11 +98,6 @@ def set_routes(server, db, login_manager, app):
     def dashboard():
         app.layout = register_layout(dm, current_user.username)
         return app.index()
-
-    @server.route('/details_ip')
-    @login_required
-    def serve_details_ip():
-        return render_template('panel.html', user=current_user)
     
     ### FEATURE FLAG
 
@@ -191,6 +186,8 @@ def set_routes(server, db, login_manager, app):
     @login_required
     def get_data_count():
         try:
+            selected_ip = request.args.get('ip', default = '', type = str)
+            print(f"get_data_count: {selected_ip}")
             date_value = global_date()
             total_entries = dm.get_total_entries_new(date_value)
         except:

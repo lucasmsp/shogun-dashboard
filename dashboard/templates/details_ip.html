@@ -366,6 +366,11 @@ function getEntries(data) {
     }
 
     const rawJsonContainer = document.getElementById('raw-json-content');
+    
+    delete data["vulns"];
+    delete data['meta_id'];
+    delete data['vulns_scores'];
+    
     rawJsonContainer.textContent = JSON.stringify(data, null, 2);
 }
 
