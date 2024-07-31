@@ -56,7 +56,10 @@ def register_layout_query(dm):
 
     q5 = [
         html.H2(
-            children="Shodan's banners about IPs with vulnerabilities in Brazil.",
+            children=("Shodan's banners about IPs with vulnerabilities in Brazil. "
+                      "Using this interface, users can filter banners by each column, "
+                      "ranking its vulnerabilities and clicking on IP column to check details."
+                      ),
             style={'fontSize': '20px', 'padding': 20}
         ),
 
@@ -64,15 +67,6 @@ def register_layout_query(dm):
     ]
 
     return q5
-
-
-def find_expression(string):
-    list_expressions = ['>=', '<=', '!=']
-    for i in list_expressions:
-        index = string.find(i)
-
-        if index != -1:
-            return i
 
 
 # register all the callbacks in one place

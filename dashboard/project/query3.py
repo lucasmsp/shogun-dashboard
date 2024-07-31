@@ -6,6 +6,8 @@ import dash_ag_grid as dag
 import plotly.express as px
 import plotly.figure_factory as ff
 
+import pandas as pd
+
 INPUT_DATA = '3'
 TAB_VIEW = "tab-2"
 
@@ -322,16 +324,18 @@ def register_callback_query(dm, app):
 
     @app.callback(
         Output('query3-graph', "figure"),
-        Input('date-picker-single', 'value'),
-        Input('dropdown-query3', 'value'),
-        Input("general-tabs", "active_tab"), prevent_initial_call=True
+        Input('dropdown-query3', 'value'), 
+        Input('query-3-ag', "rowData"),
+        Input("general-tabs", "active_tab"),
+        prevent_initial_call=True
     )
-    def update_graphs(date_value, value, active_tab=None):
+    def update_graphs(value, data_input, active_tab=None):
         if TAB_VIEW != active_tab:
             return {}
-        print("[INFO][query3] update_graphs: ", date_value)
+        print("[INFO][query3] update_graphs: ")
 
-        df = dm.get_view_dataset(date_value, INPUT_DATA)
+        df = pd.DataFrame.from_dict(data_input)
+
         if df.empty:
             return {}
 
