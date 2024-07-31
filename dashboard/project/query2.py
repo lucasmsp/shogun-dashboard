@@ -434,7 +434,7 @@ def register_callback_query(dm, app):
                             xaxis_title='# Distinct CVEs',
                             yaxis_title='Probability',
                             showlegend=True,
-                            xaxis_range=[1,100])
+                            )
 
         elif metric == "PDF/CDF - Distribution of the number of vulnerable Products by Organization":
 
@@ -460,7 +460,7 @@ def register_callback_query(dm, app):
                             xaxis_title='# Distinct Products',
                             yaxis_title='Probability',
                             showlegend=True,
-                            xaxis_range=[1,100])
+                            )
         return fig
         
     @app.callback(
