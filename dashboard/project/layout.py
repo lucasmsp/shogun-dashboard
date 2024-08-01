@@ -83,7 +83,7 @@ def register_layout(dm, username):
                             label=username,
                             align_end=True
                         ),
-                        dcc.Interval(id='last_dump_check', interval=10 * 60 * 1000, n_intervals=0),
+                        dcc.Interval(id='last_dump_check', interval=5 * 60 * 1000, n_intervals=0),
                 ]),
                 color="dark",
                 dark=True,

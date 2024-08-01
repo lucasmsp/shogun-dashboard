@@ -23,34 +23,36 @@ def register_layout_query(dm):
         ),
 
         dbc.Row(
-            dag.AgGrid(
-                id="query-2a-grid",
-                rowData = [{"org_clean": "Processing...", "ip_str": "-", "score": 0, "cvss_rank": "-", "cvss_score": "0", "cpe_product": "-", "cve_id": ""}],
-                columnDefs=[
-                    {"field": 'org_clean', "headerName": 'Organization (clean)', "filterParams": {"filterOptions": ["equals","notEqual",'contains']}},
-                    {"field": 'ip_str', "headerName": 'IP',
-                      "tooltipValueGetter": {"function": "'Click on the cell for more details'"},
-                       "filterParams": {"filterOptions": ["equals","notEqual",'contains']} 
-                    },
-                    {"field": 'epss', "headerName": 'EPSS', "tooltipField": "epss_rank", 
-                     "filter": "agNumberColumnFilter", "filterParams": {"filterOptions": ["equals","notEqual",'lessThan', 'greaterThan', 'inRange']}},
-                    {"field": 'cvss_rank', "headerName": 'CVSS Rank', "tooltipField": "cvss_score", "filterParams": {"filterOptions": ["equals","notEqual",'contains']}},
-                    {
-                        "field": 'cpe_product', 
-                        "headerName": 'Product name', 
-                        "tooltipField": "cve_id",
-                        "filterParams": {"filterOptions": ["equals","notEqual",'contains']}
-                    },
-                ],
-                defaultColDef={"flex": 1, "filter": True},
-                columnSize="sizeToFit",
-                columnSizeOptions= {"skipHeader": False},
-                dashGridOptions={
-                    'tooltipInteraction': True,
-                    'tooltipShowDelay': 10, 
-                    'tooltipHideDelay': 10000
-                }
-            )
+            dcc.Loading([
+                dag.AgGrid(
+                    id="query-2a-grid",
+                    rowData = [{"org_clean": "Processing...", "ip_str": "-", "score": 0, "cvss_rank": "-", "cvss_score": "0", "cpe_product": "-", "cve_id": ""}],
+                    columnDefs=[
+                        {"field": 'org_clean', "headerName": 'Organization (clean)', "filterParams": {"filterOptions": ["equals","notEqual",'contains']}},
+                        {"field": 'ip_str', "headerName": 'IP',
+                        "tooltipValueGetter": {"function": "'Click on the cell for more details'"},
+                        "filterParams": {"filterOptions": ["equals","notEqual",'contains']} 
+                        },
+                        {"field": 'epss', "headerName": 'EPSS', "tooltipField": "epss_rank", 
+                        "filter": "agNumberColumnFilter", "filterParams": {"filterOptions": ["equals","notEqual",'lessThan', 'greaterThan', 'inRange']}},
+                        {"field": 'cvss_rank', "headerName": 'CVSS Rank', "tooltipField": "cvss_score", "filterParams": {"filterOptions": ["equals","notEqual",'contains']}},
+                        {
+                            "field": 'cpe_product', 
+                            "headerName": 'Product name', 
+                            "tooltipField": "cve_id",
+                            "filterParams": {"filterOptions": ["equals","notEqual",'contains']}
+                        },
+                    ],
+                    defaultColDef={"flex": 1, "filter": True},
+                    columnSize="sizeToFit",
+                    columnSizeOptions= {"skipHeader": False},
+                    dashGridOptions={
+                        'tooltipInteraction': True,
+                        'tooltipShowDelay': 10, 
+                        'tooltipHideDelay': 10000
+                    }
+                )
+            ])
         ),
 
         html.Br(),
@@ -97,19 +99,21 @@ def register_layout_query(dm):
         ),
 
         dbc.Row(
-            dag.AgGrid(
-                id="query-2b-grid",
-                rowData = [{"org_clean": "Processing...", "epss": "-"}],
-                columnDefs=[
-                    {"field": 'org_clean', "headerName": 'Organization', "filterParams": {"filterOptions": ["equals","notEqual",'contains']}},
-                    {"field": 'epss', "headerName": 'EPSS (major)', 
-                     "filter": "agNumberColumnFilter", "filterParams": {"filterOptions": ["equals","notEqual",'lessThan', 'greaterThan', 'inRange']}},
-                ],
-                defaultColDef={"flex": 1, "filter": True},
-                columnSize="sizeToFit",
-                columnSizeOptions= {"skipHeader": False},
-                dashGridOptions={"rowSelection": "single", "animateRows": False}
-            )
+            dcc.Loading([
+                dag.AgGrid(
+                    id="query-2b-grid",
+                    rowData = [{"org_clean": "Processing...", "epss": "-"}],
+                    columnDefs=[
+                        {"field": 'org_clean', "headerName": 'Organization', "filterParams": {"filterOptions": ["equals","notEqual",'contains']}},
+                        {"field": 'epss', "headerName": 'EPSS (major)', 
+                        "filter": "agNumberColumnFilter", "filterParams": {"filterOptions": ["equals","notEqual",'lessThan', 'greaterThan', 'inRange']}},
+                    ],
+                    defaultColDef={"flex": 1, "filter": True},
+                    columnSize="sizeToFit",
+                    columnSizeOptions= {"skipHeader": False},
+                    dashGridOptions={"rowSelection": "single", "animateRows": False}
+                )
+            ])
         ),
 
         html.Br(),

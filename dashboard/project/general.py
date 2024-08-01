@@ -1,5 +1,6 @@
 from dash.dependencies import Output, Input
 from dash.long_callback import DiskcacheLongCallbackManager
+from dash import no_update
 
 from datetime import datetime
 import project.computation as spark
@@ -16,9 +17,10 @@ def register_callback_query(dm, app):
         Output(component_id='date-picker-single', component_property='options'),
         Output(component_id='date-picker-single', component_property='value'),
         Input(component_id='last_dump_check', component_property='n_intervals'),
-        Input(component_id='date-picker-single', component_property='value')
+        Input(component_id='date-picker-single', component_property='value'),
+        Input(component_id='date-picker-single', component_property='options'),
     )
-    def update_dump_message(n_intervals, value):
+    def update_dump_message(n_intervals, value, old_opts):
         print("[INFO][update_dump_message] Checking for new any changes.")
 
         obs = ""
@@ -51,6 +53,10 @@ def register_callback_query(dm, app):
         if not value:
             if len(options) > 0:
                 value = options[0]
+
+        if options == old_opts:
+            options = no_update
+            value = no_update
 
         return msg, options, value
 
