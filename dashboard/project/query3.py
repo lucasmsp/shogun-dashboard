@@ -129,29 +129,31 @@ def register_layout_query(dm):
     layout = [
         component_1,
         dbc.Row(
-            dag.AgGrid(
-                id="query-3-ag",
-                rowData = [{"cve_id": "Processing...", "cvss_score": 0, "epss": 0, "n_ips": 0, 'n_orgs': 0}],
-                columnDefs=[
-                    {"field": 'cve_id', "headerName": 'CVE', "cellRenderer": "GoToMitre", "tooltipValueGetter":
-                        {"function": "'Click on the cell for more details'"}},
-                    {"field": 'cvss_score', "headerName": 'CVSS',
-                     'tooltipValueGetter': {"function": "'CVSS Version: ' + "
-                                                        "params.data.cvss_version"}},
-                    {"field": 'epss', "headerName": 'EPSS', 'tooltipValueGetter': {"function": "'EPSS: ' + "
-                                                                                               "params.data.epss_rank"}},
-                    {"field": 'n_ips', "headerName": "# IPs"},
-                    {"field": 'n_orgs', "headerName": "# Organizations"},
-                ],
-                defaultColDef={"flex": 1},
-                columnSize="sizeToFit",
-                columnSizeOptions={"skipHeader": False},
-                dashGridOptions={
-                    'tooltipInteraction': True,
-                    'tooltipShowDelay': 10,
-                    'tooltipHideDelay': 1000
-                }
-            )
+            dcc.Loading([
+                dag.AgGrid(
+                    id="query-3-ag",
+                    rowData = [{"cve_id": "Processing...", "cvss_score": 0, "epss": 0, "n_ips": 0, 'n_orgs': 0}],
+                    columnDefs=[
+                        {"field": 'cve_id', "headerName": 'CVE', "cellRenderer": "GoToMitre", "tooltipValueGetter":
+                            {"function": "'Click on the cell for more details'"}},
+                        {"field": 'cvss_score', "headerName": 'CVSS',
+                        'tooltipValueGetter': {"function": "'CVSS Version: ' + "
+                                                            "params.data.cvss_version"}},
+                        {"field": 'epss', "headerName": 'EPSS', 'tooltipValueGetter': {"function": "'EPSS: ' + "
+                                                                                                "params.data.epss_rank"}},
+                        {"field": 'n_ips', "headerName": "# IPs"},
+                        {"field": 'n_orgs', "headerName": "# Organizations"},
+                    ],
+                    defaultColDef={"flex": 1},
+                    columnSize="sizeToFit",
+                    columnSizeOptions={"skipHeader": False},
+                    dashGridOptions={
+                        'tooltipInteraction': True,
+                        'tooltipShowDelay': 10,
+                        'tooltipHideDelay': 1000
+                    }
+                )
+            ])
         ),
 
         html.Div(style={'height': '40px'}),

@@ -1,8 +1,6 @@
 import itertools
-from dash import html, dcc, dash_table
+from dash import html, dcc, html, Input, Output
 import dash_ag_grid as dag
-
-from dash import Dash, dcc, html, Input, Output
 
 import dash_bootstrap_components as dbc
 
@@ -12,13 +10,12 @@ TAB_VIEW = "tab-4"
 
 def register_layout_query(dm):
 
-    layout = [
-        dbc.Row(
-            dag.AgGrid(
+    aggrid = dag.AgGrid(
                 id="query-5-ag",
                 rowData = [{"data": "Processing...", "ip_str": "0", "port": 0, "city": "", "os": "",
                             "org_clean": "", "hostnames": "", "domains": "", "score": 0, "meta_id": ""
                             }],
+                persistence=True,
                 columnDefs=[
                     {"field": 'data', "headerName": 'SERVICE', "cellRenderer": "markdown",
                       'width': 300, 'maxWidth': 500, "resizable": True, }, #"wrapText": True, "autoHeight": True},
@@ -53,8 +50,11 @@ def register_layout_query(dm):
                 style={"height": "1000px"},
                 className="ag-theme-alpine compact"
             )
-        ),
-
+    
+    layout = [
+        dbc.Row(
+            dcc.Loading([aggrid])
+        )
     ]
 
     q5 = [
@@ -80,7 +80,8 @@ def register_callback_query(dm, app):
         [
             Input('date-picker-single', 'value'),
             Input("general-tabs", "active_tab")
-        ], prevent_initial_call=True
+        ],
+        prevent_initial_call=True
     )
     def update_table5(date_value, active_tab=None):
 
