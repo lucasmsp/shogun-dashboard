@@ -58,7 +58,7 @@ text-align: left;
 line-height: 1.8;
 }
 
-.domain-tag, .hostname-tag {
+.domain-tag, .hostname-tag, .cpe-tag {
     display: inline-block;
     padding: 8px;
     font-size: 18px;
@@ -67,6 +67,7 @@ line-height: 1.8;
     text-decoration: none;
     text-align: center;
     position: relative;
+    margin: 3px;
 }
 
 .cve-tag {
@@ -97,6 +98,7 @@ background-color: #f44336;
 
 .domain-tag { background-color: #007bff; }
 .hostname-tag { background-color: #007bff; }
+.cpe-tag { background-color: #FFC107; }
 
 .show-more-btn {
 display: block;
@@ -250,22 +252,27 @@ th, td {
     font-size: 14px;
     text-align: left;
 }
+
 .checkmark-btn {
     font-size: 24px; 
     padding: 10px 20px;
     border: none;
-    background-color: #4CAF50; 
+    background-color: gray;
     color: white;
     border-radius: 5px;
     cursor: pointer;
 }
 
-.checkmark-btn.blue {
+.checkmark-btn.blue.active {
     background-color: #2196F3;
 }
 
-.checkmark-btn.orange {
-    background-color: #FF9800;
+.checkmark-btn.orange.active {
+    background-color: #FF9800; 
+}
+
+.checkmark-btn.green.active {
+    background-color: #4CAF50;
 }
 
 .checkmark-btn:hover {
