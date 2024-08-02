@@ -171,10 +171,6 @@ def set_routes(server, db, login_manager, app):
     @login_required
     def get_details_json(meta_id):
         try:
-            print(request.args)
-            print(request.form)
-            print(request.data)
-
             day = global_date()
             condition = ds.field("meta_id") == meta_id
             filtered_data = dm.get_report_dataset_new(day, condition=condition, single_output=True)

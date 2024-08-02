@@ -12,7 +12,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='dataTables.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='details_ip.css') }}">
-    <title>IP Details</title>
+    <title>Loading...</title>
     <style>
       
     </style>
@@ -37,7 +37,7 @@
           <div class="ip-score-wrapper">
               <p id="score">Score: 1</p>
               <button class="checkmark-btn blue" id="up-btn">⬆</button>
-              <button class="checkmark-btn" id="checkmark-btn">✓</button>
+              <button class="checkmark-btn green" id="checkmark-btn">✓</button>
               <button class="checkmark-btn orange" id="down-btn">⬇</button>
               <div id="vote-message" class="vote-message"></div>
           </div>
@@ -50,20 +50,23 @@
                   <h2>IP Info</h2>
               </div>
               <div class="info-content">
-                  <div><span class="label">City:</span> <span class="label-city">N/A</span></div>
-                  <hr>
-                  <div><span class="label">Organization:</span> <span class="label-organization">N/A</span></div>
-                  <hr>
-                  <div><span class="label">Operating System:</span> <span class="label-operating-system">N/A</span></div>
-                  <hr>
-                  <div><span class="label">Hostnames:</span></div>
-                  <div id="hostnames-container"></div>
-                  <hr>
-                  <div><span class="label">Domains:</span></div>
-                  <div id="domains-container"></div>
-                  <div id="cve-tags-container"></div>
-                  <button id="show-more-btn" class="show-more-btn">Show More</button>
-              </div>
+                <div><span class="label">City:</span> <span class="label-city">N/A</span></div>
+                <hr>
+                <div><span class="label">Organization:</span> <span class="label-organization">N/A</span></div>
+                <hr>
+                <div><span class="label">Operating System:</span> <span class="label-operating-system">N/A</span></div>
+                <hr>
+                <div><span class="label">CPE23:</span></div>
+                <div id="cpe23-container"></div>
+                <hr>
+                <div><span class="label">Hostnames:</span></div>
+                <div id="hostnames-container"></div>
+                <hr>
+                <div><span class="label">Domains:</span></div>
+                <div id="domains-container"></div>
+                <div id="cve-tags-container"></div>
+                <button id="show-more-btn" class="show-more-btn">Show More</button>
+            </div>
           </div>
           <div class="info-container">
               <div class="info-title">
@@ -286,12 +289,16 @@ function getEntries(data) {
         for (const key in data) {
             if (key == 'ip_str') {
                 document.getElementById("ip_str").textContent = data[key];
+                document.title = data[key];
             }
             if (key == 'data') {
                 document.getElementById("data").textContent = data[key];
             }
             if (key == 'timestamp') {
                 document.getElementById("timestamp").textContent = data[key];
+            }
+            if (key == 'score') {
+                document.getElementById('score').textContent = data[key];
             }
             if (key == 'latitude') {
                 latitude = data[key];
@@ -300,7 +307,6 @@ function getEntries(data) {
                 longitude = data[key];
             }
             if (key === 'http') {
-                console.log('Setting iframe src to:', data[key]);
                 // Properly decode HTML content and set it inside the iframe
                 const iframe = document.getElementById("data-iframe");
                 iframe.contentWindow.document.open();
@@ -314,7 +320,6 @@ function getEntries(data) {
                 longitude = longitude[0];
             }
             if (latitude !== null && longitude !== null) {
-                console.log(latitude, longitude);
                 const marker = L.marker([latitude, longitude]).addTo(mymap);
                 mymap.setView([latitude, longitude], 8);
             }
@@ -335,35 +340,30 @@ function getEntries(data) {
         }
         tbody.appendChild(tr);
     }
-
+    document.querySelector('.info-content .label-city').textContent = data.city || 'N/A';
     document.querySelector('.info-content .label-organization').textContent = data.org_clean || 'N/A';
     document.querySelector('.info-content .label-operating-system').textContent = data.operating_system || 'N/A';
 
-    const hostnamesContainer = document.getElementById('hostnames-container');
-    hostnamesContainer.innerHTML = '';  // Clear previous tags
-    if (data.hostnames) {
-        data.hostnames.forEach(hostname => {
-            const hostnameTag = document.createElement('span');
-            hostnameTag.className = 'hostname-tag';
-            hostnameTag.textContent = hostname;
-            hostnamesContainer.appendChild(hostnameTag);
-        });
-    } else {
-        hostnamesContainer.textContent = 'N/A';
+    populateTags(data.cpe23, 'cpe23-container', 'cpe-tag');
+    populateTags(data.hostnames, 'hostnames-container', 'hostname-tag');
+    populateTags(data.domains, 'domains-container', 'domain-tag');
+
+    function populateTags(items, containerId, className) {
+        const container = document.getElementById(containerId);
+        container.innerHTML = ''; // Clear previous tags
+        if (Array.isArray(items[0])) {
+            items[0].forEach(item => {
+                const tag = document.createElement('span');
+                tag.className = className;
+                tag.textContent = item;
+                container.appendChild(tag);
+            });
+        } else {
+            container.textContent = 'N/A';
+        }
     }
 
-    const domainsContainer = document.getElementById('domains-container');
-    domainsContainer.innerHTML = '';  // Clear previous tags
-    if (data.domains) {
-        data.domains.forEach(domain => {
-            const domainTag = document.createElement('span');
-            domainTag.className = 'domain-tag';
-            domainTag.textContent = domain;
-            domainsContainer.appendChild(domainTag);
-        });
-    } else {
-        domainsContainer.textContent = 'N/A';
-    }
+   
 
     const rawJsonContainer = document.getElementById('raw-json-content');
     
@@ -381,7 +381,6 @@ function getEntries(data) {
     function processJsonData(data) {
         const vulnerabilitiesTable = $('#vulnerabilitiesTable').DataTable();
         let vulnerabilities = [];
-        console.log(data);
         const vulnsArray = data.vulns;
         const vulns = vulnsArray[0];
         vulns.forEach(vuln => {
