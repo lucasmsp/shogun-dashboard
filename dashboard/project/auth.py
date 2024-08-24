@@ -45,7 +45,7 @@ def register_callback_query(dm, app):
             if os.path.exists(file_path):
                 print(f"File found: {file_path}")
                 content = pd.read_csv(file_path)
-                print(f"File content:\n{content}")
+                # print(f"File content:\n{content}")
             else:
                 print("File not found.")
             

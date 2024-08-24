@@ -6,7 +6,7 @@ from project.layout import register_layout
 import pyarrow.dataset as ds
 import pandas as pd
 import os
-from datetime import datetime
+from datetime import datetime,timedelta
 
 def global_date():
     file_path = os.path.join('date', 'selected_date.csv')
@@ -40,6 +40,10 @@ def start_flask(dm):
     db.init_app(server)
 
     with server.app_context():
+        # things before first request
+        server.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=5)
+        server.config['REMEMBER_COOKIE_DURATION'] = timedelta(minutes=5) # The default is 31 days. 
+        server.permanent = True # If set to False the session will be deleted when the user closes the browser/refresh.
         db.create_all()
 
         if not User.query.filter_by(username='admin').first():
@@ -96,7 +100,7 @@ def set_routes(server, db, login_manager, app):
     @server.route('/dashboard/')
     @login_required
     def dashboard():
-        app.layout = register_layout(dm, current_user.username)
+        app.layout = register_layout(dm)
         return app.index()
     
     ### FEATURE FLAG
