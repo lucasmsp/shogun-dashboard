@@ -1,6 +1,7 @@
 from dash.dependencies import Output, Input
 from dash.long_callback import DiskcacheLongCallbackManager
 from dash import no_update
+from flask_login import current_user
 
 from datetime import datetime
 import project.computation as spark
@@ -12,6 +13,23 @@ cache = diskcache.Cache("./cache")
 long_callback_manager = DiskcacheLongCallbackManager(cache)
 
 def register_callback_query(dm, app):
+
+    @app.callback(
+        Output(component_id='username-menu', component_property='label'),
+        Output(component_id='admin-menu-item', component_property='style'),
+        Input(component_id='username-menu', component_property='children')
+    )
+    def cur_user(style):
+        if current_user.is_authenticated:
+
+            if current_user.username == "admin":
+                style = {'display': 'block'}
+
+            return current_user.username, style
+        else:
+            return 'Empty', style
+    
+
     @app.callback(
         Output(component_id='last_dump_message', component_property='children'),
         Output(component_id='date-picker-single', component_property='options'),
