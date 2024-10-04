@@ -97,25 +97,8 @@ class DatasetManager(object):
         else:
             df = pd.DataFrame()
         return df
-
-    def get_report_dataset(self, day, columns=None, condition=None, single_output=False):
-
-        commit = self.retrive_commit(day)
-        if commit >= 0:
-            filepath = self.tlhop_epss_report_path
-
-            print(f"[INFO][DatasetManager] Reading report of day {day}")
-            dt = DeltaTable(filepath, version=commit).to_pyarrow_dataset()
-
-            if single_output:
-                df = dt.filter(condition).head(1).to_pydict()
-            else:
-                df = dt.to_table(filter=condition, columns=columns).to_pandas()
-        else:
-            df = pd.DataFrame()
-        return df
     
-    def get_report_dataset_new(self, day, columns=None, condition=None, single_output=False, start=0, finish=-1, sort_by='score', ascending=False):
+    def get_report_dataset(self, day, columns=None, condition=None, single_output=False, start=0, finish=-1, sort_by='score', ascending=False, compute_score=False):
         commit = self.retrive_commit(day)
         df = None
         if commit >= 0:
@@ -127,13 +110,16 @@ class DatasetManager(object):
             if single_output:
                 df = dt.filter(condition).head(1).to_pydict()
             else:
-                table = dt.to_table(filter=condition, columns=columns)
 
+                table = dt.to_table(filter=condition, columns=columns)
                 df = table.to_pandas()
-                df['score'] = df['vulns_scores'].apply(lambda x: x.get('epss', []) if isinstance(x, dict) else [])
-                df['score'] = df['score'].apply(lambda probs: 1 - np.prod([1 - p for p in probs]))
-                df = df.drop(columns=['vulns_scores'])
-                df = df.sort_values(by=sort_by, ascending=ascending)
+
+                if compute_score:
+                    df['score'] = df['vulns_scores'].apply(lambda x: x.get('epss', []) if isinstance(x, dict) else [])
+                    df['score'] = df['score'].apply(lambda probs: 1 - np.prod([1 - p for p in probs]))
+                    df = df.drop(columns=['vulns_scores'])
+                    df = df.sort_values(by=sort_by, ascending=ascending)
+                
                 
                 if finish > 0:
                     df = df.iloc[start:finish]
