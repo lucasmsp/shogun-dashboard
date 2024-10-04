@@ -89,11 +89,12 @@ def register_callback_query(dm, app):
             return [{}]
         print("[INFO][query5] - update_table5: ", date_value)
 
-        df = dm.get_report_dataset_new(
+        df = dm.get_report_dataset(
                 date_value,
                 columns=["data", "ip_str", "port", "city", "os", "org_clean", "hostnames", "domains", "meta_id", "vulns_scores"], 
                 sort_by='score',
-                ascending=False
+                ascending=False,
+                compute_score=True
             )
 
         if df.empty:

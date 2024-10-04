@@ -177,7 +177,7 @@ def set_routes(server, db, login_manager, app):
         try:
             day = global_date()
             condition = ds.field("meta_id") == meta_id
-            filtered_data = dm.get_report_dataset_new(day, condition=condition, single_output=True)
+            filtered_data = dm.get_report_dataset(day, condition=condition, single_output=True)
         except:
             filtered_data = {}
         return jsonify(filtered_data)
@@ -204,15 +204,16 @@ def set_routes(server, db, login_manager, app):
             start = (page_int - 1) * page_size
             finish = page_int * page_size
 
-            df = dm.get_report_dataset_new(
+            df = dm.get_report_dataset(
                 date_value, 
                 columns=["data", "ip_str", "port", "city", "os", "org", "hostnames", "domains", "meta_id", "vulns_scores"], 
                 start=start, 
                 finish=finish,
                 sort_by='epss',
-                ascending=False
+                ascending=False,
+                compute_score=True
             )
-
+            # TODO
             partial = df.to_json(orient='records')
         except:
             partial = {}
