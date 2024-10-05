@@ -6,7 +6,7 @@ from project.layout import register_layout
 import pyarrow.dataset as ds
 import pandas as pd
 import os
-from datetime import datetime,timedelta
+from datetime import datetime
 
 def global_date():
     file_path = os.path.join('date', 'selected_date.csv')
@@ -23,7 +23,7 @@ def start_flask(dm):
     Starts the custom flask server to handle authentication and the advanced queries.
     """
 
-    server = Flask("TLHOP/SAM Cybersecurity Dashboards", template_folder='./templates', static_folder="./templates/static")
+    server = Flask("SAM/CRIVO Cybersecurity Dashboards", template_folder='./templates', static_folder="./templates/static")
     # During the process of signing a cookie, the SECRET_KEY is used in a way similar to how a "salt" would be used to muddle a password before hashing it. 
     # Do not set the SECRET_KEY directly with a function that generates a different key each time it's called. Otherwise, each time your application is
     # restarted it will be given a new key, thus invalidating the previous. A good recipe to generate FLASK_SECRET is copy the content of `import os; os.urandom(24)`
@@ -40,10 +40,6 @@ def start_flask(dm):
     db.init_app(server)
 
     with server.app_context():
-        # things before first request
-        server.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=5)
-        server.config['REMEMBER_COOKIE_DURATION'] = timedelta(minutes=5) # The default is 31 days. 
-        server.permanent = True # If set to False the session will be deleted when the user closes the browser/refresh.
         db.create_all()
 
         if not User.query.filter_by(username='admin').first():
@@ -213,7 +209,7 @@ def set_routes(server, db, login_manager, app):
                 ascending=False,
                 compute_score=True
             )
-            # TODO
+
             partial = df.to_json(orient='records')
         except:
             partial = {}

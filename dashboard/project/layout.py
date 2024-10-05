@@ -54,7 +54,7 @@ def register_layout(dm):
                 dbc.Container(
                     [
                         dbc.Row([
-                            html.H1(children=["📊 TLHOP/SAM Cybersecurity Dashboards"])
+                            html.H1(children=["📊 SAM/CRIVO Cybersecurity Dashboards"])
                             ], className="g-0",
                         ),
                         dbc.NavItem(
@@ -67,7 +67,7 @@ def register_layout(dm):
                                         placeholder="Analysis day",
                                         clearable=False,
                                         multi=False,
-                                        style={'minWidth': '100%'}
+                                        style={'minWidth': '200px'}
                                     ),                                    
                                 )
                             ), class_name="ms-4", style={'width': '10vh', 'display': 'inline-block', "color": "black"}
@@ -108,30 +108,28 @@ def register_layout(dm):
             ),
 
             html.Footer([
+                html.H3(children=[
+                    html.Br(),
+                    html.Img(src="/assets/rnp.png", style={'height': '30px', 'verticalAlign': 'middle', 'paddingRight': '10px'}),
+                    "DCC/UFMG - CERT.br - RNP"
+                ],
+                style={'textAlign': 'center', 'marginTop': '20px'}),
                 html.Div(
                     html.H5(
-                            id='last_dump_message',
-                            children="Last dump: ??. Checking for new data at ??."
-                        ),
-                        style={'float': 'left', 'textAlign': 'left'}
+                        id='last_dump_message',
+                        children="Last dump: ??. Checking for new data at ??."
+                    ),
+                    style={'float': 'left', 'textAlign': 'left'}
                 ),
-                html.H3(children=(
-                    html.A(
-                        html.I(className="fab fa-github"), # Icon from font awesome
-                        href="https://github.com/lucasmsp/tlhop-epss-app" ,
-                        target="_blank"
-                    ), 
-                    " Thread-Limiting Holistic Open Platform (TLHOP) Project - DCC/UFMG - CERT.br  | 2024"))
-                ],
-                style={
-                        'border': '1px solid #ccc',     # Add a border at the top
-                        'textAlign': 'center',         # Center-align the text
-                        'padding': '30px',              # Add some padding for spacing
-                        'background-color': '#f2f2f2'   # Set a background color
-                }
-            ),
+            ],
+            style={
+                'border': '1px solid #ccc',  # Add a border at the top
+                'textAlign': 'center',  # Center-align the text
+                'padding': '30px',  # Add some padding for spacing
+                'background-color': '#f2f2f2'  # Set a background color
+            }),
+
             dcc.Store(id='store-date')
         ]
     )
     return layout
-

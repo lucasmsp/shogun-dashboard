@@ -100,30 +100,31 @@ dagcomponentfuncs.launchBtn = function (props) {
         }
     }
 
-    // Click handler
-    function handleVoteClick(voteValue) {
-        if (vote === voteValue) {
-            // Remove vote if already selected
-            saveVote(null);
-        } else {
-            saveVote(voteValue);
-        }
+    // Handle dropdown change
+    function handleDropdownChange(event) {
+        const voteValue = parseInt(event.target.value, 10);
+        saveVote(voteValue);
     }
 
-    // CSS
-    function getButtonClass(voteValue) {
-        return `btn ${vote === voteValue ? 'btn-primary' : 'btn-success'}`;
+    // Dropdown options
+    const options = [];
+    for (let i = 0; i <= 10; i++) {
+        options.push(
+            React.createElement(
+                'option',
+                { key: i, value: i },
+                i
+            )
+        );
     }
 
-    const button1 = React.createElement("button", { className: getButtonClass(1), onClick: () => handleVoteClick(1) }, "⬆");
-    const button2 = React.createElement("button", { className: getButtonClass(0), onClick: () => handleVoteClick(0) }, "✓");
-    const button3 = React.createElement("button", { className: getButtonClass(-1), onClick: () => handleVoteClick(-1) }, "⬇");
-
-    const div = React.createElement(
-        'div',
-        { className: 'btn-group' },
-        [button1, button2, button3]
-      );
-
-    return div
+    return React.createElement(
+        'select',
+        {
+            value: vote !== null ? vote : '',  // Set the current vote or default to empty
+            className: 'form-select',
+            onChange: handleDropdownChange,
+        },
+        options
+    );
 };
