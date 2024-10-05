@@ -1,4 +1,4 @@
-from dash import html, dcc, dash_table
+from dash import html, dcc
 import dash_bootstrap_components as dbc
 
 import project.query1 as query1
@@ -7,7 +7,7 @@ import project.query3 as query3
 import project.query4 as query4
 import project.query5 as query5
 
-def register_layout(dm, username):
+def register_layout(dm):
 
     tab1_content = dbc.Card(
         dbc.CardBody(
@@ -45,14 +45,10 @@ def register_layout(dm, username):
     
 
     nav_opts = [
-        dbc.DropdownMenuItem(username, header=True),
         dbc.DropdownMenuItem("Profile", id="profile-menu-item"),
         dbc.DropdownMenuItem("Administrator", id="admin-menu-item", style={'display': 'none'}),
         dbc.DropdownMenuItem("Logout", id="logout-menu-item"),
     ]
-
-    if username == "admin":
-        nav_opts[2].style = {'display': 'block'}
 
     navbar = dbc.Navbar(
                 dbc.Container(
@@ -80,8 +76,9 @@ def register_layout(dm, username):
                             children=nav_opts,
                             nav=True,
                             in_navbar=True,
-                            label=username,
-                            align_end=True
+                            label="Loading...",
+                            align_end=True,
+                            id="username-menu"
                         ),
                         dcc.Interval(id='last_dump_check', interval=5 * 60 * 1000, n_intervals=0),
                 ]),

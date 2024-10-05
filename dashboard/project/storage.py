@@ -115,46 +115,14 @@ class DatasetManager(object):
                 df = table.to_pandas()
 
                 if compute_score:
-                    df['score'] = df['vulns_scores'].apply(lambda x: x.get('epss', []) if isinstance(x, dict) else [])
-                    df['score'] = df['score'].apply(lambda probs: 1 - np.prod([1 - p for p in probs]))
+                    df['score'] = df['vulns_scores'].apply(
+                        lambda x: max(x.get('epss', [0])) if isinstance(x, dict) else 0)
                     df = df.drop(columns=['vulns_scores'])
                     df = df.sort_values(by=sort_by, ascending=ascending)
                 
                 
                 if finish > 0:
                     df = df.iloc[start:finish]
-
-        return df
-    
-    def get_report_dataset_new(self, day, columns=None, condition=None, single_output=False, start=0, finish=-1, sort_by='score', ascending=False):
-        commit = self.retrive_commit(day)
-        df = None
-        if commit >= 0:
-            filepath = self.tlhop_epss_report_path
-
-            print(f"Reading report of day {day}")
-            dt = DeltaTable(filepath, version=commit).to_pyarrow_dataset()
-
-            if single_output:
-                df = dt.filter(condition).head(1).to_pydict()
-            else:
-                table = dt.to_table(filter=condition, columns=None)
-                df = table.to_pandas()
-                #df['score'] = df['vulns_scores'].apply(lambda x: x.get('epss', []) if isinstance(x, dict) else [])
-                #df['score'] = df['score'].apply(lambda probs: 1 - np.prod([1 - p for p in probs]))
-                df['score'] = df['vulns_scores'].apply(lambda x: max(x.get('epss', [0])) if isinstance(x, dict) else 0)
-                df = df.drop(columns=['vulns_scores'])
-                df = df.sort_values(by=sort_by, ascending=ascending)
-                
-                # Sample 600 random entries
-                df = df.sample(n=600, random_state=42)
-
-                if finish > 0:
-                    df = df.iloc[start:finish]
-
-            #file_path = 'file_ips.csv'
-            #df.to_csv(file_path, index=False)
-            #print(f"DataFrame saved to {file_path} successfully.")
 
         return df
 
