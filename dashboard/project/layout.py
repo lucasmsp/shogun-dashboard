@@ -1,4 +1,4 @@
-from dash import html, dcc
+from dash import html, dcc, dash_table
 import dash_bootstrap_components as dbc
 
 import project.query1 as query1
@@ -7,7 +7,7 @@ import project.query3 as query3
 import project.query4 as query4
 import project.query5 as query5
 
-def register_layout(dm):
+def register_layout(dm, username):
 
     tab1_content = dbc.Card(
         dbc.CardBody(
@@ -45,16 +45,20 @@ def register_layout(dm):
     
 
     nav_opts = [
+        dbc.DropdownMenuItem(username, header=True),
         dbc.DropdownMenuItem("Profile", id="profile-menu-item"),
         dbc.DropdownMenuItem("Administrator", id="admin-menu-item", style={'display': 'none'}),
         dbc.DropdownMenuItem("Logout", id="logout-menu-item"),
     ]
 
+    if username == "admin":
+        nav_opts[2].style = {'display': 'block'}
+
     navbar = dbc.Navbar(
                 dbc.Container(
                     [
                         dbc.Row([
-                            html.H1(children=["📊 TLHOP/SAM Cybersecurity Dashboards"])
+                            html.H1(children=["📊 SAM/CRIVO Cybersecurity Dashboards"])
                             ], className="g-0",
                         ),
                         dbc.NavItem(
@@ -67,7 +71,7 @@ def register_layout(dm):
                                         placeholder="Analysis day",
                                         clearable=False,
                                         multi=False,
-                                        style={'minWidth': '100%'}
+                                        style={'minWidth': '200px'}
                                     ),                                    
                                 )
                             ), class_name="ms-4", style={'width': '10vh', 'display': 'inline-block', "color": "black"}
@@ -76,9 +80,8 @@ def register_layout(dm):
                             children=nav_opts,
                             nav=True,
                             in_navbar=True,
-                            label="Loading...",
-                            align_end=True,
-                            id="username-menu"
+                            label=username,
+                            align_end=True
                         ),
                         dcc.Interval(id='last_dump_check', interval=5 * 60 * 1000, n_intervals=0),
                 ]),
@@ -108,30 +111,28 @@ def register_layout(dm):
             ),
 
             html.Footer([
+                html.H3(children=[
+                    html.Br(),
+                    html.Img(src="/assets/rnp.png", style={'height': '30px', 'verticalAlign': 'middle', 'paddingRight': '10px'}),
+                    "DCC/UFMG - CERT.br - RNP"
+                ],
+                style={'textAlign': 'center', 'marginTop': '20px'}),
                 html.Div(
                     html.H5(
-                            id='last_dump_message',
-                            children="Last dump: ??. Checking for new data at ??."
-                        ),
-                        style={'float': 'left', 'textAlign': 'left'}
+                        id='last_dump_message',
+                        children="Last dump: ??. Checking for new data at ??."
+                    ),
+                    style={'float': 'left', 'textAlign': 'left'}
                 ),
-                html.H3(children=(
-                    html.A(
-                        html.I(className="fab fa-github"), # Icon from font awesome
-                        href="https://github.com/lucasmsp/tlhop-epss-app" ,
-                        target="_blank"
-                    ), 
-                    " Thread-Limiting Holistic Open Platform (TLHOP) Project - DCC/UFMG - CERT.br  | 2024"))
-                ],
-                style={
-                        'border': '1px solid #ccc',     # Add a border at the top
-                        'textAlign': 'center',         # Center-align the text
-                        'padding': '30px',              # Add some padding for spacing
-                        'background-color': '#f2f2f2'   # Set a background color
-                }
-            ),
+            ],
+            style={
+                'border': '1px solid #ccc',  # Add a border at the top
+                'textAlign': 'center',  # Center-align the text
+                'padding': '30px',  # Add some padding for spacing
+                'background-color': '#f2f2f2'  # Set a background color
+            }),
+
             dcc.Store(id='store-date')
         ]
     )
     return layout
-

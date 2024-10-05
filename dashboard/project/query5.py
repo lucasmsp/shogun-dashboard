@@ -18,14 +18,12 @@ def register_layout_query(dm):
                 persistence=True,
                 columnDefs=[
                     {"field": 'data', "headerName": 'SERVICE', "cellRenderer": "markdown",
-                      'width': 300, 'maxWidth': 500, "resizable": True, }, #"wrapText": True, "autoHeight": True},
+                      'width': 300, 'maxWidth': 500, "resizable": True, },
                     {"field": 'ip_str', "headerName": 'IP', "cellRenderer": "IPLink", 
                      "tooltipValueGetter": {"function": "'Click on the cell for more details'"}, 
                      'width': 150, 'maxWidth': 150, "resizable": False
                      },
-                    {"field": 'port', "headerName": 'PORT', "resizable": False, 'width': 100, 'maxWidth': 100,
-                     #"cellRenderer": "Button", "cellRendererParams": {"className": "btn btn-primary"},  
-                     },
+                    {"field": 'port', "headerName": 'PORT', "resizable": False, 'width': 100, 'maxWidth': 100},
                     {"field": 'city', "headerName": "CITY", 'width': 150, "wrapText": True},
                     {"field": 'os', "headerName": "OS", 'width': 80, "wrapText": True},
                     {"field": 'org_clean', "headerName": "ORGANIZATION", "wrapText": True},
@@ -71,8 +69,6 @@ def register_layout_query(dm):
 
     return q5
 
-
-# register all the callbacks in one place
 def register_callback_query(dm, app):
 
     @app.callback(
@@ -89,12 +85,11 @@ def register_callback_query(dm, app):
             return [{}]
         print("[INFO][query5] - update_table5: ", date_value)
 
-        df = dm.get_report_dataset(
+        df = dm.get_report_dataset_new(
                 date_value,
                 columns=["data", "ip_str", "port", "city", "os", "org_clean", "hostnames", "domains", "meta_id", "vulns_scores"], 
                 sort_by='score',
-                ascending=False,
-                compute_score=True
+                ascending=False
             )
 
         if df.empty:
