@@ -26,10 +26,10 @@ def register_layout_query(dm):
             dcc.Loading([
                 dag.AgGrid(
                     id="query-2a-grid",
-                    rowData = [{"org_clean": "Processing...", "ip_str": "-", "score": 0, "cvss_rank": "-", "cvss_score": "0", "cpe_product": "-", "cve_id": ""}],
+                    rowData = [{"org_clean": "Processing...", "ip": "-", "score": 0, "cvss_rank": "-", "cvss_score": "0", "cpe_product": "-", "cve_id": ""}],
                     columnDefs=[
                         {"field": 'org_clean', "headerName": 'Organization (clean)', "filterParams": {"filterOptions": ["equals","notEqual",'contains']}},
-                        {"field": 'ip_str', "headerName": 'IP',
+                        {"field": 'ip', "headerName": 'IP',
                         "tooltipValueGetter": {"function": "'Click on the cell for more details'"},
                         "filterParams": {"filterOptions": ["equals","notEqual",'contains']} 
                         },
@@ -282,7 +282,7 @@ def register_callback_query(dm, app):
             )
 
         elif metric == "Bar plot - Top 10 vulnerable products":
-            number_ips = df['ip_str'].nunique()
+            number_ips = df['ip'].nunique()
             top_products = df.groupby(['cpe_product'])['cvss_rank'].count().reset_index(name='total_count')
             if len(top_products) > 10:
                 top_products = top_products[:10]
@@ -319,7 +319,7 @@ def register_callback_query(dm, app):
             return {}
         
         df = filter_text(filter_modal, df, "org_clean")
-        df = filter_text(filter_modal, df, "ip_str")
+        df = filter_text(filter_modal, df, "ip")
         df = filter_number(filter_modal, df, "epss")
         df = filter_text(filter_modal, df, "cvss_rank")
         df = filter_text(filter_modal, df, "cpe_product")
@@ -346,7 +346,7 @@ def register_callback_query(dm, app):
             return [{}]
         
         aggregated_df = df.groupby('org_clean').agg({
-            'ip_str': lambda x: list(x),
+            'ip': lambda x: list(x),
             'cve_id': lambda x: list(x),
             'cpe_product': lambda x: list(x),
             'epss': 'max', 
@@ -372,7 +372,7 @@ def register_callback_query(dm, app):
         if aggregated_df.empty:
             return {}
 
-        aggregated_df["n_ips"] = aggregated_df["ip_str"].apply(len)
+        aggregated_df["n_ips"] = aggregated_df["ip"].apply(len)
         aggregated_df = aggregated_df.sort_values("n_ips")
         
         aggregated_df = filter_text(filter_modal, aggregated_df, "org_clean")
@@ -479,9 +479,9 @@ def register_callback_query(dm, app):
 
         filter_opt = {}  
         if (TAB_VIEW == active_tab) and cell:
-            if cell.get("colId", "") == "ip_str":
+            if cell.get("colId", "") == "ip":
                 value = cell.get('value', "")
-                filter_opt = {'ip_str': {'filterType': 'text', 'type': 'equals', 'filter': value}}
+                filter_opt = {'ip': {'filterType': 'text', 'type': 'equals', 'filter': value}}
 
                 return "tab-4", filter_opt, {}
         return active_tab, filter_opt, {}

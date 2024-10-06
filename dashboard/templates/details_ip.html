@@ -30,7 +30,7 @@
       <div class="container">
           <div class="two-buttons">
               <div class="ip-info-wrapper">
-                  <p id="ip_str"></p>
+                  <p id="ip"></p>
                   <p id="timestamp"></p>
               </div>
           </div>
@@ -291,8 +291,8 @@ function getEntries(data) {
     for (let i = 0; i < rowCount; i++) {
         const tr = document.createElement('tr');
         for (const key in data) {
-            if (key == 'ip_str') {
-                document.getElementById("ip_str").textContent = data[key];
+            if (key == 'ip') {
+                document.getElementById("ip").textContent = data[key];
                 document.title = data[key];
             }
             if (key == 'data') {

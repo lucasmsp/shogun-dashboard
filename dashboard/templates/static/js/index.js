@@ -76,7 +76,7 @@ async function renderTable(data) {
                 portDiv.textContent = row[key];
 
                 td.appendChild(portDiv);
-            } else if (key === 'ip_str') {
+            } else if (key === 'ip') {
                 const ipLink = document.createElement('a');
                 ipLink.href = `/details/${row['meta_id']}`;
                 ipLink.textContent = row[key];

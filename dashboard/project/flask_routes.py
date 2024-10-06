@@ -202,7 +202,7 @@ def set_routes(server, db, login_manager, app):
 
             df = dm.get_report_dataset(
                 date_value, 
-                columns=["data", "ip_str", "port", "city", "os", "org", "hostnames", "domains", "meta_id", "vulns_scores"], 
+                columns=["data", "ip", "port", "city", "os", "org", "hostnames", "domains", "meta_id", "vulns_scores"], 
                 start=start, 
                 finish=finish,
                 sort_by='epss',

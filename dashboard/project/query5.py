@@ -12,14 +12,14 @@ def register_layout_query(dm):
 
     aggrid = dag.AgGrid(
                 id="query-5-ag",
-                rowData = [{"data": "Processing...", "ip_str": "0", "port": 0, "city": "", "os": "",
+                rowData = [{"data": "Processing...", "ip": "0", "port": 0, "city": "", "os": "",
                             "org_clean": "", "hostnames": "", "domains": "", "score": 0, "meta_id": ""
                             }],
                 persistence=True,
                 columnDefs=[
                     {"field": 'data', "headerName": 'SERVICE', "cellRenderer": "markdown",
                       'width': 300, 'maxWidth': 500, "resizable": True, },
-                    {"field": 'ip_str', "headerName": 'IP', "cellRenderer": "IPLink", 
+                    {"field": 'ip', "headerName": 'IP', "cellRenderer": "IPLink", 
                      "tooltipValueGetter": {"function": "'Click on the cell for more details'"}, 
                      'width': 150, 'maxWidth': 150, "resizable": False
                      },
@@ -87,7 +87,7 @@ def register_callback_query(dm, app):
 
         df = dm.get_report_dataset(
                 date_value,
-                columns=["data", "ip_str", "port", "city", "os", "org_clean", "hostnames", "domains", "meta_id", "vulns_scores"], 
+                columns=["data", "ip", "port", "city", "os", "org_clean", "hostnames", "domains", "meta_id", "vulns_scores"], 
                 sort_by='score',
                 ascending=False,
                 compute_score=True

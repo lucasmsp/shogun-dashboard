@@ -53,8 +53,8 @@ let longitude = null;
 for (let i = 0; i < rowCount; i++) {
 const tr = document.createElement('tr');
 for (const key in data) {
-  if (key == 'ip_str') {
-    document.getElementById("ip_str").textContent = data[key];
+  if (key == 'ip') {
+    document.getElementById("ip").textContent = data[key];
   }
   if (key == 'data') {
     document.getElementById("data").textContent = data[key];

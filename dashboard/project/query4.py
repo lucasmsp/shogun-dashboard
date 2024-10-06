@@ -33,7 +33,7 @@ def register_layout_query(dm):
                     dcc.Dropdown(
                         id='query4-dropdown-query',
                         options=[
-                            {'label': 'Choropleth Map of brazilian states - # IPs with vulnerabilities', 'value': 'ip_str'},
+                            {'label': 'Choropleth Map of brazilian states - # IPs with vulnerabilities', 'value': 'ip'},
                             {'label': 'Choropleth Map of brazilian states - Average CVSS by state (only the major CVE '
                                       'per IP)', 'value': 'cvss_score'},
                             {'label': 'Choropleth Map of brazilian states - Average EPSS by state (only the major CVE '
@@ -42,7 +42,7 @@ def register_layout_query(dm):
                             {'label': 'Choropleth Map of brazilian states - Number of IPs with CVEs within CVSS range by states', 'value': 'ip_cvss'}
                         ],
                         clearable=False,
-                        value='ip_str'
+                        value='ip'
                     ),
                     style={'marginTop': '32px'}
                 ),
@@ -122,14 +122,15 @@ def register_callback_query(dm, app):
 
         print("[INFO][query4][update_choropleth_map] ", date_value, flush=True)
         
-        if value == 'ip_str':
+        if value == 'ip':
 
-            df = dm.get_report_dataset(date_value, columns=["ip_str", "region_code"])
+            df = dm.get_report_dataset(date_value, columns=["ip", "city"])
+            df['region_code'] = df['city'].str.split(', ').str[1]
             if df.empty:
                 return fig
 
             df['name'] = df['region_code'].map(state_id_map)
-            df['n_ips'] = df.groupby('region_code')['ip_str'].transform(lambda x: x.nunique(dropna=True))
+            df['n_ips'] = df.groupby('region_code')['ip'].transform(lambda x: x.nunique(dropna=True))
             df = df[['n_ips', 'region_code', 'name']].drop_duplicates()
 
             fig = px.choropleth_mapbox(
@@ -156,8 +157,9 @@ def register_callback_query(dm, app):
 
         elif value == 'cvss_score':
 
-            df = dm.get_report_dataset(date_value,
-                                       columns=["ip_str", "region_code", "vulns_scores"])
+            df = dm.get_report_dataset(date_value, columns=["ip", "city", "vulns_scores"])
+            df['region_code'] = df['city'].str.split(', ').str[1]
+
             if df.empty:
                 return fig
 
@@ -169,7 +171,7 @@ def register_callback_query(dm, app):
             # Transformando cada item em float
             df['cvss_new'] = pd.to_numeric(df['cvss_new'], downcast='float', errors='coerce')
             # filtrando apenas o maior CVSS_NEW de cada IP
-            df = df.groupby(['region_code', "name", 'ip_str']).max('cvss_new').reset_index()
+            df = df.groupby(['region_code', "name", 'ip']).max('cvss_new').reset_index()
             # Criando uma coluna 'cvss_mean' que armazena a média dos cvss por estado
             df['cvss_mean'] = df.groupby('region_code')['cvss_new'].transform('mean')
             #Criando um df somente com as 3 colunas necessárias para criar o mapa
@@ -199,8 +201,8 @@ def register_callback_query(dm, app):
 
         elif value == 'epss_score':
 
-            df = dm.get_report_dataset(date_value,
-                                       columns=['ip_str', "region_code", "vulns_scores"])
+            df = dm.get_report_dataset(date_value, columns=['ip', "city", "vulns_scores"])
+            df['region_code'] = df['city'].str.split(', ').str[1]
             if df.empty:
                 return fig
 
@@ -211,7 +213,7 @@ def register_callback_query(dm, app):
             # Transformando cada item em float
             df['epss_new'] = pd.to_numeric(df['epss_new'], downcast='float', errors='coerce')
             # filtrando apenas o maior epss_new de cada IP
-            df = df.groupby(['region_code', "name", 'ip_str']).max('epss_new').reset_index()
+            df = df.groupby(['region_code', "name", 'ip']).max('epss_new').reset_index()
             # Criando uma coluna 'epss_sum' que armazena a média dos epss por estado
             df['epss_mean'] = df.groupby('region_code')['epss_new'].transform('mean')
 
@@ -242,8 +244,8 @@ def register_callback_query(dm, app):
 
         elif value == 'cve_id':
 
-            df = dm.get_report_dataset(date_value,
-                                       columns=["region_code", "vulns_scores"])
+            df = dm.get_report_dataset(date_value, columns=["city", "vulns_scores"])
+            df['region_code'] = df['city'].str.split(', ').str[1]
             if df.empty:
                 return fig
 
@@ -279,8 +281,8 @@ def register_callback_query(dm, app):
 
         elif value == 'ip_cvss':
             print("[INFO][query4][update_choropleth_map] ip_cvss: ", cvss_range_query)
-            df = dm.get_report_dataset(date_value,
-                                       columns=["ip_str", "region_code", "vulns_scores"])
+            df = dm.get_report_dataset(date_value, columns=['ip', "city", "vulns_scores"])
+            df['region_code'] = df['city'].str.split(', ').str[1]
             if df.empty:
                 return fig
             df['name'] = df['region_code'].map(state_id_map)
@@ -289,9 +291,9 @@ def register_callback_query(dm, app):
             df = df.explode('cvss_new')
 
             df['cvss_new'] = df['cvss_new'].apply(lambda x: float(x))
-            df = df.groupby(['region_code', "name", 'ip_str']).max('cvss_new').reset_index()
+            df = df.groupby(['region_code', "name", 'ip']).max('cvss_new').reset_index()
             df = df[(df['cvss_new'] >= cvss_range_query[0]) & (df['cvss_new'] <= cvss_range_query[1])]
-            df = df.groupby(by=['region_code', "name"]).agg(n_ips=('ip_str', pd.Series.nunique)).reset_index()
+            df = df.groupby(by=['region_code', "name"]).agg(n_ips=('ip', pd.Series.nunique)).reset_index()
 
             value = df['n_ips'].empty
 
