@@ -1,7 +1,15 @@
-from dash.dependencies import Output, Input
+from dash.dependencies import Input, Output, State
 from dash.long_callback import DiskcacheLongCallbackManager
-from dash import no_update
+from dash import no_update, html, dcc, callback_context
 from flask_login import current_user
+import dash_bootstrap_components as dbc
+
+import project.query1 as query1
+import project.query2_orgs as query2_orgs
+import project.query2_ips as query2_ips
+import project.query3 as query3
+import project.query4 as query4
+import project.query5 as query5
 
 from datetime import datetime
 import project.computation as spark
@@ -102,6 +110,122 @@ def register_callback_query(dm, app):
                 msg = "Last dump: {last}.".format(last=last_date_commit)
         return msg
 
+    tab1_content = dbc.Card(
+        dbc.CardBody(
+            html.Div(children=[dbc.Row(children=query1.register_layout_query(dm))], className="wrapper")),
+        className="mt-3",
+        id="tab1_content"
+    )
+
+    tab2_content_orgs = dbc.Card(
+        dbc.CardBody(
+            html.Div(children=[dbc.Row(children=query2_orgs.register_layout_query(dm))], className="wrapper"),
+        ),
+        className="mt-3",
+        id="tab2_content_orgs"
+    )
+
+    tab2_content_ips = dbc.Card(
+        dbc.CardBody(
+            html.Div(children=[dbc.Row(children=query2_ips.register_layout_query(dm))], className="wrapper"),
+        ),
+        className="mt-3",
+        id="tab2_content_ips"
+    )
+
+    tab3_content = dbc.Card(
+        dbc.CardBody(
+            html.Div(children=[dbc.Row(children=query3.register_layout_query(dm))], className="wrapper"),
+        ),
+        className="mt-3",
+        id="tab3_content"
+    )
+
+    tab4_content = dbc.Card(
+        dbc.CardBody(
+            html.Div(children=[dbc.Row(children=query4.register_layout_query(dm))], className="wrapper"),
+        ),
+        className="mt-3",
+        id="tab4_content"
+    )
+
+    tab5_content = dbc.Card(
+        dbc.CardBody(
+            html.Div(children=[dbc.Row(children=query5.register_layout_query(dm))], className="wrapper_table",
+                     style={"width": "100%", "height": "100%"}),
+        ),
+        className="mt-3",
+        id="tab5_content"
+    )
+
+    @app.callback(
+        Output("page-content", "children"),
+        [Input("url", "pathname")]
+    )
+    def render_page_content(pathname):
+        print(pathname)
+        if pathname == "/dashboard/view1":
+            return tab1_content
+        elif pathname == "/dashboard/view2a":
+            return tab2_content_orgs
+        elif pathname == "/dashboard/view2b":
+            return tab2_content_ips
+        elif pathname == "/dashboard/view3":
+            return tab3_content
+        elif pathname == "/dashboard/view4":
+            return tab4_content
+        elif pathname == "/dashboard/report":
+            return tab5_content
+        return html.Div(
+            [
+                html.H1("404: Not found", className="text-danger"),
+                html.Hr(),
+                html.P(f"The pathname {pathname} was not recognised..."),
+            ],
+            className="p-3 bg-light rounded-3",
+        )
+
+    @app.callback(
+        Output("sidebar", "className"),
+        [Input("sidebar-toggle", "n_clicks")],
+        [State("sidebar", "className")],
+    )
+    def toggle_classname(n, classname):
+        if n and classname == "":
+            return "collapsed"
+        return ""
+
+    @app.callback(
+        Output("collapse", "is_open"),
+        [Input("navbar-toggle", "n_clicks")],
+        [State("collapse", "is_open")],
+    )
+    def toggle_collapse(n, is_open):
+        if n:
+            return not is_open
+        return is_open
+
+    @app.callback(
+        Output("submenu-v2-collapse", "is_open"),
+        Input("submenu-v2", "n_clicks"),
+        State("submenu-v2-collapse", "is_open"),
+        prevent_initial_call='initial_duplicate'
+    )
+    def collapse_submenu(btn, is_open):
+        ctx = callback_context
+        print(ctx.triggered_id)
+        if "submenu-v2" == ctx.triggered_id:
+            return not is_open
+        return is_open
+
+    @app.callback(
+        Output("arrow-v2", "className"),
+        [Input("submenu-v2-collapse", "is_open")],
+    )
+    def set_navitem_class(is_open):
+        if is_open:
+            return "fas fa-chevron-down me-3"
+        return "fas fa-chevron-right me-3"
 
 
         

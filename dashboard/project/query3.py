@@ -11,140 +11,36 @@ import pandas as pd
 INPUT_DATA = '3'
 TAB_VIEW = "tab-2"
 
-
-def dash_components():
-    components_1 = html.Div([
-        html.Div(children=[
-            html.Center([
-                dcc.Input(
-                    id="search-bar-cve",
-                    type="search",
-                    placeholder="Search by CVE...",
-                    style={
-                        "width": "100%",
-                        "margin": "15px"
-                    }
-                )
-            ]),
-
-            dcc.Dropdown(
-                placeholder="CVSS version",
-                id='dropdown-cvss-version',
-                options=[
-                    {'label': '3.1', 'value': '3.1'},
-                    {'label': '3.0', 'value': '3.0'},
-                    {'label': '2.1', 'value': '2.1'},
-                ],
-                multi=False,
-                style={
-                    "width": "100%",
-                    "margin": "7px",
-                },
-            ),
-
-            html.Label(
-                children='Choose the CVSS range',
-                style={
-                    "marginLeft": "30px",
-                    "marginBottom": "10px",
-                }
-            ),
-            dcc.RangeSlider(
-                id='cvss-range-query3-slider',
-                min=0,
-                max=10,
-                count=1,
-                value=[0, 10],
-                tooltip={
-                    'placement': 'top',
-                    'always_visible': True,
-                },
-                allowCross=False,
-            ),
-
-        ], style={'padding': 10, 'flex': 1}),
-
-        html.Div(children=[
-            html.Center([
-                dcc.Input(
-                    id='search-bar-query3-org',
-                    type="search",
-                    placeholder="Org filter expression ('>', '<', '=','>=', '<=', '!=') e.g., '> 30'",
-                    style={
-                        "width": "100%",
-                        "margin": "15px"
-                    }
-                )
-            ]),
-
-            html.Center([
-                dcc.Input(
-                    id='search-bar-query3-ip',
-                    type="search",
-                    placeholder="IP filter expression ('>', '<', '=','>=', '<=', '!=') e.g., '> 30'",
-                    style={
-                        "width": "100%",
-                        "margin": "15px"
-                    }
-                )
-            ]),
-
-            html.Label(
-                children='Choose the EPSS range',
-                style={
-                    "marginLeft": "30px",
-                }
-            ),
-            dcc.RangeSlider(
-                id='epss-range-query3-slider',
-                min=0,
-                max=1,
-                step=0.1,
-                marks={
-                    0.0: '0.0',
-                    0.2: '0.2',
-                    0.4: '0.4',
-                    0.6: '0.6',
-                    0.8: '0.8',
-                    1.0: '1.0',
-                },
-                value=[0, 1],
-                tooltip={
-                    'placement': 'top',
-                    'always_visible': True,
-                },
-                allowCross=False,
-            ),
-        ],
-            style={'padding': 10, 'flex': 1})
-    ],
-        style={'display': 'flex', 'flexDirection': 'row'}
-    )
-    return components_1
-
-
 # constructs the layout for View 3
 def register_layout_query(dm):
-    component_1 = dash_components()
     layout = [
-        component_1,
         dbc.Row(
             dcc.Loading([
                 dag.AgGrid(
                     id="query-3-ag",
                     rowData = [{"cve_id": "Processing...", "cvss_score": 0, "epss": 0, "n_ips": 0, 'n_orgs': 0}],
                     columnDefs=[
-                        {"field": 'cve_id', "headerName": 'CVE', "cellRenderer": "GoToMitre", "tooltipValueGetter":
-                            {"function": "'Click on the cell for more details'"}},
+                        {"field": 'cve_id', "headerName": 'CVE', "cellRenderer": "GoToMitre",
+                         "tooltipValueGetter": {"function": "'Click on the cell for more details'"},
+                         "filterParams": {"filterOptions": ["equals", "notEqual", 'contains']}
+                        },
                         {"field": 'cvss_score', "headerName": 'CVSS',
-                        'tooltipValueGetter': {"function": "'CVSS Version: ' + "
-                                                            "params.data.cvss_version"}},
-                        {"field": 'epss', "headerName": 'EPSS', 'tooltipValueGetter': {"function": "'EPSS: ' + "
-                                                                                                "params.data.epss_rank"}},
-                        {"field": 'n_ips', "headerName": "# IPs"},
-                        {"field": 'n_orgs', "headerName": "# Organizations"},
+                        'tooltipValueGetter': {"function": "'CVSS Version: ' + params.data.cvss_version"},
+                         "filter": "agNumberColumnFilter", "filterParams": {"filterOptions": ["equals","notEqual",'lessThan', 'greaterThan', 'inRange']}
+                         },
+                        {"field": 'epss', "headerName": 'EPSS',
+                         'tooltipValueGetter': {"function": "'EPSS: ' + params.data.epss_rank"},
+                         "filter": "agNumberColumnFilter",
+                         "filterParams": {"filterOptions": ["equals", "notEqual", 'lessThan', 'greaterThan', 'inRange']}
+                         },
+                        {"field": 'n_ips', "headerName": "# IPs",
+                         "filter": "agNumberColumnFilter", "filterParams": {"filterOptions": ["equals","notEqual",'lessThan', 'greaterThan', 'inRange']}
+                         },
+                        {"field": 'n_orgs', "headerName": "# Organizations",
+                         "filter": "agNumberColumnFilter", "filterParams": {"filterOptions": ["equals","notEqual",'lessThan', 'greaterThan', 'inRange']}
+                         },
                     ],
-                    defaultColDef={"flex": 1},
+                    defaultColDef={"flex": 1, "filter": True},
                     columnSize="sizeToFit",
                     columnSizeOptions={"skipHeader": False},
                     dashGridOptions={
@@ -187,7 +83,7 @@ def register_layout_query(dm):
     ]
 
     q3 = [
-        html.H1(children="View 3 - More details by CVE", className='wrapper'),
+        html.H1(children="View 3 - Report of Common Vulnerabilities and Exposures (CVE)", className='wrapper'),
 
         html.Div(style={'height': '40px'}),
 
@@ -218,123 +114,32 @@ def register_callback_query(dm, app):
         Output('query-3-ag', "rowData"),
         [
             Input('date-picker-single', 'value'),
-            Input('search-bar-cve', 'value'),
-            Input('dropdown-cvss-version', 'value'),
-            Input('cvss-range-query3-slider', 'value'),
-            Input('epss-range-query3-slider', 'value'),
-            Input('search-bar-query3-org', 'value'),
-            Input('search-bar-query3-ip', 'value'),
-            Input("general-tabs", "active_tab")
-        ], prevent_initial_call=True
+            # Input("accordion", "active_item")
+        ],
+        # prevent_initial_call=True
     )
-    def update_table3(date_value, cve_query, dropdown_query_cvss, cvss_range_query,
-                      epss_range_query, org_query, ip_query, active_tab=None):
-        if TAB_VIEW != active_tab:
-            return [{}]
+    def update_table3(date_value):
+        # if TAB_VIEW != active_tab:
+        #     return [{}]
         print("[INFO][query3] - update_table3: ", date_value)
 
         df = dm.get_view_dataset(date_value, INPUT_DATA)
         if df.empty:
             return [{}]
 
-        if cve_query:
-            df = df[df['cve_id'].str.contains(cve_query, case=False)]
-
-        if dropdown_query_cvss:
-            drop = str(dropdown_query_cvss)
-            value = float(drop)
-            df = df[df['cvss_version'] == value]
-
-        if cvss_range_query:
-            df = df[(df['cvss_score'] >= cvss_range_query[0]) & (df['cvss_score'] <= cvss_range_query[1])]
-
-        if epss_range_query:
-            df = df[(df['epss'] >= epss_range_query[0]) & (df['epss'] <= epss_range_query[1])]
-
-        if org_query:
-            op = str(org_query)
-            op = op.replace(" ", "")
-            result_expression = find_expression(op)
-
-            if result_expression in ['>=', '<=', '!=']:
-                info = op.split('=')
-                value = info[1]
-                if value.isnumeric():
-                    value = int(value)
-                    if result_expression == ">=":
-                        df = df[df['n_orgs'] >= value]
-                    elif result_expression == '<=':
-                        df = df[df['n_orgs'] <= value]
-                    elif result_expression == '!=':
-                        df = df[df['n_orgs'] != value]
-                else:
-                    pass
-
-            else:
-                if op != '':
-                    operator = op[0]
-                    value = op[1:].strip()
-                    if value.isnumeric():
-                        value = int(value)
-                        if operator == '=':
-                            df = df[df['n_orgs'] == value]
-                        elif operator == '>':
-                            df = df[df['n_orgs'] > value]
-                        elif operator == '<':
-                            df = df[df['n_orgs'] < value]
-                    else:
-                        pass
-                else:
-                    pass
-
-        if ip_query:
-            op = str(ip_query)
-            op = op.replace(" ", "")
-            result_expression = find_expression(op)
-
-            if result_expression in ['>=', '<=', '!=']:
-                info = op.split('=')
-                value = info[1]
-                if value.isnumeric():
-                    value = int(value)
-                    if result_expression == ">=":
-                        df = df[df['n_ips'] >= value]
-                    elif result_expression == '<=':
-                        df = df[df['n_ips'] <= value]
-                    elif result_expression == '!=':
-                        df = df[df['n_ips'] != value]
-                else:
-                    pass
-
-            else:
-                if op != '':
-                    operator = op[0]
-                    value = op[1:].strip()
-                    if value.isnumeric():
-                        value = int(value)
-                        if operator == '=':
-                            df = df[df['n_ips'] == value]
-                        elif operator == '>':
-                            df = df[df['n_ips'] > value]
-                        elif operator == '<':
-                            df = df[df['n_ips'] < value]
-                    else:
-                        pass
-                else:
-                    pass
-
         return df.to_dict('records')
 
+    # TODO: Atualizar gráficos para usar o filtermodal
     @app.callback(
         Output('query3-graph', "figure"),
         Input('dropdown-query3', 'value'), 
         Input('date-picker-single', 'value'),
-        Input("general-tabs", "active_tab"),
-        prevent_initial_call=True
+        # Input("accordion", "active_item"),
+        # prevent_initial_call=True
     )
-    def update_graphs(value, date_value, active_tab=None):
-        if TAB_VIEW != active_tab:
-            return {}
+    def update_graphs(value, date_value):
+        # if TAB_VIEW != active_tab:
+        #     return {}
         print("[INFO][query3] update_graphs: ")
 
         df = dm.get_view_dataset(date_value, INPUT_DATA)

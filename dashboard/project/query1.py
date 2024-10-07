@@ -21,15 +21,17 @@ def register_layout_query(dm):
                     dag.AgGrid(
                         id='query-1-table',
                         columnDefs=[
-                            {"headerName": 'EPSS rank', "field": "epss_rank", "flex": 1}, 
+                            {"headerName": 'EPSS rank', "field": "epss_rank", "flex": 1,
+                             'headerTooltip': "EPSS rank vary from 0 (0%) to 1 (100%)"},
                             {"headerName": '# CVEs', "field": 'n_cves', "flex": 1},
                             {"headerName": '# IPs', "field": 'n_ips', "flex": 1},
                             {"headerName": '# organizations', "field": 'n_orgs', "flex": 1}
                         ],
                         rowData = [{"epss_rank": "Processing...", "n_cves": 0, "n_ips": 0, "field": 0}],
                         defaultColDef={"flex": 1, "resizable": False},
-                        columnSize="sizeToFit",
+                        columnSize="responsiveSizeToFit",
                         columnSizeOptions= {"skipHeader": False},
+                        dashGridOptions={"animateRows": False},
                         style={"height": 260}
                     ),
                 ),
@@ -69,27 +71,27 @@ def register_callback_query(dm, app):
     @app.callback(
         Output('query-1-table', "rowData"),
         Input('date-picker-single', 'value'),
-        Input("general-tabs", "active_tab")
+        # Input("daccordion", "active_item")
     )
-    def update_table1(date_value, active_tab):
-        if TAB_VIEW == active_tab:
-            print(f"[INFO][query1] update_table1: {date_value} and '{active_tab}'")
-            df = dm.get_view_dataset(date_value, INPUT_DATA)
-            return df.to_dict('records')
-        return []
+    def update_table1(date_value):
+        # if TAB_VIEW == active_tab:
+        print(f"[INFO][query1] update_table1: {date_value}")
+        df = dm.get_view_dataset(date_value, INPUT_DATA)
+        return df.to_dict('records')
+        # return []
             
     
     @app.callback(
         Output("query-1-graph", "figure"), 
         Input('date-picker-single', 'value'),
         Input("query-1-dropdown", "value"),
-        Input("general-tabs", "active_tab")
+        # Input("accordion", "active_item")
     )
-    def update_chart1(date_value, metric, active_tab):
+    def update_chart1(date_value, metric):
         fig = {}
-        if TAB_VIEW != active_tab:
-            return fig
-        print(f"[INFO][query1] update_chart1: {date_value} and '{active_tab}'")
+        # if TAB_VIEW != active_tab:
+        #     return fig
+        print(f"[INFO][query1] update_chart1: {date_value}")
 
         df = dm.get_view_dataset(date_value, INPUT_DATA)
         if df.empty:

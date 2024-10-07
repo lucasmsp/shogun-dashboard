@@ -75,14 +75,14 @@ def register_callback_query(dm, app):
         Output('query-5-ag', "rowData"),
         [
             Input('date-picker-single', 'value'),
-            Input("general-tabs", "active_tab")
+            # Input("accordion", "active-item")
         ],
-        prevent_initial_call=True
+        # prevent_initial_call=True
     )
-    def update_table5(date_value, active_tab=None):
+    def update_table5(date_value):
 
-        if TAB_VIEW != active_tab:
-            return [{}]
+        # if TAB_VIEW != active_tab:
+        #     return [{}]
         print("[INFO][query5] - update_table5: ", date_value)
 
         df = dm.get_report_dataset(

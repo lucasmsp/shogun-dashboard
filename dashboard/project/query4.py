@@ -1,10 +1,7 @@
-from urllib.request import urlopen
 import json
 import plotly.express as px
 import dash_bootstrap_components as dbc
 from dash import Dash, dcc, html, Input, Output, callback
-import plotly.figure_factory as ff
-import numpy as np
 import pandas as pd
 import os
 
@@ -112,13 +109,14 @@ def register_callback_query(dm, app):
         Output('query-4-graph', 'figure'),
         Input('date-picker-single', 'value'),
         Input("query4-dropdown-query", 'value'),
-        Input('query4-cvss-range-slider', 'value'), 
-        Input("general-tabs", "active_tab"), prevent_initial_call=True
+        Input('query4-cvss-range-slider', 'value'),
+        # Input("accordion", "active_item"),
+        # prevent_initial_call=True
     )
-    def update_choropleth_map(date_value, value, cvss_range_query=[0,10], active_tab=None):
+    def update_choropleth_map(date_value, value, cvss_range_query=[0,10]):
         fig = {}
-        if TAB_VIEW != active_tab:
-            return fig
+        # if TAB_VIEW != active_tab:
+        #     return fig
 
         print("[INFO][query4][update_choropleth_map] ", date_value, flush=True)
         
