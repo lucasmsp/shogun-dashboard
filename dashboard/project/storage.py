@@ -1,4 +1,3 @@
-from ansible_collections.community.general.plugins.modules.redis import flush
 from deltalake import DeltaTable
 from croniter import croniter
 from datetime import datetime, timedelta
