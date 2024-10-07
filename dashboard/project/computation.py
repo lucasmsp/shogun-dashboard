@@ -10,10 +10,7 @@ DELTA_VERSION = os.environ.get("DELTA_VERSION", "3.0.0")
 SHODAN_FOLDER = os.environ.get("SHODAN_FOLDER", "/opt/input_data/")
 RESULT_FOLDER = os.environ.get("RESULT_FOLDER", "/opt/output_data/")
 
-output_filepath = RESULT_FOLDER + "/tlhop-epss-dashboard.delta"
-output_filepath_view1 = RESULT_FOLDER + "/tlhop-epss-dashboard-view1.delta"
-output_filepath_view2 = RESULT_FOLDER + "/tlhop-epss-dashboard-view2.delta"
-output_filepath_view3 = RESULT_FOLDER + "/tlhop-epss-dashboard-view3.delta"
+output_filepath = RESULT_FOLDER + "/tlhop-epss-dashboard"
 
 def run_dummy(timestamp):
     with open("/tmp/run-dummy", "w") as f:
@@ -57,18 +54,14 @@ def run(day_str, first_execution=False):
 
     day_shodan_format = day_str.replace("-", "")
     input_filepath = SHODAN_FOLDER + f"/BR.{day_shodan_format}.json.bz2"
-    
-    algorithm = ShodanVulnerabilitiesBanners(org_refinement=True, fix_brazilian_cities=True)
-    algorithm.compute_general_report(input_filepath, output_filepath, check_nvd=True, epss_day=day_str)
 
-    v1 = algorithm.gen_extra_query1()
-    v1.write.format("delta").mode("overwrite").option("mergeSchema", "true").save(output_filepath_view1)
-
-    v2 = algorithm.gen_extra_query2()
-    v2.write.format("delta").mode("overwrite").option("mergeSchema", "true").save(output_filepath_view2)
-
-    v3 = algorithm.gen_extra_query3()
-    v3.write.format("delta").mode("overwrite").option("mergeSchema", "true").save(output_filepath_view3)
+    algorithm = ShodanVulnerabilitiesBanners(input_filepath, output_filepath, epss_day=day_str,
+                                             org_refinement=True, fix_brazilian_cities=True)
+    algorithm.compute_general_report()
+    algorithm.gen_extra_query1()
+    algorithm.gen_extra_query2()
+    algorithm.gen_extra_query3()
+    algorithm.gen_extra_query4()
 
     spark.stop()
     t2 = time.time()
