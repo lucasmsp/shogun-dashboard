@@ -14,9 +14,9 @@ from project.filters import *
 INPUT_DATA_V2 = '2'
 TAB_VIEW = "tab-1"
 
-def register_layout_query():
+def register_layout_query(filter_modal={}):
 
-    tab2_content = [
+    elements = [
         html.H2(children="Highest EPSS for each org", className='wrapper'),
         html.H2(
             children="This visualization allows for assessing the higher vulnerability of an Organization based on the EPSS score. Users can click on an organization to further informations.",
@@ -35,6 +35,7 @@ def register_layout_query():
                          "filter": "agNumberColumnFilter", "filterParams": {
                             "filterOptions": ["equals", "notEqual", 'lessThan', 'greaterThan', 'inRange']}},
                     ],
+                    filterModel=filter_modal,
                     defaultColDef={"flex": 1, "filter": True},
                     columnSize="sizeToFit",
                     columnSizeOptions={"skipHeader": False},
@@ -76,7 +77,15 @@ def register_layout_query():
         )
     ]
 
-    return tab2_content
+    tab2_content_orgs = dbc.Card(
+        dbc.CardBody(
+            html.Div(children=[dbc.Row(children=elements)], className="wrapper"),
+        ),
+        className="mt-3",
+        id="tab2_content_orgs"
+    )
+
+    return tab2_content_orgs
 
 
 
@@ -126,9 +135,10 @@ def register_callback_query(dm, app):
 
         aggregated_df["n_ips"] = aggregated_df["ip"].apply(len)
         aggregated_df = aggregated_df.sort_values("n_ips")
-        
-        aggregated_df = filter_text(filter_modal, aggregated_df, "org_clean")
-        aggregated_df = filter_number(filter_modal, aggregated_df, "epss")
+
+        if filter_modal:
+            aggregated_df = filter_text(filter_modal, aggregated_df, "org_clean")
+            aggregated_df = filter_number(filter_modal, aggregated_df, "epss")
    
         fig = go.Figure()
 
@@ -220,30 +230,21 @@ def register_callback_query(dm, app):
         return fig
         
 
-    # @app.callback(
-    #     Output('v2-content', 'children'),
-    #     Input("url-redirect", "pathname"),
-    # )
-    # def tab_v2_select(pathname):
-    #     if pathname == "/dashboard/v2a":
-    #         return tab1_content
-    #     elif pathname == "/dashboard/v2b":
-    #         return tab2_content
-
 
     @app.callback(
-        Output('query-2a-grid', 'filterModel'),
-        Output("query-2b-grid", "cellClicked"),
-        Output("url", "pathname"),
-        Input("query-2b-grid", "cellClicked")
+        Output("url-redirect", "pathname", allow_duplicate=True),
+        Output('store-filters', 'data', allow_duplicate=True),
+        Input("query-2b-grid", "cellClicked"),
+        prevent_initial_call=True
     )
     def select_org_records(cell):
-        print(cell)
-        filter_opt = {}  
+        """
+        When clicked, go to view2a (IPs), filtering only records that belongs to the selected organization
+
+        """
         if cell:
             if cell.get("colId", "") == "org_clean":
                 value = cell.get('value', "")
-                filter_opt = {'org_clean': {'filterType': 'text', 'type': 'equals', 'filter': value}}
-
-                return filter_opt, {}, "/dashboard/view2a"
-        return filter_opt, {}, "/dashboard/view1"
+                filter_opt = {"query-2a-grid": {'org_clean': {'filterType': 'text', 'type': 'equals', 'filter': value}}}
+                return "/dashboard/view2a", filter_opt
+        return no_update, no_update

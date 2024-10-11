@@ -8,7 +8,7 @@ import re
 
 TAB_VIEW = "tab-4"
 
-def register_layout_query():
+def register_layout_query(filter_modal={}):
 
     aggrid = dag.AgGrid(
                 id="query-5-ag",
@@ -16,6 +16,7 @@ def register_layout_query():
                             "org_clean": "", "hostnames": "", "domains": "", "score": 0, "meta_id": ""
                             }],
                 persistence=True,
+                filterModel=filter_modal,
                 columnDefs=[
                     {"field": 'data', "headerName": 'SERVICE', "cellRenderer": "markdown",
                       'width': 300, 'maxWidth': 500, "resizable": True, },
@@ -48,14 +49,8 @@ def register_layout_query():
                 style={"height": "1000px"},
                 className="ag-theme-alpine compact"
             )
-    
-    layout = [
-        dbc.Row(
-            dcc.Loading([aggrid])
-        )
-    ]
 
-    q5 = [
+    elements = [
         html.H2(
             children=("Shodan's banners about IPs with vulnerabilities in Brazil. "
                       "Using this interface, users can filter banners by each column, "
@@ -63,11 +58,19 @@ def register_layout_query():
                       ),
             style={'fontSize': '20px', 'padding': 20}
         ),
-
-        dbc.Tab(layout, label="Table")
+        dbc.Row(dcc.Loading([aggrid]))
     ]
 
-    return q5
+    tab5_content = dbc.Card(
+        dbc.CardBody(
+            html.Div(children=[dbc.Row(children=elements)], className="wrapper_table",
+                     style={"width": "100%", "height": "100%"}),
+        ),
+        className="mt-3",
+        id="tab5_content"
+    )
+
+    return tab5_content
 
 def register_callback_query(dm, app):
 

@@ -2,7 +2,13 @@ from dash.dependencies import Input, Output, State
 from dash import no_update, html, dcc, ctx, no_update
 from flask_login import current_user
 
-from project.layout import tab1_content, tab2_content_orgs, tab2_content_ips, tab3_content, tab4_content, tab5_content
+import project.query1 as query1
+import project.query2_orgs as query2_orgs
+import project.query2_ips as query2_ips
+import project.query3 as query3
+import project.query4 as query4
+import project.query5 as query5
+
 
 def register_callback_query(dm, app):
 
@@ -56,26 +62,35 @@ def register_callback_query(dm, app):
 
     @app.callback(
         Output("page-content", "children"),
-        Output("url-redirect", "pathname"),
-        [Input("url-redirect", "pathname")]
+
+        State('store-filters', 'data'),
+        Input("url-redirect", "pathname")
+
     )
-    def render_page_content(pathname):
+    def render_page_content(filters, pathname):
         print("render_page_content:", pathname)
+        print(filters)
 
-        if pathname == "/dashboard/view1":
-            return tab1_content, no_update
-        elif pathname == "/dashboard/view2a":
-            return tab2_content_orgs, no_update
+        if pathname == "/dashboard/view2a":
+            aggrid_key = 'query-2a-grid'
+            if aggrid_key in filters:
+                filters = filters[aggrid_key]
+            content = query2_ips.register_layout_query(filter_modal=filters)
         elif pathname == "/dashboard/view2b":
-            return tab2_content_ips, no_update
+            content = query2_orgs.register_layout_query(filter_modal={})
         elif pathname == "/dashboard/view3":
-            return tab3_content, no_update
+            content = query3.register_layout_query(filter_modal={})
         elif pathname == "/dashboard/view4":
-            return tab4_content, no_update
+            content = query4.register_layout_query(filter_modal={})
         elif pathname == "/dashboard/report":
-            return tab5_content, no_update
+            aggrid_key = 'query-5-ag'
+            if aggrid_key in filters:
+                filters = filters[aggrid_key]
+            content = query5.register_layout_query(filter_modal=filters)
+        else:
+            content = query1.register_layout_query(filter_modal={})
 
-        return tab1_content, "/dashboard/view1"
+        return content
 
     @app.callback(
         Output("sidebar", "className"),

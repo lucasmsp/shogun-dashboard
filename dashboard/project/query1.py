@@ -9,8 +9,8 @@ from project.auxiliar import gen_subgraphs, header_mapping
 
 INPUT_DATA = '1'
 
-def register_layout_query():
-    q1 = [
+def register_layout_query(filter_modal={}):
+    elements = [
         html.H1(children="View 1 - EPSS summary", className='wrapper', style={'textAlign': 'center'}),
         dbc.Container(
             [
@@ -41,8 +41,14 @@ def register_layout_query():
             ]
         )
     ]
+
+    tab1_content = dbc.Card(
+            dbc.CardBody(html.Div(children=[dbc.Row(children=elements)], className="wrapper")),
+            className="mt-3",
+            id="tab1_content"
+    )
     
-    return q1
+    return tab1_content
 
 
 

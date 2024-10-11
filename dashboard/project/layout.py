@@ -8,53 +8,12 @@ import project.query3 as query3
 import project.query4 as query4
 import project.query5 as query5
 
-tab1_content = dbc.Card(
-    dbc.CardBody(
-        html.Div(children=[dbc.Row(children=query1.register_layout_query())], className="wrapper")),
-    className="mt-3",
-    id="tab1_content"
-)
-
-tab2_content_orgs = dbc.Card(
-    dbc.CardBody(
-        html.Div(children=[dbc.Row(children=query2_orgs.register_layout_query())], className="wrapper"),
-    ),
-    className="mt-3",
-    id="tab2_content_orgs"
-)
-
-tab2_content_ips = dbc.Card(
-    dbc.CardBody(
-        html.Div(children=[dbc.Row(children=query2_ips.register_layout_query())], className="wrapper"),
-    ),
-    className="mt-3",
-    id="tab2_content_ips"
-)
-
-tab3_content = dbc.Card(
-    dbc.CardBody(
-        html.Div(children=[dbc.Row(children=query3.register_layout_query())], className="wrapper"),
-    ),
-    className="mt-3",
-    id="tab3_content"
-)
-
-tab4_content = dbc.Card(
-    dbc.CardBody(
-        html.Div(children=[dbc.Row(children=query4.register_layout_query())], className="wrapper"),
-    ),
-    className="mt-3",
-    id="tab4_content"
-)
-
-tab5_content = dbc.Card(
-    dbc.CardBody(
-        html.Div(children=[dbc.Row(children=query5.register_layout_query())], className="wrapper_table",
-                 style={"width": "100%", "height": "100%"}),
-    ),
-    className="mt-3",
-    id="tab5_content"
-)
+tab1_content = query1.register_layout_query(filter_modal={})
+tab2_content_orgs =  query2_orgs.register_layout_query(filter_modal={})
+tab2_content_ips = query2_ips.register_layout_query(filter_modal={})
+tab3_content = query3.register_layout_query(filter_modal={})
+tab4_content = query4.register_layout_query(filter_modal={})
+tab5_content = query5.register_layout_query(filter_modal={})
 
 def register_layout(dm):
 
@@ -111,14 +70,14 @@ def register_layout(dm):
                                 children=[
                                     dbc.NavLink(
                                         "by Organization",
-                                        href="/dashboard/view2a",
+                                        href="/dashboard/view2b",
                                         active="exact",
                                         style={"margin-top": "0px", "padding-top": "0px"}
 
                                     ),
                                     dbc.NavLink(
                                         "by IP",
-                                        href="/dashboard/view2b",
+                                        href="/dashboard/view2a",
                                         active="exact",
                                         style={"margin-top": "0px", "padding-top": "0px"}
                                     )
@@ -228,14 +187,14 @@ def register_layout(dm):
             }
     )
 
-
     layout = html.Div([
             dcc.Location(id='url-redirect', refresh=False),
             sidebar,
             header,
             html.Div(id="page-content", children=tab1_content, style={'min-height': '1300px'}),
             footer,
-            dcc.Store(id='store-date')
+            dcc.Store(id='store-date'),
+            dcc.Store(id='store-filters', storage_type="session", data={})
         ])
 
     return layout

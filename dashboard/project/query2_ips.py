@@ -12,11 +12,10 @@ from project.filters import *
 
 
 INPUT_DATA_V2 = '2'
-TAB_VIEW = "tab-1"
 
-def register_layout_query():
+def register_layout_query(filter_modal={}):
 
-    tab1_content = [
+    elements = [
         html.H2(children="List of vulnerable products for each IP", className='wrapper'),
         html.H2(
             children="This visualization allows for assessing the higher vulnerability of an IP based on the EPSS score. Users can click on IP to further analysis.",
@@ -50,6 +49,7 @@ def register_layout_query():
                     ],
                     defaultColDef={"flex": 1, "filter": True},
                     columnSize="sizeToFit",
+                    filterModel=filter_modal,
                     columnSizeOptions={"skipHeader": False},
                     dashGridOptions={
                         'tooltipInteraction': True,
@@ -96,7 +96,15 @@ def register_layout_query():
         )
     ]
 
-    return tab1_content
+    tab2_content_ips = dbc.Card(
+        dbc.CardBody(
+            html.Div(children=[dbc.Row(children=elements)], className="wrapper"),
+        ),
+        className="mt-3",
+        id="tab2_content_ips"
+    )
+
+    return tab2_content_ips
 
 
 
@@ -112,8 +120,7 @@ def register_callback_query(dm, app):
         ]
     )
     def update_grid2a(date_value):
-        # if TAB_VIEW != active_tab:
-        #     return [{}]
+
         print("[INFO] query 2 - update_table2a: ", date_value)
         df = dm.get_view_dataset(date_value, INPUT_DATA_V2)
 
@@ -213,8 +220,7 @@ def register_callback_query(dm, app):
         ]
     )
     def update_graph2a(date_value, filter_modal, metric):
-        # if TAB_VIEW != active_tab:
-        #     return {}
+
         print("[INFO] query 2 - update_graph2a: ")
 
         df = dm.get_view_dataset(date_value, INPUT_DATA_V2)
@@ -238,8 +244,7 @@ def register_callback_query(dm, app):
     )
     def select_ip(cell):
 
-        filter_opt = {}  
-        # if (TAB_VIEW == active_tab) and cell:
+        filter_opt = {}
         if cell:
             if cell.get("colId", "") == "ip_str":
                 value = cell.get('value', "")

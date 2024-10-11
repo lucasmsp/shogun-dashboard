@@ -13,8 +13,8 @@ import pandas as pd
 INPUT_DATA = '3'
 
 # constructs the layout for View 3
-def register_layout_query():
-    q3 = [
+def register_layout_query(filter_modal={}):
+    elements = [
         dbc.Row(
             html.Div([
                 html.H1(children="View 3 - Report of Common Vulnerabilities and Exposures (CVE)",
@@ -67,7 +67,15 @@ def register_layout_query():
 
     ]
 
-    return q3
+    tab3_content = dbc.Card(
+        dbc.CardBody(
+            html.Div(children=[dbc.Row(children=elements)], className="wrapper"),
+        ),
+        className="mt-3",
+        id="tab3_content"
+    )
+
+    return tab3_content
 
 
 def find_expression(string):
@@ -220,5 +228,4 @@ def register_callback_query(dm, app):
         graphs.append(graph)
 
         children = gen_subgraphs(n_cols=3, graphs=graphs)
-        print(children)
         return children

@@ -1,26 +1,25 @@
 import json
 import plotly.express as px
 import dash_bootstrap_components as dbc
-from dash import Dash, dcc, html, Input, Output, callback
+
+from dash import Dash, dcc, html, Input, Output, callback, no_update
+
 import pandas as pd
 import os
 
-TAB_VIEW = "tab-3"
 
-def register_layout_query():
-    q4 = [
+def register_layout_query(filter_modal={}):
+    elements = [
         dbc.Row(
             children=[
                 html.H1(
                     children="View 4 - Representation of data through maps",
-                    style={'textAlign': 'center'}
+                    style={'textAlign': 'center', 'bottom-padding': '40px'}
                 ),
-                html.Div(style={'height': '40px'}),
                 html.H2(
                     children="This visualization allows the analysis of the data through the maps",
-                    style={'fontSize': '20px'}
+                    style={'fontSize': '20px', 'bottom-padding': '40px'}
                 ),
-                html.Div(style={'height': '40px'}),
                 html.H4(children="Choose the type of chart", style={'textAlign': 'Left'}),
                 dbc.Row(
                     dcc.Dropdown(
@@ -64,7 +63,6 @@ def register_layout_query():
                         id="query4-div-to-hide",
                         style={ 'display': 'none'})
                 ),
-
                 html.Div(style={'height': '40px'}),
 
                 dcc.Graph(
@@ -73,16 +71,26 @@ def register_layout_query():
                         'displayModeBar': False,
                         'scrollZoom': True
                     }
-                ),
+                )
             ]
-        ),
+        )
     ]
-    return q4
+
+    tab4_content = dbc.Card(
+        dbc.CardBody(
+            html.Div(children=[dbc.Row(children=elements)], className="wrapper_table",
+                     style={"width": "100%", "height": "100%"}),
+        ),
+        className="mt-3",
+        id="tab4_content"
+    )
+
+    return tab4_content
 
 
 def register_callback_query(dm, app):
     
-    brazil_states_geojson = os.environ.get("TLHOP_DATASETS_PATH","")+"/brazil-states.geojson"
+    brazil_states_geojson = os.environ.get("TLHOP_DATASETS_PATH","") + "/brazil-states.geojson"
     with open(brazil_states_geojson) as f:
         brazil = json.load(f)
 
@@ -109,8 +117,8 @@ def register_callback_query(dm, app):
     )
     def update_choropleth_map(date_value, value, cvss_range_query=[0, 10]):
         fig = {}
-        # if TAB_VIEW != active_tab:
-        #     return fig
+        height = 900
+        zoom = 4
 
         print("[INFO][query4][update_choropleth_map] ", date_value, flush=True)
         
@@ -136,16 +144,15 @@ def register_callback_query(dm, app):
                 mapbox_style="carto-positron",
                 labels={'n_ips': '# IPs'},
                 center={"lat": -14, "lon": -55},
-                zoom=2,
+                zoom=zoom,
                 opacity=0.5,
             )
             fig.update_layout(
                 title="# IPs per vulnerability",
                 margin={'r': 1, 'l': 1, 'b': 1, 't': 40},
                 font=dict(size=12),
+                height=height
             )
-
-            return fig
 
         elif value == 'cvss_score':
 
@@ -180,16 +187,15 @@ def register_callback_query(dm, app):
                 mapbox_style="carto-positron",
                 labels={'cvss_mean': 'Avg CVSS'},
                 center={"lat": -14, "lon": -55},
-                zoom=2,
+                zoom=zoom,
                 opacity=0.5,
             )
             fig.update_layout(
                 title="Average CVSS by state (only the major CVE per IP)",
                 margin={'r': 1, 'l': 1, 'b': 1, 't': 40},
                 font=dict(size=12),
+                height=height
             )
-
-            return fig
 
         elif value == 'epss_score':
 
@@ -223,16 +229,15 @@ def register_callback_query(dm, app):
                 mapbox_style="carto-positron",
                 labels={'epss_mean': 'Avg EPSS'},
                 center={"lat": -14, "lon": -55},
-                zoom=2,
+                zoom=zoom,
                 opacity=0.5,
             )
             fig.update_layout(
                 title="Average EPSS by state (only the major CVE per IP)",
                 margin={'r': 1, 'l': 1, 'b': 1, 't': 40},
                 font=dict(size=12),
+                height=height
             )
-
-            return fig
 
         elif value == 'cve_id':
 
@@ -260,16 +265,15 @@ def register_callback_query(dm, app):
                 mapbox_style="carto-positron",
                 labels={'n_cves': '# CVEs'},
                 center={"lat": -14, "lon": -55},
-                zoom=2,
+                zoom=zoom,
                 opacity=0.5,
             )
             fig.update_layout(
                 title="Number of different CVEs per state",
                 margin={'r': 1, 'l': 1, 'b': 1, 't': 40},
                 font=dict(size=12),
+                height=height
             )
-
-            return fig
 
         elif value == 'ip_cvss':
             print("[INFO][query4][update_choropleth_map] ip_cvss: ", cvss_range_query)
@@ -299,15 +303,16 @@ def register_callback_query(dm, app):
                     mapbox_style="carto-positron",
                     labels={'cvss_new': 'CVSS range'},
                     center={"lat": -14, "lon": -55},
-                    zoom=2,
+                    zoom=zoom,
                     opacity=0.5,
                 )
                 fig.update_layout(
                     title="Number of IPs with CVEs within CVSS range by states",
                     margin={'r': 1, 'l': 1, 'b': 1, 't': 40},
                     font=dict(size=12),
+                    height=height
                 )
-                return fig
+
             else:
 
                 fig = px.choropleth_mapbox(
@@ -321,14 +326,33 @@ def register_callback_query(dm, app):
                     mapbox_style="carto-positron",
                     labels={'cvss_new': 'CVSS range'},
                     center={"lat": -14, "lon": -55},
-                    zoom=2,
+                    zoom=zoom,
                     opacity=0.5,
                 )
                 fig.update_layout(
                     title="Number of IPs with CVEs within CVSS range by states",
                     margin={'r': 1, 'l': 1, 'b': 1, 't': 40},
                     font=dict(size=12),
+                    height=height
                 )
-                return fig
+        return fig
 
+    @app.callback(
+        Output("url-redirect", "pathname", allow_duplicate=True),
+        Output('store-filters', 'data', allow_duplicate=True),
+        Input("query-4-graph", "clickData"),
+        prevent_initial_call=True
+    )
+    def select_region_view4_to_report(data):
+
+        print("[INFO] - select_region_view4_to_report: ", data, flush=True)
+
+        if not data:
+            return no_update
+            #, no_update
+
+        region = ", " + data['points'][0]['hovertext']
+        filter_opt = {"query-5-ag": {"city": {"filterType": "text", "type": "'contains", 'filter': region}}}
+
+        return "/dashboard/report", filter_opt
 
