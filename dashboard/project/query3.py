@@ -12,7 +12,7 @@ INPUT_DATA = '3'
 TAB_VIEW = "tab-2"
 
 # constructs the layout for View 3
-def register_layout_query(dm):
+def register_layout_query():
     layout = [
         dbc.Row(
             dcc.Loading([
@@ -113,10 +113,8 @@ def register_callback_query(dm, app):
     @app.callback(
         Output('query-3-ag', "rowData"),
         [
-            Input('date-picker-single', 'value'),
-            # Input("accordion", "active_item")
-        ],
-        # prevent_initial_call=True
+            Input('date-picker-single', 'value')
+        ]
     )
     def update_table3(date_value):
         # if TAB_VIEW != active_tab:
@@ -133,9 +131,7 @@ def register_callback_query(dm, app):
     @app.callback(
         Output('query3-graph', "figure"),
         Input('dropdown-query3', 'value'), 
-        Input('date-picker-single', 'value'),
-        # Input("accordion", "active_item"),
-        # prevent_initial_call=True
+        Input('date-picker-single', 'value')
     )
     def update_graphs(value, date_value):
         # if TAB_VIEW != active_tab:

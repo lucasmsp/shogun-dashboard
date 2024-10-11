@@ -14,7 +14,7 @@ from project.filters import *
 INPUT_DATA_V2 = '2'
 TAB_VIEW = "tab-1"
 
-def register_layout_query(dm):
+def register_layout_query():
 
     tab2_content = [
         html.H2(children="Highest EPSS for each org", className='wrapper'),
@@ -88,7 +88,7 @@ def register_callback_query(dm, app):
         Output("query-2b-grid", "rowData"),
         [
             Input('date-picker-single', 'value'),
-        ],
+        ]
     )
     def update_grid2b(date_value):
         # if TAB_VIEW != active_tab:
@@ -113,7 +113,7 @@ def register_callback_query(dm, app):
 
         Input('date-picker-single', 'value'),
         Input('query-2b-grid', 'filterModel'),
-        Input("dropdown-type-2b", 'value'),
+        Input("dropdown-type-2b", 'value')
     )
     def update_graph2b(date_value, filter_modal, metric):
         # if TAB_VIEW != active_tab:
@@ -235,7 +235,7 @@ def register_callback_query(dm, app):
         Output('query-2a-grid', 'filterModel'),
         Output("query-2b-grid", "cellClicked"),
         Output("url", "pathname"),
-        Input("query-2b-grid", "cellClicked"),
+        Input("query-2b-grid", "cellClicked")
     )
     def select_org_records(cell):
         print(cell)

@@ -1,6 +1,61 @@
 from dash import html, dcc, callback_context
 import dash_bootstrap_components as dbc
 
+import project.query1 as query1
+import project.query2_orgs as query2_orgs
+import project.query2_ips as query2_ips
+import project.query3 as query3
+import project.query4 as query4
+import project.query5 as query5
+
+tab1_content = dbc.Card(
+    dbc.CardBody(
+        html.Div(children=[dbc.Row(children=query1.register_layout_query())], className="wrapper")),
+    className="mt-3",
+    id="tab1_content"
+)
+
+tab2_content_orgs = dbc.Card(
+    dbc.CardBody(
+        html.Div(children=[dbc.Row(children=query2_orgs.register_layout_query())], className="wrapper"),
+    ),
+    className="mt-3",
+    id="tab2_content_orgs"
+)
+
+tab2_content_ips = dbc.Card(
+    dbc.CardBody(
+        html.Div(children=[dbc.Row(children=query2_ips.register_layout_query())], className="wrapper"),
+    ),
+    className="mt-3",
+    id="tab2_content_ips"
+)
+
+tab3_content = dbc.Card(
+    dbc.CardBody(
+        html.Div(children=[dbc.Row(children=query3.register_layout_query())], className="wrapper"),
+    ),
+    className="mt-3",
+    id="tab3_content"
+)
+
+tab4_content = dbc.Card(
+    dbc.CardBody(
+        html.Div(children=[dbc.Row(children=query4.register_layout_query())], className="wrapper"),
+    ),
+    className="mt-3",
+    id="tab4_content"
+)
+
+tab5_content = dbc.Card(
+    dbc.CardBody(
+        html.Div(children=[dbc.Row(children=query5.register_layout_query())], className="wrapper_table",
+                 style={"width": "100%", "height": "100%"}),
+    ),
+    className="mt-3",
+    id="tab5_content"
+)
+
 def register_layout(dm):
 
     sidebar_header = dbc.Row(
@@ -156,13 +211,13 @@ def register_layout(dm):
                     html.Img(src="/assets/rnp.png", style={'height': '30px', 'verticalAlign': 'middle', 'paddingRight': '10px'}),
                     "DCC/UFMG - CERT.br - RNP"
                 ],
-                style={'textAlign': 'center', 'marginTop': '20px'}),
+                style={'textAlign': 'center', 'marginTop': '10px'}),
                 html.Div(
                     html.H5(
                         id='last_dump_message',
                         children="Last dump: ??. Checking for new data at ??."
                     ),
-                    style={'float': 'left', 'textAlign': 'left'}
+                    style={'float': 'right', 'textAlign': 'right'}
                 ),
             ],
             style={
@@ -175,13 +230,14 @@ def register_layout(dm):
 
 
     layout = html.Div([
-            dcc.Location(id='url-redirect', refresh=True),
-            dcc.Location(id="url", pathname='/dashboard/view1'),
+            dcc.Location(id='url-redirect', refresh=False),
             sidebar,
             header,
-            html.Div(id="page-content", style={'min-height': '1300px'}),
+            html.Div(id="page-content", children=tab1_content, style={'min-height': '1300px'}),
             footer,
             dcc.Store(id='store-date')
         ])
 
     return layout
+
+

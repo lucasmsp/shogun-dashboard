@@ -14,7 +14,7 @@ from project.filters import *
 INPUT_DATA_V2 = '2'
 TAB_VIEW = "tab-1"
 
-def register_layout_query(dm):
+def register_layout_query():
 
     tab1_content = [
         html.H2(children="List of vulnerable products for each IP", className='wrapper'),
@@ -109,7 +109,7 @@ def register_callback_query(dm, app):
         Output('query-2a-grid', "rowData"),
         [
             Input('date-picker-single', 'value'),
-        ],
+        ]
     )
     def update_grid2a(date_value):
         # if TAB_VIEW != active_tab:
@@ -210,7 +210,7 @@ def register_callback_query(dm, app):
             Input('date-picker-single', 'value'),
             Input('query-2a-grid', 'filterModel'),
             Input("dropdown-color-2a", 'value'),
-        ],
+        ]
     )
     def update_graph2a(date_value, filter_modal, metric):
         # if TAB_VIEW != active_tab:

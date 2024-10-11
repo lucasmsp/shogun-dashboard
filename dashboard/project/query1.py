@@ -1,33 +1,33 @@
-from dash import html, dcc, dash_table
+from dash import html, dcc
 import dash_bootstrap_components as dbc
 from dash.dependencies import Output, Input
 
-import pandas as pd
 import plotly.express as px
 import dash_ag_grid as dag
 
-INPUT_DATA = '1'
-TAB_VIEW = "tab-0"
+from project.auxiliar import gen_subgraphs, header_mapping
 
-def register_layout_query(dm):
-    # visualização 1
+INPUT_DATA = '1'
+
+def register_layout_query():
     q1 = [
         html.H1(children="View 1 - EPSS summary", className='wrapper', style={'textAlign': 'center'}),
         dbc.Container(
             [
                 dbc.Row(
-                    
-                        
                     dag.AgGrid(
                         id='query-1-table',
                         columnDefs=[
-                            {"headerName": 'EPSS rank', "field": "epss_rank", "flex": 1,
-                             'headerTooltip': "EPSS rank vary from 0 (0%) to 1 (100%)"},
-                            {"headerName": '# CVEs', "field": 'n_cves', "flex": 1},
-                            {"headerName": '# IPs', "field": 'n_ips', "flex": 1},
-                            {"headerName": '# organizations', "field": 'n_orgs', "flex": 1}
+                            {"field": "epss_rank", "headerName": header_mapping['epss_rank']['name'], "flex": 1,
+                             'headerTooltip': header_mapping['epss_rank']['description']},
+                            {"field": 'n_cves', "headerName": header_mapping['n_cves']['name'], "flex": 1,
+                             'headerTooltip': header_mapping['n_cves']['description']},
+                            {"field": 'n_ips', "headerName": header_mapping['n_ips']['name'], "flex": 1,
+                             'headerTooltip': header_mapping['n_ips']['description']},
+                            {"field": 'n_orgs', "headerName": header_mapping['n_orgs']['name'], "flex": 1,
+                             'headerTooltip': header_mapping['n_orgs']['description']}
                         ],
-                        rowData = [{"epss_rank": "Processing...", "n_cves": 0, "n_ips": 0, "field": 0}],
+                        rowData = [{"epss_rank": "Processing...", "n_cves": 0, "n_ips": 0, "n_orgs": 0}],
                         defaultColDef={"flex": 1, "resizable": False},
                         columnSize="responsiveSizeToFit",
                         columnSizeOptions= {"skipHeader": False},
@@ -35,29 +35,8 @@ def register_layout_query(dm):
                         style={"height": 260}
                     ),
                 ),
-                dbc.Row(
-                    [
-                        html.H4(children="Choose a type of graph: ", className='wrapper', style={'textAlign': 'Left'}),
-                        dcc.Dropdown(
-                            id="query-1-dropdown",
-                            options=[
-                                "Bar plot - Number of CVEs by EPSS Rank", 
-                                "Bar plot - Number of organizations by EPSS Rank",
-                                "Bar plot - Number of IPs by EPSS Rank",
-                                "CDF plot - Number of CVEs by EPSS Rank",
-                                "PDF plot - Number of CVEs by EPSS Rank"
-                            ],
-                            value="Bar plot - Number of CVEs by EPSS Rank",
-                            clearable=False,
-                        ),
-                        dcc.Graph(
-                            id="query-1-graph",
-                            config={
-                                'displayModeBar': False,
-                                'scrollZoom': False
-                            }, 
-                        ),
-                    ]
+                dbc.Row(dbc.Col(html.Hr(style={"width": "100%", 'top-padding': '10px'}), width={'size': 10, 'offset': 1})),
+                dbc.Row([html.Div(id='query-1-graph', children=[])]
                 )
             ]
         )
@@ -70,85 +49,110 @@ def register_layout_query(dm):
 def register_callback_query(dm, app):
     @app.callback(
         Output('query-1-table', "rowData"),
-        Input('date-picker-single', 'value'),
-        # Input("daccordion", "active_item")
+        Input('date-picker-single', 'value')
     )
     def update_table1(date_value):
-        # if TAB_VIEW == active_tab:
         print(f"[INFO][query1] update_table1: {date_value}")
         df = dm.get_view_dataset(date_value, INPUT_DATA)
         return df.to_dict('records')
-        # return []
-            
-    
+
+
     @app.callback(
-        Output("query-1-graph", "figure"), 
-        Input('date-picker-single', 'value'),
-        Input("query-1-dropdown", "value"),
-        # Input("accordion", "active_item")
+        Output("query-1-graph", "children"),
+        Input('date-picker-single', 'value')
     )
-    def update_chart1(date_value, metric):
-        fig = {}
-        # if TAB_VIEW != active_tab:
-        #     return fig
+    def update_chart1(date_value):
+
         print(f"[INFO][query1] update_chart1: {date_value}")
 
         df = dm.get_view_dataset(date_value, INPUT_DATA)
         if df.empty:
-            return fig
-        
-        y_column = "n_cves"
-        y_label = "# CVEs"
-        graph_type = "bar plot"
+            return []
 
-        if metric == "Bar plot - Number of CVEs by EPSS Rank":
-            y_column = "n_cves"
-            y_label = "# CVEs"
-            graph_type = "bar plot"
-        elif metric == "Bar plot - Number of organizations by EPSS Rank":
-            y_column = "n_orgs"
-            y_label = "# Orgs"
-            graph_type = "bar plot"
-        elif metric == "Bar plot - Number of IPs by EPSS Rank":
-            y_column = "n_ips"
-            y_label = "# IPs"
-            graph_type = "bar plot"
-        elif metric == "PDF plot - Number of CVEs by EPSS Rank":
-            y_column = "n_cves"
-            y_label = "# CVEs"
-            graph_type = "pdf plot"
-        elif metric == "CDF plot - Number of CVEs by EPSS Rank":
-            y_column = "n_cves"
-            y_label = "# CVEs"
-            graph_type = "cdf plot"
-        
-        if graph_type == "bar plot":
-            fig = px.bar(df,
-                x="epss_rank", 
-                y=y_column, 
-                barmode="group",
-                labels={
-                        "epss_rank": "EPSS Rank",
-                        y_column: y_label
-                    }
-                )
-        elif graph_type == "pdf plot":
-            df['pdf'] = df['n_cves'] / sum(df['n_cves'])
-            df = df.reset_index()
-            fig = px.line(df,
-                x="epss_rank", 
-                y='pdf',
-                range_y=(0,1)
-                )
+        graphs_type = {
+            "Bar plot - Number of CVEs by EPSS Rank":
+                { "y_column": "n_cves", "graph_type": "bar plot", "y_label": "# CVEs",
+                  'x_column': 'epss_rank', 'x_label': "EPSS Rank"},
 
-        else:
-            df['pdf'] = df['n_cves'] / sum(df['n_cves'])
-            df['cdf'] = df['pdf'].cumsum()
-            df = df.reset_index()
-            fig = px.line(df,
-                x="epss_rank", 
-                y='cdf',
-                range_y=(0,1)
+            "Bar plot - Number of organizations by EPSS Rank":
+                {"y_column": "n_orgs", "graph_type": "bar plot", "y_label": "# Orgs",
+                 'x_column': 'epss_rank', 'x_label': "EPSS Rank"},
+
+            "Bar plot - Number of IPs by EPSS Rank":
+                {"y_column": "n_ips", "graph_type": "bar plot", "y_label": "# IPs",
+                 'x_column': 'epss_rank', 'x_label': "EPSS Rank"},
+
+            "PDF plot - Number of CVEs by EPSS Rank":
+                {"y_column": "n_cves", "graph_type": "pdf plot", "y_label": "# CVEs",
+                 'x_column': 'epss_rank', 'x_label': "EPSS Rank"},
+
+            "CDF plot - Number of CVEs by EPSS Rank":
+                {"y_column": "n_cves", "graph_type": "cdf plot", "y_label": "# CVEs",
+                 'x_column': 'epss_rank', 'x_label': "EPSS Rank"},
+
+        }
+
+        graphs = []
+        for title, configs in graphs_type.items():
+            y_column = configs['y_column']
+            x_column = configs['x_column']
+            y_label = configs['y_label']
+            x_label = configs['x_label']
+            graph_type = configs['graph_type']
+
+            if graph_type == "bar plot":
+                fig = px.bar(df,
+                             x=x_column,
+                             y=y_column,
+                             barmode="group",
+                             labels={
+                                 x_column: x_label,
+                                 y_column: y_label
+                             },
+                             title= title
                 )
 
-        return fig
+            elif graph_type == "pdf plot":
+                df['pdf'] = df[y_column] / sum(df[y_column])
+                df = df.reset_index()
+                fig = px.line(df,
+                              x=x_column,
+                              y='pdf',
+                              range_y=(0, 1),
+                              title= title,
+                              labels={
+                                  x_column: x_label,
+                                  'pdf': "PDF"
+                              }
+                )
+
+            else:
+                df['pdf'] = df[y_column] / sum(df[y_column])
+                df['cdf'] = df['pdf'].cumsum()
+                df = df.reset_index()
+                fig = px.line(df,
+                              x=x_column,
+                              y='cdf',
+                              range_y=(0, 1),
+                              title= title,
+                              labels={
+                                  x_column: x_label,
+                                  'cdf': "CDF"
+                              }
+                )
+
+            graph = dcc.Graph(figure=fig,
+                              config={
+                                  'displayModeBar': False,
+                                  'scrollZoom': False
+                              }
+            )
+            graphs.append(graph)
+
+        children = gen_subgraphs(n_cols=3, graphs=graphs)
+
+        return children
+
+
+
+

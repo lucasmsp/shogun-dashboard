@@ -8,7 +8,7 @@ import re
 
 TAB_VIEW = "tab-4"
 
-def register_layout_query(dm):
+def register_layout_query():
 
     aggrid = dag.AgGrid(
                 id="query-5-ag",
@@ -74,10 +74,8 @@ def register_callback_query(dm, app):
     @app.callback(
         Output('query-5-ag', "rowData"),
         [
-            Input('date-picker-single', 'value'),
-            # Input("accordion", "active-item")
-        ],
-        # prevent_initial_call=True
+            Input('date-picker-single', 'value')
+        ]
     )
     def update_table5(date_value):
 

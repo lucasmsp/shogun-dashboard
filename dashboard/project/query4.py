@@ -7,24 +7,20 @@ import os
 
 TAB_VIEW = "tab-3"
 
-def register_layout_query(dm):
-    q5 = [
+def register_layout_query():
+    q4 = [
         dbc.Row(
             children=[
                 html.H1(
                     children="View 4 - Representation of data through maps",
                     style={'textAlign': 'center'}
                 ),
-
                 html.Div(style={'height': '40px'}),
-
                 html.H2(
                     children="This visualization allows the analysis of the data through the maps",
                     style={'fontSize': '20px'}
                 ),
-
                 html.Div(style={'height': '40px'}),
-
                 html.H4(children="Choose the type of chart", style={'textAlign': 'Left'}),
                 dbc.Row(
                     dcc.Dropdown(
@@ -81,7 +77,7 @@ def register_layout_query(dm):
             ]
         ),
     ]
-    return q5
+    return q4
 
 
 def register_callback_query(dm, app):
@@ -109,11 +105,9 @@ def register_callback_query(dm, app):
         Output('query-4-graph', 'figure'),
         Input('date-picker-single', 'value'),
         Input("query4-dropdown-query", 'value'),
-        Input('query4-cvss-range-slider', 'value'),
-        # Input("accordion", "active_item"),
-        # prevent_initial_call=True
+        Input('query4-cvss-range-slider', 'value')
     )
-    def update_choropleth_map(date_value, value, cvss_range_query=[0,10]):
+    def update_choropleth_map(date_value, value, cvss_range_query=[0, 10]):
         fig = {}
         # if TAB_VIEW != active_tab:
         #     return fig

@@ -6,7 +6,9 @@ def register_callback_query(dm, app):
 
     @app.callback(
         Output('url-redirect', 'href'),
-        [Input('logout-menu-item', 'n_clicks'), 
+        Output('url-redirect', 'refresh'),
+
+        [Input('logout-menu-item', 'n_clicks'),
         Input('admin-menu-item', 'n_clicks'),
         Input('profile-menu-item', 'n_clicks')],
         prevent_initial_call=True
@@ -15,18 +17,18 @@ def register_callback_query(dm, app):
         ctx = callback_context
 
         if not ctx.triggered:
-            return None
+            return None, False
 
         triggered_id = ctx.triggered[0]['prop_id'].split('.')[0]
 
         if triggered_id == 'logout-menu-item' and logout_clicks:
-            return "/logout"
+            return "/logout", True
         elif triggered_id == 'admin-menu-item' and admin_clicks:
-            return "/admin"
+            return "/admin", True
         elif triggered_id == 'profile-menu-item' and profile_clicks:
-            return "/profile"
-        
-        return None
+            return "/profile", True
+
+        return None, False
     
     @app.callback(
         Output('store-date', 'data'),
@@ -39,7 +41,6 @@ def register_callback_query(dm, app):
                 os.makedirs('date')
             
             df = pd.DataFrame({'date': [date_value]})
-            
             df.to_csv(file_path, index=False, mode='w')
             
             if os.path.exists(file_path):
@@ -50,12 +51,3 @@ def register_callback_query(dm, app):
                 print("File not found.")
             
             return date_value
-        
-    # @app.callback(
-    #     Output('details-iframe', 'src'),
-    #     Input('date-picker-single', 'value')
-    # )
-    # def update_iframe_src(selected_date):
-    #     if selected_date is not None:
-    #         return f"/details_ip?date={selected_date}"
-    #     return "/details_ip"
