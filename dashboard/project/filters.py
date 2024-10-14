@@ -13,7 +13,7 @@ def filter_text(filter_modal, df, col):
             df = df[df[col].str.contains(value, case=False)]
         elif type_ == "equals":
             df = df[df[col] == value]
-        elif type_ == "equals":
+        elif type_ == "notEqual":
             df = df[df[col] != value]
 
     return df

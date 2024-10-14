@@ -1,7 +1,7 @@
 import itertools
 
 import dash_bootstrap_components as dbc
-from dash import Dash, dcc, html, Input, Output
+from dash import Dash, dcc, html, Input, Output, no_update
 import dash_ag_grid as dag
 import plotly.express as px
 import plotly.figure_factory as ff
@@ -34,31 +34,112 @@ def register_layout_query(filter_modal={}):
                 columnDefs=[
                     {"field": 'cve_id', "headerName": 'CVE', "cellRenderer": "GoToMitre",
                      "tooltipValueGetter": {"function": "'Click on the cell for more details'"},
-                     "filterParams": {"filterOptions": ["equals", "notEqual", 'contains']}
+                     "filterParams": {"filterOptions": ["equals", "notEqual", 'contains']},
+                         "cellStyle": {
+                             "styleConditions": [
+                                 {
+                                     "condition": "params.data.verified === true",
+                                     "style": {"backgroundColor": "lightgreen"},
+                                 },
+                                 {
+                                     "condition": "params.data.verified === false",
+                                     "style": {"backgroundColor": "lightcoral"},
+                                 },
+                                 {
+                                     "condition": "params.data.verified === null",
+                                     "style": {"backgroundColor": "lightgrey"},
+                                 },
+
+                             ],
+                         }
                     },
                     {"field": 'cvss_score', "headerName": 'CVSS',
                     'tooltipValueGetter': {"function": "'CVSS Version: ' + params.data.cvss_version"},
-                     "filter": "agNumberColumnFilter", "filterParams": {"filterOptions": ["equals","notEqual",'lessThan', 'greaterThan', 'inRange']}
+                     "filter": "agNumberColumnFilter", "filterParams": {"filterOptions": ["equals","notEqual",'lessThan', 'greaterThan', 'inRange']},
+                         "cellStyle": {
+                             "styleConditions": [
+                                 {
+                                     "condition": "params.data.cvss_score >= 0 && params.data.cvss_score <= 2",
+                                     "style": {"backgroundColor": "#FFD700"},
+                                 },
+                                 {
+                                     "condition": "params.data.cvss_score > 2 && params.data.cvss_score <= 4",
+                                     "style": {"backgroundColor": "#FFA500"},
+                                 },
+                                 {
+                                     "condition": "params.data.cvss_score > 4 && params.data.cvss_score <= 6",
+                                     "style": {"backgroundColor": "#FF8C00"},
+                                 },
+                                 {
+                                     "condition": "params.data.cvss_score > 6 && params.data.cvss_score <= 8",
+                                     "style": {"backgroundColor": "#FF6347"},
+                                 },
+                                 {
+                                     "condition": "params.data.cvss_score > 8 && params.data.cvss_score <= 10",
+                                     "style": {"backgroundColor": "#FF4500"},
+                                 },
+                             ],
+                         },
                      },
                     {"field": 'epss', "headerName": 'EPSS',
                      'tooltipValueGetter': {"function": "'EPSS: ' + params.data.epss_rank"},
                      "filter": "agNumberColumnFilter",
-                     "filterParams": {"filterOptions": ["equals", "notEqual", 'lessThan', 'greaterThan', 'inRange']}
+                     "filterParams": {"filterOptions": ["equals", "notEqual", 'lessThan', 'greaterThan', 'inRange']},
+                         "cellStyle": {
+                             "styleConditions": [
+                                 {
+                                     "condition": "params.data.epss >= 0 && params.data.epss <= 0.2",
+                                     "style": {"backgroundColor": "#FFD700"},
+                                 },
+                                 {
+                                     "condition": "params.data.epss > 0.2 && params.data.epss <= 0.4",
+                                     "style": {"backgroundColor": "#FFA500"},
+                                 },
+                                 {
+                                     "condition": "params.data.epss > 0.4 && params.data.epss <= 0.6",
+                                     "style": {"backgroundColor": "#FF8C00"},
+                                 },
+                                 {
+                                     "condition": "params.data.epss > 0.6 && params.data.epss <= 0.8",
+                                     "style": {"backgroundColor": "#FF6347"},
+                                 },
+                                 {
+                                     "condition": "params.data.epss > 0.8 && params.data.epss <= 1",
+                                     "style": {"backgroundColor": "#FF4500"},
+                                 },
+                             ],
+                         },
                      },
+                    {"field": 'cwe', "headerName": "CWE"},
+                    {"field": 'n_as', "headerName": "# AS"},
                     {"field": 'n_ips', "headerName": "# IPs",
                      "filter": "agNumberColumnFilter", "filterParams": {"filterOptions": ["equals","notEqual",'lessThan', 'greaterThan', 'inRange']}
                      },
                     {"field": 'n_orgs', "headerName": "# Organizations",
                      "filter": "agNumberColumnFilter", "filterParams": {"filterOptions": ["equals","notEqual",'lessThan', 'greaterThan', 'inRange']}
                      },
+                    {"headerName": "Cisa's KEV",
+                            "suppressStickyLabel": True,
+                            "children": [
+                                {"field": "date_added", "headerName": "Date Added", "width": 140, "columnGroupShow": "closed"},
+                                {"field": "knownRansomwareCampaignUse", "headerName": "Ransomware Use", "width": 140,
+                                 'tooltipValueGetter': {"function":
+                                                            "params.data.description"
+                                                        },
+                                 "columnGroupShow": "closed"
+                                 }
+                            ],
+                        },
                 ],
                 defaultColDef={"flex": 1, "filter": True},
                 columnSize="sizeToFit",
                 columnSizeOptions={"skipHeader": False},
                 dashGridOptions={
+                    "rowSelection": "single",
                     'tooltipInteraction': True,
                     'tooltipShowDelay': 10,
-                    'tooltipHideDelay': 1000
+                    'tooltipHideDelay': 1000,
+                    "animateRows": False
                 }
             )
         ]),
@@ -98,6 +179,12 @@ def register_callback_query(dm, app):
         df = dm.get_view_dataset(date_value, INPUT_DATA)
         if df.empty:
             return [{}]
+
+        df['cwe'] = df['cwe'].apply(lambda x: ','.join(map(str, x)))
+
+        df['cisa_info'] = df['cisa_info'].apply(lambda x: {} if pd.isna(x) else x)
+        tmp = pd.json_normalize(df.pop("cisa_info"))[['date_added', 'description', 'knownRansomwareCampaignUse']]
+        df = pd.concat([df, tmp], axis=1)
 
         return df.to_dict('records')
 
@@ -229,3 +316,21 @@ def register_callback_query(dm, app):
 
         children = gen_subgraphs(n_cols=3, graphs=graphs)
         return children
+
+    @app.callback(
+        Output("url-redirect", "pathname", allow_duplicate=True),
+        Output('store-filters', 'data', allow_duplicate=True),
+        Input("query-3-ag", "cellClicked"),
+        Input("query-3-ag", "selectedRows"),
+        prevent_initial_call=True
+    )
+    def select_orgs_ips(cell, row):
+        print(f"[INFO] select_orgs_ips: Cell {cell} and row {row}")
+        if cell and row:
+            if cell.get("colId", "") == "n_orgs":
+                cve_value = row[0].get('cve_id')
+                filter_opt = {
+                    "query-2a-grid": {'cve_id': {'filterType': 'text', 'type': 'contains', 'filter': cve_value}}}
+                return "/dashboard/view2a", filter_opt
+
+        return no_update, no_update

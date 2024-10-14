@@ -36,5 +36,9 @@ header_mapping = {
         'name': '# Organizations',
         "description": "Number of organizations"
     },
+    "n_as": {
+        'name': "# AS",
+        "description": "Number of Autonomous Systems"
+    }
 
 }

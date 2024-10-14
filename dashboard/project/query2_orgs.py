@@ -19,7 +19,7 @@ def register_layout_query(filter_modal={}):
     elements = [
         html.H2(children="Highest EPSS for each org", className='wrapper'),
         html.H2(
-            children="This visualization allows for assessing the higher vulnerability of an Organization based on the EPSS score. Users can click on an organization to further informations.",
+            children="This visualization allows for assessing the higher vulnerability of an Organization based on the EPSS score. Users can click on an organization to further information.",
             style={'fontSize': '20px', 'padding': 10, }
         ),
 

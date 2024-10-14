@@ -43,9 +43,11 @@ def register_layout_query(filter_modal={}):
                         {
                             "field": 'cpe_product',
                             "headerName": 'Product name',
-                            "tooltipField": "cve_id",
                             "filterParams": {"filterOptions": ["equals", "notEqual", 'contains']}
                         },
+                        {"field": 'cve_id', "headerName": 'CVE',
+                         "filterParams": {"filterOptions": ["equals", "notEqual", 'contains']}
+                         },
                     ],
                     defaultColDef={"flex": 1, "filter": True},
                     columnSize="sizeToFit",

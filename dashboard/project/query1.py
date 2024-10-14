@@ -25,9 +25,11 @@ def register_layout_query(filter_modal={}):
                             {"field": 'n_ips', "headerName": header_mapping['n_ips']['name'], "flex": 1,
                              'headerTooltip': header_mapping['n_ips']['description']},
                             {"field": 'n_orgs', "headerName": header_mapping['n_orgs']['name'], "flex": 1,
-                             'headerTooltip': header_mapping['n_orgs']['description']}
+                             'headerTooltip': header_mapping['n_orgs']['description']},
+                            {"field": "n_as", "headerName": header_mapping['n_as']['name'], "flex": 1,
+                             'headerTooltip': header_mapping['n_as']['description']},
                         ],
-                        rowData = [{"epss_rank": "Processing...", "n_cves": 0, "n_ips": 0, "n_orgs": 0}],
+                        rowData = [{"epss_rank": "Processing...", "n_cves": 0, "n_ips": 0, "n_orgs": 0, 'n_as': 0}],
                         defaultColDef={"flex": 1, "resizable": False},
                         columnSize="responsiveSizeToFit",
                         columnSizeOptions= {"skipHeader": False},
