@@ -178,43 +178,6 @@ def set_routes(server, db, login_manager, app):
             filtered_data = {}
         return jsonify(filtered_data)
 
-    @server.route('/api/data_count', methods=['GET'])
-    @login_required
-    def get_data_count():
-        try:
-            selected_ip = request.args.get('ip', default = '', type = str)
-            print(f"get_data_count: {selected_ip}")
-            date_value = global_date()
-            total_entries = dm.get_total_entries_new(date_value)
-        except:
-            total_entries = -1
-        return jsonify({'total_entries': total_entries})
-
-    @server.route('/api/data/<page>', methods=['GET'])
-    @login_required
-    def get_details(page):
-        try:
-            date_value = global_date()
-            page_size = 10
-            page_int = int(page)
-            start = (page_int - 1) * page_size
-            finish = page_int * page_size
-
-            df = dm.get_report_dataset(
-                date_value, 
-                columns=["data", "ip", "port", "city", "os", "org", "hostnames", "domains", "meta_id", "vulns_scores"], 
-                start=start, 
-                finish=finish,
-                sort_by='epss',
-                ascending=False,
-                compute_score=True
-            )
-
-            partial = df.to_json(orient='records')
-        except:
-            partial = {}
-        return partial
-    
     @server.route('/admin')
     @login_required
     def admin_page():
