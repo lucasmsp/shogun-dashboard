@@ -106,11 +106,9 @@ class DatasetManager(object):
                 df = table.to_pandas()
 
                 if compute_score:
-                    df['score'] = df['vulns_scores'].apply(
-                        lambda x: max(x.get('epss', [0])) if isinstance(x, dict) else 0)
-                    df = df.drop(columns=['vulns_scores'])
+                    df['score'] = df['vulns_epss'].apply(lambda x: max(x))
+                    df = df.drop(columns=['vulns_epss'])
                     df = df.sort_values(by=sort_by, ascending=ascending)
-                
                 
                 if finish > 0:
                     df = df.iloc[start:finish]
