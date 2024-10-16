@@ -26,8 +26,8 @@ def register_layout_query(filter_modal={}):
             dcc.Loading([
                 dag.AgGrid(
                     id="query-2a-grid",
-                    rowData=[{"org_clean": "Processing...", "ip": "-", "score": 0, "cvss_rank": "-", "cvss_score": "0",
-                              "cpe_product": "-", "cve_id": ""}],
+                    rowData=[{"org_clean": "Processing...", "ip": "-", "score": 0, "vulns_cvss_rank": "-", "vulns_cvss_score": "0",
+                              "cpe_product": "-", "vulns_cve_id": "", "vulns_epss": 0, "vulns_epss_rank": "-"}],
                     columnDefs=[
                         {"field": 'org_clean', "headerName": 'Organization (clean)',
                          "filterParams": {"filterOptions": ["equals", "notEqual", 'contains']}},
@@ -35,17 +35,17 @@ def register_layout_query(filter_modal={}):
                          "tooltipValueGetter": {"function": "'Click on the cell for more details'"},
                          "filterParams": {"filterOptions": ["equals", "notEqual", 'contains']}
                          },
-                        {"field": 'epss', "headerName": 'EPSS', "tooltipField": "epss_rank",
+                        {"field": 'vulns_epss', "headerName": 'EPSS', "tooltipField": "vulns_epss_rank",
                          "filter": "agNumberColumnFilter", "filterParams": {
                             "filterOptions": ["equals", "notEqual", 'lessThan', 'greaterThan', 'inRange']}},
-                        {"field": 'cvss_rank', "headerName": 'CVSS Rank', "tooltipField": "cvss_score",
+                        {"field": 'vulns_cvss_rank', "headerName": 'CVSS Rank', "tooltipField": "vulns_cvss_score",
                          "filterParams": {"filterOptions": ["equals", "notEqual", 'contains']}},
                         {
                             "field": 'cpe_product',
                             "headerName": 'Product name',
                             "filterParams": {"filterOptions": ["equals", "notEqual", 'contains']}
                         },
-                        {"field": 'cve_id', "headerName": 'CVE',
+                        {"field": 'vulns_cve_id', "headerName": 'CVE',
                          "filterParams": {"filterOptions": ["equals", "notEqual", 'contains']}
                          },
                     ],
@@ -136,11 +136,11 @@ def register_callback_query(dm, app):
         fig = go.Figure()
         if metric == "PDF/CDF plot - EPSS Distribution":
             stats_df = df \
-                .groupby('epss') \
-                ['epss'] \
+                .groupby('vulns_epss') \
+                ['vulns_epss'] \
                 .agg('count') \
                 .pipe(pd.DataFrame) \
-                .rename(columns = {'epss': 'frequency'})
+                .rename(columns = {'vulns_epss': 'frequency'})
 
             # PDF
             stats_df['pdf'] = stats_df['frequency'] / sum(stats_df['frequency'])
@@ -149,8 +149,8 @@ def register_callback_query(dm, app):
             stats_df['cdf'] = stats_df['pdf'].cumsum()
             stats_df = stats_df.reset_index()
 
-            fig.add_trace(go.Scatter(x=stats_df['epss'], y=stats_df['pdf'], mode='lines', name='PDF'))
-            fig.add_trace(go.Scatter(x=stats_df['epss'], y=stats_df['cdf'], mode='lines', name='CDF'))
+            fig.add_trace(go.Scatter(x=stats_df['vulns_epss'], y=stats_df['pdf'], mode='lines', name='PDF'))
+            fig.add_trace(go.Scatter(x=stats_df['vulns_epss'], y=stats_df['cdf'], mode='lines', name='CDF'))
             fig.update_layout(title='PDF and CDF of EPSS Score',
                             xaxis_title='EPSS',
                             yaxis_title='Probability',
@@ -164,12 +164,12 @@ def register_callback_query(dm, app):
                 "high": 3,
                 "critical": 4
             }
-            df['severity'] = df['cvss_rank'].map(severity_mapping)
+            df['severity'] = df['vulns_cvss_rank'].map(severity_mapping)
 
-            cvss_counts = df.groupby(['cvss_rank', 'severity'])['cvss_rank'].count().reset_index(name='total_count')
+            cvss_counts = df.groupby(['vulns_cvss_rank', 'severity'])['vulns_cvss_rank'].count().reset_index(name='total_count')
             cvss_counts = cvss_counts.sort_values(by=['severity'], ascending=True)
 
-            fig.add_trace(go.Bar(x=cvss_counts.cvss_rank, y=cvss_counts.total_count, name='CVSS Rank'))
+            fig.add_trace(go.Bar(x=cvss_counts.vulns_cvss_rank, y=cvss_counts.total_count, name='CVSS Rank'))
 
             fig.update_layout(
                 # title='Distribution of CVSS Rank',
@@ -179,10 +179,10 @@ def register_callback_query(dm, app):
         elif metric == "Scatter plot - EPSS by CVSS score": 
 
             fig = px.scatter(df, 
-                             x=df["cvss_score"],
-                             y=df['epss'], 
+                             x=df["vulns_cvss_score"],
+                             y=df['vulns_epss'],
                              title="Scatter plot - EPSS by CVSS score",
-                             color='epss_rank')
+                             color='vulns_epss_rank')
             fig.update_layout(
                 xaxis_title="CVSS Score",
                 yaxis_title="EPSS Score",
@@ -196,7 +196,7 @@ def register_callback_query(dm, app):
 
         elif metric == "Bar plot - Top 10 vulnerable products":
             number_ips = df['ip'].nunique()
-            top_products = df.groupby(['cpe_product'])['cvss_rank'].count().reset_index(name='total_count')
+            top_products = df.groupby(['cpe_product'])['vulns_cvss_rank'].count().reset_index(name='total_count')
             if len(top_products) > 10:
                 top_products = top_products[:10]
             top_products['percent'] = 100 * (top_products.total_count / number_ips)
@@ -231,19 +231,19 @@ def register_callback_query(dm, app):
         
         df = filter_text(filter_modal, df, "org_clean")
         df = filter_text(filter_modal, df, "ip")
-        df = filter_number(filter_modal, df, "epss")
-        df = filter_text(filter_modal, df, "cvss_rank")
+        df = filter_number(filter_modal, df, "vulns_epss")
+        df = filter_text(filter_modal, df, "vulns_cvss_rank")
         df = filter_text(filter_modal, df, "cpe_product")
 
         fig = gen_graphs(df, metric)
         return fig
 
-
-    @app.callback(
+    app.callback(
         Output('query-5-ag', 'filterModel'),
         Output("query-2a-grid", "cellClicked"),
         Input("query-2a-grid", "cellClicked"),
     )
+
     def select_ip(cell):
 
         filter_opt = {}

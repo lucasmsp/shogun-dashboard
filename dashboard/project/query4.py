@@ -156,15 +156,17 @@ def register_callback_query(dm, app):
 
         elif value == 'cvss_score':
 
-            df = dm.get_report_dataset(date_value, columns=["ip", "city", "vulns_scores"])
+            df = dm.get_report_dataset(date_value, columns=["ip", "city", "vulns_cvss_score"])
             df['region_code'] = df['city'].str.split(', ').str[1]
 
+            print(df['vulns_cvss_score'])
             if df.empty:
                 return fig
 
             df['name'] = df['region_code'].map(state_id_map)
-            df['cvss_new'] = df['vulns_scores'].apply(lambda x: x['cvss_score'])
-            df = df.drop('vulns_scores', axis=1)\
+            df['cvss_new'] = df['vulns_cvss_score']
+
+            df = df.drop('vulns_cvss_score', axis=1)\
                 .explode('cvss_new')
 
             # Transformando cada item em float
@@ -199,14 +201,14 @@ def register_callback_query(dm, app):
 
         elif value == 'epss_score':
 
-            df = dm.get_report_dataset(date_value, columns=['ip', "city", "vulns_scores"])
+            df = dm.get_report_dataset(date_value, columns=['ip', "city", "vulns_epss"])
             df['region_code'] = df['city'].str.split(', ').str[1]
             if df.empty:
                 return fig
 
             df['name'] = df['region_code'].map(state_id_map)
-            df['epss_new'] = df['vulns_scores'].apply(lambda x: x['epss'])            
-            df = df.drop('vulns_scores', axis=1)\
+            df['epss_new'] = df['vulns_epss']
+            df = df.drop('vulns_epss', axis=1)\
                 .explode('epss_new')
             # Transformando cada item em float
             df['epss_new'] = pd.to_numeric(df['epss_new'], downcast='float', errors='coerce')
@@ -241,14 +243,14 @@ def register_callback_query(dm, app):
 
         elif value == 'cve_id':
 
-            df = dm.get_report_dataset(date_value, columns=["city", "vulns_scores"])
+            df = dm.get_report_dataset(date_value, columns=["city", "vulns_cve_id"])
             df['region_code'] = df['city'].str.split(', ').str[1]
             if df.empty:
                 return fig
 
             df['name'] = df['region_code'].map(state_id_map)
-            df['cve_new'] = df['vulns_scores'].apply(lambda x: x['cve_id'])
-            df = df.drop('vulns_scores', axis=1)\
+            df['cve_new'] = df['vulns_cve_id']
+            df = df.drop('vulns_cve_id', axis=1)\
                 .explode('cve_new')
 
             df = df[['region_code', 'name', 'cve_new']].drop_duplicates()
@@ -277,14 +279,16 @@ def register_callback_query(dm, app):
 
         elif value == 'ip_cvss':
             print("[INFO][query4][update_choropleth_map] ip_cvss: ", cvss_range_query)
-            df = dm.get_report_dataset(date_value, columns=['ip', "city", "vulns_scores"])
+            df = dm.get_report_dataset(date_value, columns=['ip', "city", "vulns_cvss_score"])
             df['region_code'] = df['city'].str.split(', ').str[1]
             if df.empty:
                 return fig
             df['name'] = df['region_code'].map(state_id_map)
-            df['cvss_new'] = df['vulns_scores'].apply(lambda x: x['cvss_score'])
+            df['cvss_new'] = df['vulns_cvss_score']
 
-            df = df.explode('cvss_new')
+            # df = df.explode('cvss_new')
+            df = df.drop('vulns_cvss_score', axis=1) \
+                .explode('cvss_new')
 
             df['cvss_new'] = df['cvss_new'].apply(lambda x: float(x))
             df = df.groupby(['region_code', "name", 'ip']).max('cvss_new').reset_index()
