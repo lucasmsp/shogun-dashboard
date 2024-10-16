@@ -18,7 +18,7 @@ def register_layout_query(filter_modal={}):
                     dag.AgGrid(
                         id='query-1-table',
                         columnDefs=[
-                            {"field": "epss_rank", "headerName": header_mapping['epss_rank']['name'], "flex": 1,
+                            {"field": "vulns_epss_rank", "headerName": header_mapping['epss_rank']['name'], "flex": 1,
                              'headerTooltip': header_mapping['epss_rank']['description']},
                             {"field": 'n_cves', "headerName": header_mapping['n_cves']['name'], "flex": 1,
                              'headerTooltip': header_mapping['n_cves']['description']},
@@ -29,7 +29,7 @@ def register_layout_query(filter_modal={}):
                             {"field": "n_as", "headerName": header_mapping['n_as']['name'], "flex": 1,
                              'headerTooltip': header_mapping['n_as']['description']},
                         ],
-                        rowData = [{"epss_rank": "Processing...", "n_cves": 0, "n_ips": 0, "n_orgs": 0, 'n_as': 0}],
+                        rowData = [{"vulns_epss_rank": "Processing...", "n_cves": 0, "n_ips": 0, "n_orgs": 0, 'n_as': 0}],
                         defaultColDef={"flex": 1, "resizable": False},
                         columnSize="responsiveSizeToFit",
                         columnSizeOptions= {"skipHeader": False},
@@ -80,23 +80,23 @@ def register_callback_query(dm, app):
         graphs_type = {
             "Bar plot - Number of CVEs by EPSS Rank":
                 { "y_column": "n_cves", "graph_type": "bar plot", "y_label": "# CVEs",
-                  'x_column': 'epss_rank', 'x_label': "EPSS Rank"},
+                  'x_column': 'vulns_epss_rank', 'x_label': "EPSS Rank"},
 
             "Bar plot - Number of organizations by EPSS Rank":
                 {"y_column": "n_orgs", "graph_type": "bar plot", "y_label": "# Orgs",
-                 'x_column': 'epss_rank', 'x_label': "EPSS Rank"},
+                 'x_column': 'vulns_epss_rank', 'x_label': "EPSS Rank"},
 
             "Bar plot - Number of IPs by EPSS Rank":
                 {"y_column": "n_ips", "graph_type": "bar plot", "y_label": "# IPs",
-                 'x_column': 'epss_rank', 'x_label': "EPSS Rank"},
+                 'x_column': 'vulns_epss_rank', 'x_label': "EPSS Rank"},
 
             "PDF plot - Number of CVEs by EPSS Rank":
                 {"y_column": "n_cves", "graph_type": "pdf plot", "y_label": "# CVEs",
-                 'x_column': 'epss_rank', 'x_label': "EPSS Rank"},
+                 'x_column': 'vulns_epss_rank', 'x_label': "EPSS Rank"},
 
             "CDF plot - Number of CVEs by EPSS Rank":
                 {"y_column": "n_cves", "graph_type": "cdf plot", "y_label": "# CVEs",
-                 'x_column': 'epss_rank', 'x_label': "EPSS Rank"},
+                 'x_column': 'vulns_epss_rank', 'x_label': "EPSS Rank"},
 
         }
 

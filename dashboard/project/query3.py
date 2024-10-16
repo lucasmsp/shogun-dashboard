@@ -30,87 +30,87 @@ def register_layout_query(filter_modal={}):
         dcc.Loading([
             dag.AgGrid(
                 id="query-3-ag",
-                rowData = [{"cve_id": "Processing...", "cvss_score": 0, "epss": 0, "n_ips": 0, 'n_orgs': 0}],
+                rowData = [{"vulns_cve_id": "Processing...", "vulns_cvss_score": 0, "vulns_epss": 0, "n_ips": 0, 'n_orgs': 0}],
                 columnDefs=[
-                    {"field": 'cve_id', "headerName": 'CVE', "cellRenderer": "GoToMitre",
+                    {"field": 'vulns_cve_id', "headerName": 'CVE', "cellRenderer": "GoToMitre",
                      "tooltipValueGetter": {"function": "'Click on the cell for more details'"},
                      "filterParams": {"filterOptions": ["equals", "notEqual", 'contains']},
-                         "cellStyle": {
-                             "styleConditions": [
-                                 {
-                                     "condition": "params.data.verified === true",
-                                     "style": {"backgroundColor": "lightgreen"},
-                                 },
-                                 {
-                                     "condition": "params.data.verified === false",
-                                     "style": {"backgroundColor": "lightcoral"},
-                                 },
-                                 {
-                                     "condition": "params.data.verified === null",
-                                     "style": {"backgroundColor": "lightgrey"},
-                                 },
-
-                             ],
-                         }
+                         # "cellStyle": {
+                         #     "styleConditions": [
+                         #         {
+                         #             "condition": "params.data.verified === true",
+                         #             "style": {"backgroundColor": "lightgreen"},
+                         #         },
+                         #         {
+                         #             "condition": "params.data.verified === false",
+                         #             "style": {"backgroundColor": "lightcoral"},
+                         #         },
+                         #         {
+                         #             "condition": "params.data.verified === null",
+                         #             "style": {"backgroundColor": "lightgrey"},
+                         #         },
+                         #
+                         #     ],
+                         # }
                     },
-                    {"field": 'cvss_score', "headerName": 'CVSS',
-                    'tooltipValueGetter': {"function": "'CVSS Version: ' + params.data.cvss_version"},
+                    {"field": 'vulns_cvss_score', "headerName": 'CVSS',
+                    'tooltipValueGetter': {"function": "'CVSS Version: ' + params.data.vulns_cvss_version"},
                      "filter": "agNumberColumnFilter", "filterParams": {"filterOptions": ["equals","notEqual",'lessThan', 'greaterThan', 'inRange']},
                          "cellStyle": {
                              "styleConditions": [
                                  {
-                                     "condition": "params.data.cvss_score >= 0 && params.data.cvss_score <= 2",
+                                     "condition": "params.data.vulns_cvss_score >= 0 && params.data.vulns_cvss_score <= 2",
                                      "style": {"backgroundColor": "#FFD700"},
                                  },
                                  {
-                                     "condition": "params.data.cvss_score > 2 && params.data.cvss_score <= 4",
+                                     "condition": "params.data.vulns_cvss_score > 2 && params.data.vulns_cvss_score <= 4",
                                      "style": {"backgroundColor": "#FFA500"},
                                  },
                                  {
-                                     "condition": "params.data.cvss_score > 4 && params.data.cvss_score <= 6",
+                                     "condition": "params.data.vulns_cvss_score > 4 && params.data.vulns_cvss_score <= 6",
                                      "style": {"backgroundColor": "#FF8C00"},
                                  },
                                  {
-                                     "condition": "params.data.cvss_score > 6 && params.data.cvss_score <= 8",
+                                     "condition": "params.data.vulns_cvss_score > 6 && params.data.vulns_cvss_score <= 8",
                                      "style": {"backgroundColor": "#FF6347"},
                                  },
                                  {
-                                     "condition": "params.data.cvss_score > 8 && params.data.cvss_score <= 10",
+                                     "condition": "params.data.vulns_cvss_score > 8 && params.data.vulns_cvss_score <= 10",
                                      "style": {"backgroundColor": "#FF4500"},
                                  },
                              ],
                          },
                      },
-                    {"field": 'epss', "headerName": 'EPSS',
-                     'tooltipValueGetter': {"function": "'EPSS: ' + params.data.epss_rank"},
+                    {"field": 'vulns_epss', "headerName": 'EPSS',
+                     'tooltipValueGetter': {"function": "'EPSS: ' + params.data.vulns_epss_rank"},
                      "filter": "agNumberColumnFilter",
                      "filterParams": {"filterOptions": ["equals", "notEqual", 'lessThan', 'greaterThan', 'inRange']},
                          "cellStyle": {
                              "styleConditions": [
                                  {
-                                     "condition": "params.data.epss >= 0 && params.data.epss <= 0.2",
+                                     "condition": "params.data.vulns_epss >= 0 && params.data.vulns_epss <= 0.2",
                                      "style": {"backgroundColor": "#FFD700"},
                                  },
                                  {
-                                     "condition": "params.data.epss > 0.2 && params.data.epss <= 0.4",
+                                     "condition": "params.data.vulns_epss > 0.2 && params.data.vulns_epss <= 0.4",
                                      "style": {"backgroundColor": "#FFA500"},
                                  },
                                  {
-                                     "condition": "params.data.epss > 0.4 && params.data.epss <= 0.6",
+                                     "condition": "params.data.vulns_epss > 0.4 && params.data.vulns_epss <= 0.6",
                                      "style": {"backgroundColor": "#FF8C00"},
                                  },
                                  {
-                                     "condition": "params.data.epss > 0.6 && params.data.epss <= 0.8",
+                                     "condition": "params.data.vulns_epss > 0.6 && params.data.vulns_epss <= 0.8",
                                      "style": {"backgroundColor": "#FF6347"},
                                  },
                                  {
-                                     "condition": "params.data.epss > 0.8 && params.data.epss <= 1",
+                                     "condition": "params.data.vulns_epss > 0.8 && params.data.vulns_epss <= 1",
                                      "style": {"backgroundColor": "#FF4500"},
                                  },
                              ],
                          },
                      },
-                    {"field": 'cwe', "headerName": "CWE"},
+                    {"field": 'vulns_cwe', "headerName": "CWE"},
                     {"field": 'n_as', "headerName": "# AS"},
                     {"field": 'n_ips', "headerName": "# IPs",
                      "filter": "agNumberColumnFilter", "filterParams": {"filterOptions": ["equals","notEqual",'lessThan', 'greaterThan', 'inRange']}
@@ -121,10 +121,10 @@ def register_layout_query(filter_modal={}):
                     {"headerName": "Cisa's KEV",
                             "suppressStickyLabel": True,
                             "children": [
-                                {"field": "date_added", "headerName": "Date Added", "width": 140, "columnGroupShow": "closed"},
-                                {"field": "knownRansomwareCampaignUse", "headerName": "Ransomware Use", "width": 140,
+                                {"field": "vulns_cisa_date_added", "headerName": "Date Added", "width": 140, "columnGroupShow": "closed"},
+                                {"field": "vulns_cisa_knownRansomwareCampaignUse", "headerName": "Ransomware Use", "width": 140,
                                  'tooltipValueGetter': {"function":
-                                                            "params.data.description"
+                                                            "params.data.vulns_cisa_description"
                                                         },
                                  "columnGroupShow": "closed"
                                  }
@@ -180,11 +180,11 @@ def register_callback_query(dm, app):
         if df.empty:
             return [{}]
 
-        df['cwe'] = df['cwe'].apply(lambda x: ','.join(map(str, x)))
-
-        df['cisa_info'] = df['cisa_info'].apply(lambda x: {} if pd.isna(x) else x)
-        tmp = pd.json_normalize(df.pop("cisa_info"))[['date_added', 'description', 'knownRansomwareCampaignUse']]
-        df = pd.concat([df, tmp], axis=1)
+        df['vulns_cwe'] = df['vulns_cwe'].apply(lambda x: ','.join(map(str, x)))
+        #
+        # df['cisa_info'] = df['cisa_info'].apply(lambda x: {} if pd.isna(x) else x)
+        # tmp = pd.json_normalize(df.pop("cisa_info"))[['date_added', 'description', 'knownRansomwareCampaignUse']]
+        # df = pd.concat([df, tmp], axis=1)
 
         return df.to_dict('records')
 
@@ -205,9 +205,9 @@ def register_callback_query(dm, app):
         graphs = []
 
         # fig 1
-        fig = px.scatter(df, x=df["cvss_score"], y=df['epss'],
+        fig = px.scatter(df, x=df["vulns_cvss_score"], y=df['vulns_epss'],
                          title="Scatter plot - EPSS by CVSS score",
-                         color='epss_rank')
+                         color='vulns_epss_rank')
         fig.update_layout(
             xaxis_title="CVSS Score",
             yaxis_title="EPSS",
@@ -221,12 +221,12 @@ def register_callback_query(dm, app):
         graphs.append(graph)
 
         # fig 2
-        tmp1 = df.groupby(["cvss_rank", "epss_rank"]).count() \
+        tmp1 = df.groupby(["vulns_cvss_rank", "vulns_epss_rank"]).count() \
             .reset_index() \
-            .pivot(index="cvss_rank", columns="epss_rank", values=["cve_id"]) \
+            .pivot(index="vulns_cvss_rank", columns="vulns_epss_rank", values=["vulns_cve_id"]) \
             .fillna(0) \
             .reset_index()
-        tmp1.columns = ['epss_rank', '< 0.2', '< 0.4', '< 0.6', '< 0.8', '>= 0.8']
+        tmp1.columns = ['vulns_epss_rank', '< 0.2', '< 0.4', '< 0.6', '< 0.8', '>= 0.8']
 
         severity_mapping = {
             "low": 1,
@@ -234,7 +234,7 @@ def register_callback_query(dm, app):
             "high": 3,
             "critical": 4
         }
-        tmp1['severity'] = tmp1['epss_rank'].map(severity_mapping)
+        tmp1['severity'] = tmp1['vulns_epss_rank'].map(severity_mapping)
         tmp1 = tmp1.sort_values(by='severity', ascending=True)
 
         x = ["low", "medium", "high", "critical"]
@@ -255,8 +255,8 @@ def register_callback_query(dm, app):
         graphs.append(graph)
 
         # fig 3
-        tmp2 = df.groupby("cvss_score").sum("n_ips").reset_index()
-        fig = px.line(tmp2, x=tmp2['cvss_score'], y=tmp2['n_ips'], title="Line plot - # IPs by CVSS")
+        tmp2 = df.groupby("vulns_cvss_score").sum("n_ips").reset_index()
+        fig = px.line(tmp2, x=tmp2['vulns_cvss_score'], y=tmp2['n_ips'], title="Line plot - # IPs by CVSS")
         fig.update_layout(
             xaxis_title="CVSS Score",
             yaxis_title="# IPs",
@@ -270,8 +270,8 @@ def register_callback_query(dm, app):
         graphs.append(graph)
 
         # fig 4
-        tmp3 = df.groupby("cvss_score").sum("n_orgs").reset_index()
-        fig = px.line(tmp3, x=tmp3['cvss_score'], y=tmp3['n_orgs'], title="Line plot - # Organizations by CVSS")
+        tmp3 = df.groupby("vulns_cvss_score").sum("n_orgs").reset_index()
+        fig = px.line(tmp3, x=tmp3['vulns_cvss_score'], y=tmp3['n_orgs'], title="Line plot - # Organizations by CVSS")
         fig.update_layout(
             xaxis_title="CVSS Score",
             yaxis_title="# Organizations",
@@ -285,8 +285,8 @@ def register_callback_query(dm, app):
         graphs.append(graph)
 
         # fig 5
-        tmp4 = df.groupby("epss").sum("n_orgs").reset_index()
-        fig = px.line(tmp4, x=tmp4['epss'], y=tmp4['n_orgs'], title="Line plot - # Organizations by EPSS")
+        tmp4 = df.groupby("vulns_epss").sum("n_orgs").reset_index()
+        fig = px.line(tmp4, x=tmp4['vulns_epss'], y=tmp4['n_orgs'], title="Line plot - # Organizations by EPSS")
         fig.update_layout(
             xaxis_title="EPSS Score",
             yaxis_title="# Organizations",
@@ -300,8 +300,8 @@ def register_callback_query(dm, app):
         graphs.append(graph)
 
         # fig 6
-        tmp5 = df.groupby("epss").sum("n_ips").reset_index()
-        fig = px.line(tmp5, x=tmp5['epss'], y=tmp5['n_ips'], title="Line plot - # IPs by EPSS")
+        tmp5 = df.groupby("vulns_epss").sum("n_ips").reset_index()
+        fig = px.line(tmp5, x=tmp5['vulns_epss'], y=tmp5['n_ips'], title="Line plot - # IPs by EPSS")
         fig.update_layout(
             xaxis_title="EPSS Score",
             yaxis_title="# IPs",
@@ -328,9 +328,9 @@ def register_callback_query(dm, app):
         print(f"[INFO] select_orgs_ips: Cell {cell} and row {row}")
         if cell and row:
             if cell.get("colId", "") == "n_orgs":
-                cve_value = row[0].get('cve_id')
+                cve_value = row[0].get('vulns_cve_id')
                 filter_opt = {
-                    "query-2a-grid": {'cve_id': {'filterType': 'text', 'type': 'contains', 'filter': cve_value}}}
+                    "query-2a-grid": {'vulns_cve_id': {'filterType': 'text', 'type': 'contains', 'filter': cve_value}}}
                 return "/dashboard/view2a", filter_opt
 
         return no_update, no_update

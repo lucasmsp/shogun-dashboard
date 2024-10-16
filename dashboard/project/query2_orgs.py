@@ -31,7 +31,7 @@ def register_layout_query(filter_modal={}):
                     columnDefs=[
                         {"field": 'org_clean', "headerName": 'Organization',
                          "filterParams": {"filterOptions": ["equals", "notEqual", 'contains']}},
-                        {"field": 'epss', "headerName": 'EPSS (major)',
+                        {"field": 'vulns_epss', "headerName": 'EPSS (major)',
                          "filter": "agNumberColumnFilter", "filterParams": {
                             "filterOptions": ["equals", "notEqual", 'lessThan', 'greaterThan', 'inRange']}},
                     ],
@@ -100,8 +100,6 @@ def register_callback_query(dm, app):
         ]
     )
     def update_grid2b(date_value):
-        # if TAB_VIEW != active_tab:
-        #     return [{}]
 
         print("[INFO] query 2 - update_table2b: ", date_value)
         df = dm.get_view_dataset(date_value, INPUT_DATA_V2)
@@ -110,9 +108,9 @@ def register_callback_query(dm, app):
         
         aggregated_df = df.groupby('org_clean').agg({
             'ip': lambda x: list(x),
-            'cve_id': lambda x: list(x),
+            'vulns_cve_id': lambda x: list(x),
             'cpe_product': lambda x: list(x),
-            'epss': 'max', 
+            'vulns_epss': 'max',
         }).reset_index()
 
         return aggregated_df.to_dict('records')
@@ -125,9 +123,7 @@ def register_callback_query(dm, app):
         Input("dropdown-type-2b", 'value')
     )
     def update_graph2b(date_value, filter_modal, metric):
-        # if TAB_VIEW != active_tab:
-        #     return {}
-        # print("[INFO] query 2 - update_graph2b: ")
+        print("[INFO] query 2 - update_graph2b: ")
 
         aggregated_df = dm.get_view_dataset(date_value, INPUT_DATA_V2)
         if aggregated_df.empty:
@@ -138,17 +134,17 @@ def register_callback_query(dm, app):
 
         if filter_modal:
             aggregated_df = filter_text(filter_modal, aggregated_df, "org_clean")
-            aggregated_df = filter_number(filter_modal, aggregated_df, "epss")
+            aggregated_df = filter_number(filter_modal, aggregated_df, "vulns_epss")
    
         fig = go.Figure()
 
         if metric == "PDF/CDF plot - EPSS Distribution by Organization":
             stats_df = aggregated_df \
-                .groupby('epss') \
-                ['epss'] \
+                .groupby('vulns_epss') \
+                ['vulns_epss'] \
                 .agg('count') \
                 .pipe(pd.DataFrame) \
-                .rename(columns = {'epss': 'frequency'})
+                .rename(columns = {'vulns_epss': 'frequency'})
 
             # PDF
             stats_df['pdf'] = stats_df['frequency'] / sum(stats_df['frequency'])
@@ -163,8 +159,8 @@ def register_callback_query(dm, app):
                 stats_df = stats_df[:1001]
             
 
-            fig.add_trace(go.Scatter(x=stats_df['epss'], y=stats_df['pdf'], mode='lines', name='PDF'))
-            fig.add_trace(go.Scatter(x=stats_df['epss'], y=stats_df['cdf'], mode='lines', name='CDF'))
+            fig.add_trace(go.Scatter(x=stats_df['vulns_epss'], y=stats_df['pdf'], mode='lines', name='PDF'))
+            fig.add_trace(go.Scatter(x=stats_df['vulns_epss'], y=stats_df['cdf'], mode='lines', name='CDF'))
             fig.update_layout(title='PDF and CDF of EPSS Score',
                             xaxis_title='EPSS score (by organization)',
                             yaxis_title='Probability',
@@ -172,7 +168,7 @@ def register_callback_query(dm, app):
 
         elif metric == "PDF/CDF - Distribution of the number of CVE by Organization":
 
-            aggregated_df["n_cves"] = aggregated_df["cve_id"].apply(len)
+            aggregated_df["n_cves"] = aggregated_df["vulns_cve_id"].apply(len)
 
             stats_df = aggregated_df \
                 .groupby('n_cves') \

@@ -1,4 +1,3 @@
-import itertools
 from dash import html, dcc, html, Input, Output
 import dash_ag_grid as dag
 
@@ -82,8 +81,6 @@ def register_callback_query(dm, app):
     )
     def update_table5(date_value):
 
-        # if TAB_VIEW != active_tab:
-        #     return [{}]
         print("[INFO][query5] - update_table5: ", date_value)
 
         df = dm.get_report_dataset(
@@ -102,9 +99,7 @@ def register_callback_query(dm, app):
             if not raw:
                 raw = ""
 
-            if len(raw) > 500:
-                raw = raw[0:500]
-
+            # TODO: apply all this changes in processing stage
             space_index = raw.find(' ')
             if space_index != -1:
                 truncate_data = raw[0:space_index]
