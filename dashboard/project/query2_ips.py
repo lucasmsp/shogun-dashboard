@@ -35,19 +35,20 @@ def register_layout_query(filter_modal={}):
                          "tooltipValueGetter": {"function": "'Click on the cell for more details'"},
                          "filterParams": {"filterOptions": ["equals", "notEqual", 'contains']}
                          },
+                        {"field": 'vulns_cve_id', "headerName": 'CVE',
+                         "filterParams": {"filterOptions": ["equals", "notEqual", 'contains']}
+                         },
+                        {"field": 'vulns_cvss_score', "headerName": 'CVSS', "tooltipField": "vulns_cvss_rank",
+                         "filterParams": {"filterOptions": ["equals", "notEqual", 'lessThan', 'greaterThan', 'inRange']}},
                         {"field": 'vulns_epss', "headerName": 'EPSS', "tooltipField": "vulns_epss_rank",
                          "filter": "agNumberColumnFilter", "filterParams": {
                             "filterOptions": ["equals", "notEqual", 'lessThan', 'greaterThan', 'inRange']}},
-                        {"field": 'vulns_cvss_rank', "headerName": 'CVSS Rank', "tooltipField": "vulns_cvss_score",
-                         "filterParams": {"filterOptions": ["equals", "notEqual", 'contains']}},
                         {
                             "field": 'cpe_product',
                             "headerName": 'Product name',
                             "filterParams": {"filterOptions": ["equals", "notEqual", 'contains']}
                         },
-                        {"field": 'vulns_cve_id', "headerName": 'CVE',
-                         "filterParams": {"filterOptions": ["equals", "notEqual", 'contains']}
-                         },
+
                     ],
                     defaultColDef={"flex": 1, "filter": True},
                     columnSize="sizeToFit",

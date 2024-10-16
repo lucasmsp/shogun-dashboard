@@ -100,8 +100,6 @@ def register_callback_query(dm, app):
         ]
     )
     def update_grid2b(date_value):
-        # if TAB_VIEW != active_tab:
-        #     return [{}]
 
         print("[INFO] query 2 - update_table2b: ", date_value)
         df = dm.get_view_dataset(date_value, INPUT_DATA_V2)
@@ -125,9 +123,7 @@ def register_callback_query(dm, app):
         Input("dropdown-type-2b", 'value')
     )
     def update_graph2b(date_value, filter_modal, metric):
-        # if TAB_VIEW != active_tab:
-        #     return {}
-        # print("[INFO] query 2 - update_graph2b: ")
+        print("[INFO] query 2 - update_graph2b: ")
 
         aggregated_df = dm.get_view_dataset(date_value, INPUT_DATA_V2)
         if aggregated_df.empty:
