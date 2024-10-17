@@ -10,6 +10,7 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.datatables.net/2.0.8/js/dataTables.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/2.3.6/purify.min.js"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='dataTables.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='details_ip.css') }}">
     <title>Loading...</title>
@@ -85,7 +86,7 @@
                   <h2>HTTP</h2>
               </div>
               <div class="info-content">
-                  <iframe id="data-iframe" style="width:100%; height:500px;" frameborder="0"></iframe>
+                <iframe id="data-iframe" style="width:100%; height:500px;" src="about:blank" frameborder="0"></iframe>
               </div>
           </div>
       </div>
@@ -312,8 +313,9 @@ function getEntries(data) {
             }
             if (key === 'http') {
                 const iframe = document.getElementById("data-iframe");
+                const sanitizedHTML = DOMPurify.sanitize(data[key]);
                 iframe.contentWindow.document.open();
-                iframe.contentWindow.document.write(data[key]);
+                iframe.contentWindow.document.write(sanitizedHTML);
                 iframe.contentWindow.document.close();
             }
             if (Array.isArray(latitude)) {
