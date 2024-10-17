@@ -181,6 +181,7 @@ document.addEventListener('DOMContentLoaded', async (event) => {
             throw new Error('Network response was not ok');
         }
         jsonData = await response.json();
+        console.log(jsonData);
     } catch (error) {
         console.error('There was a problem with the fetch operation:', error);
     }
@@ -384,22 +385,27 @@ function getEntries(data) {
     function processJsonData(data) {
         const vulnerabilitiesTable = $('#vulnerabilitiesTable').DataTable();
         let vulnerabilities = [];
-        const vulnsArray = data.vulns;
-        const vulns = vulnsArray[0];
 
+        const vulnsCveIdArray = data.vulns_cve_id[0];
+        const vulnsCvssScoreArray = data.vulns_cvss_score[0];
+        const vulnsEpssArray = data.vulns_epss[0];
+        const vulnsDescriptionArray = data.vulns_cisa_description[0];
+        
         let maxEpss = 0;
 
-        vulns.forEach(vuln => {
+        for (let i = 0; i < vulnsCveIdArray.length; i++) {
+            let epss = vulnsEpssArray[i] || 0;
             vulnerabilities.push({
-                cve_id: vuln.cve_id,
-                description: vuln.description,
-                cvss_score: vuln.cvss_score,
-                epss: vuln.epss
+                cve_id: vulnsCveIdArray[i],
+                description: vulnsDescriptionArray[i] || 'No description available', 
+                cvss_score: vulnsCvssScoreArray[i] || 0,
+                epss: epss
             });
-            if (vuln.epss > maxEpss) {
-                maxEpss = vuln.epss;
+
+            if (epss > maxEpss) {
+                maxEpss = epss;
             }
-        });
+        }
 
         document.getElementById('score').textContent = `Score: ${maxEpss}`;
 
@@ -415,16 +421,12 @@ function getEntries(data) {
             ]);
         });
 
-        // fix later
         vulnerabilities.sort((a, b) => b.cvss_score - a.cvss_score);
         createCVSSChart(vulnerabilities);
 
         vulnerabilities.sort((a, b) => b.epss - a.epss);
         createEPSSChart(vulnerabilities);
         vulnerabilitiesTable.draw();
-
-        //vulnerabilities.sort((a, b) => b.cvss_score - a.cvss_score);
-        vulnerabilities.sort((a, b) => b.epss - a.epss);
 
         const cveTagsContainer = document.getElementById('cve-tags-container');
         cveTagsContainer.innerHTML = '';
@@ -438,9 +440,7 @@ function getEntries(data) {
         function updateCveTags() {
             cveTagsContainer.innerHTML = '';
             vulnerabilities.slice(0, visibleCount).forEach(vuln => {
-                console.log(vuln);
                 const cveTag = document.createElement('a');
-                //cveTag.href = `https://cve.mitre.org/cgi-bin/cvename.cgi?name=${vuln.cve_id}`;
                 cveTag.href = `https://nvd.nist.gov/vuln/detail/${vuln.cve_id}`;
                 cveTag.target = '_blank';
                 cveTag.className = 'cve-tag';
