@@ -44,10 +44,10 @@ dagcomponentfuncs.Button = function (props) {
 dagcomponentfuncs.launchBtn = function (props) {
     const { meta_id } = props.data;
 
-    // Hold vote stuff
+    // Hold vote state
     const [vote, setVote] = React.useState(null);
 
-    // Fetch vote dict flask_routes.py
+    // Fetch user votes from Flask API
     React.useEffect(() => {
         async function fetchUserVotes() {
             try {
@@ -56,6 +56,8 @@ dagcomponentfuncs.launchBtn = function (props) {
                     const result = await response.json();
                     if (meta_id in result) {
                         setVote(result[meta_id]);
+                    } else {
+                        setVote('skip');  // Default to "Skip" if no vote
                     }
                 } else {
                     console.error('Failed to fetch user votes:', response.statusText);
@@ -68,7 +70,7 @@ dagcomponentfuncs.launchBtn = function (props) {
         fetchUserVotes();
     }, [meta_id]);
 
-    // Save vote to db flask_routes.py/models.py
+    // Save vote to the database
     async function saveVote(voteValue) {
         try {
             const response = await fetch('/save_vote', {
@@ -89,8 +91,6 @@ dagcomponentfuncs.launchBtn = function (props) {
             const result = await response.json();
             if (result.status === 'success') {
                 console.log('Vote saved successfully');
-
-                // Update
                 setVote(voteValue);
             } else {
                 console.error('Failed to save vote:', result.message);
@@ -100,28 +100,56 @@ dagcomponentfuncs.launchBtn = function (props) {
         }
     }
 
-    // Handle dropdown change
-    function handleDropdownChange(event) {
-        const voteValue = parseInt(event.target.value, 10);
-        saveVote(voteValue);
+    async function removeVote() {
+        try {
+            const response = await fetch('/remove_vote', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    meta_id: meta_id
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+
+            const result = await response.json();
+            if (result.status === 'success') {
+                setVote('skip');
+            } else {
+                console.error('Failed to remove vote:', result.message);
+            }
+        } catch (error) {
+            console.error('There was a problem with the fetch operation:', error);
+        }
     }
 
-    // Dropdown options
-    const options = [];
+    function handleDropdownChange(event) {
+        const voteValue = event.target.value;
+        if (voteValue === 'skip') {
+            removeVote();  // Call remove if skip
+        } else {
+            saveVote(parseInt(voteValue, 10));
+        }
+    }
+
+    const options = [
+        React.createElement('option', { key: 'skip', value: 'skip' }, 'Skip'),  // Skip option
+    ];
+
     for (let i = 0; i <= 10; i++) {
         options.push(
-            React.createElement(
-                'option',
-                { key: i, value: i },
-                i
-            )
+            React.createElement('option', { key: i, value: i }, i)
         );
     }
 
     return React.createElement(
         'select',
         {
-            value: vote !== null ? vote : '',  // Set the current vote or default to empty
+            value: vote !== null ? vote : 'skip',  // Default to "Skip" if no vote is present
             className: 'form-select',
             onChange: handleDropdownChange,
         },

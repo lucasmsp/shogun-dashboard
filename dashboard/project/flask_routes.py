@@ -282,5 +282,25 @@ def set_routes(server, db, login_manager, app):
     def profile():
         user = current_user
         return render_template('profile.html', user=user)
+    
+    @server.route('/remove_vote', methods=['POST'])
+    def remove_vote():
+        data = request.get_json()
+        meta_id = data.get('meta_id')
+
+        if not meta_id:
+            return jsonify({'status': 'error', 'message': 'Meta ID not provided'}), 400
+
+        try:
+            vote = Vote.query.filter_by(meta_id=meta_id).first()
+
+            if vote:
+                db.session.delete(vote)
+                db.session.commit()
+                return jsonify({'status': 'success'})
+            else:
+                return jsonify({'status': 'error', 'message': 'Vote not found'}), 404
+        except Exception as e:
+            return jsonify({'status': 'error', 'message': str(e)}), 500
 
     return app

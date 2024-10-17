@@ -143,7 +143,7 @@ def register_layout(dm):
                                 placeholder="Analysis day",
                                 clearable=False,
                                 multi=False,
-                                style={'minWidth': '100%'}
+                                style={'minWidth': '150px'}
                             ),
                         )
                     ), class_name="ms-4", style={'width': '10vh', 'display': 'inline-block', "color": "black"}

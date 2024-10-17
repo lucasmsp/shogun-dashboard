@@ -5,6 +5,8 @@ import dash_bootstrap_components as dbc
 
 import re
 
+from flask_login import current_user
+
 TAB_VIEW = "tab-4"
 
 def register_layout_query(filter_modal={}):
@@ -82,7 +84,18 @@ def register_callback_query(dm, app):
     def update_table5(date_value):
 
         print("[INFO][query5] - update_table5: ", date_value)
+        
+        df = dm.get_report_dataset(
+            date_value,
+            columns=["data", "ip", "port", "city", "os", "org_clean", "hostnames", "domains", "meta_id", "vulns_epss"],
+            sort_by='score',
+            ascending=False,
+            compute_score=True,
+            user_id=current_user.id,
+            for_each=True
+        )    
 
+        """
         df = dm.get_report_dataset(
                 date_value,
                 columns=["data", "ip", "port", "city", "os", "org_clean", "hostnames", "domains", "meta_id", "vulns_epss"],
@@ -90,6 +103,7 @@ def register_callback_query(dm, app):
                 ascending=False,
                 compute_score=True
             )
+        """
 
         if df.empty:
             return [{}]

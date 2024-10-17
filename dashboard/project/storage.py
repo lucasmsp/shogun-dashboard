@@ -18,6 +18,7 @@ class DatasetManager(object):
         self.tlhop_epss_report_path = RESULT_FOLDER + "/tlhop-epss-dashboard.delta"
         self.tlhop_epss_views_path = RESULT_FOLDER + "/tlhop-epss-dashboard-view{}.delta"
         self.n_views = 4
+        self.sampled_data = None
 
     def check_available_datasets(self):
         available_datasets = {}
@@ -89,31 +90,79 @@ class DatasetManager(object):
         return df
     
     def get_report_dataset(self, day, columns=None, condition=None, single_output=False,
-                           start=0, finish=-1, sort_by='score', ascending=False, compute_score=False):
+                        start=0, finish=-1, sort_by='score', ascending=False, compute_score=False, for_each=False, user_id=None):
+        
         commit = self.retrive_commit(day)
         df = None
+
         if commit >= 0:
             filepath = self.tlhop_epss_report_path
 
             print(f"Reading report of day {day}")
             dt = DeltaTable(filepath, version=commit).to_pyarrow_dataset()
 
-            if single_output:
-                df = dt.filter(condition).head(1).to_pydict()
+            if for_each:
+                if self.sampled_data is None:
+                    self.sample_data(day, random_state=777, entries=600)
+
+                if self.sampled_data is not None:
+                    print(f"Using pre-sampled data for day {day} for user {user_id}")
+                    df = self.sampled_data.copy()
+
+                    if condition:
+                        df = df.query(condition) 
+
+                    num_users = 6
+                    entries_per_user = 120
+
+                    user_index = user_id % num_users if user_id is not None else 0
+                    start_index = user_index * entries_per_user
+                    end_index = start_index + entries_per_user
+
+                    df = df.iloc[start_index:end_index]
+
+                    if finish > 0:
+                        df = df.iloc[start:finish]
+
             else:
+                if single_output:
+                    df = dt.filter(condition).head(1).to_pydict()
+                else:
+                    table = dt.to_table(filter=condition, columns=columns)
+                    df = table.to_pandas()
 
-                table = dt.to_table(filter=condition, columns=columns)
-                df = table.to_pandas()
+                    if compute_score:
+                        df['score'] = df['vulns_epss'].apply(lambda x: max(x) if isinstance(x, list) else 0)
+                        df = df.drop(columns=['vulns_epss'])
+                        df = df.sort_values(by=sort_by, ascending=ascending)
 
-                if compute_score:
-                    df['score'] = df['vulns_epss'].apply(lambda x: max(x))
-                    df = df.drop(columns=['vulns_epss'])
-                    df = df.sort_values(by=sort_by, ascending=ascending)
-                
-                if finish > 0:
-                    df = df.iloc[start:finish]
+                    if finish > 0:
+                        df = df.iloc[start:finish]
 
         return df
+    
+    def sample_data(self, day, random_state, entries):
+        """
+        Sample N random entries from the dataset and store them
+        """
+        commit = self.retrive_commit(day)
+
+        if commit >= 0:
+            filepath = self.tlhop_epss_report_path
+
+            print(f"[### SAMPLE_DATA ###] Sampling data for each user: {day} - Random state: {random_state}")
+            dt = DeltaTable(filepath, version=commit).to_pyarrow_dataset()
+
+            table = dt.to_table(columns=None)
+            df = table.to_pandas()
+
+            df['score'] = df['vulns_epss'].apply(lambda x: max(x) if isinstance(x, list) else 0)
+            df = df.drop(columns=['vulns_epss'])
+
+            self.sampled_data = df.sample(n=entries, random_state=random_state)
+
+        else:
+            self.sampled_data = pd.DataFrame()
 
     def get_total_entries_new(self, day, condition=None):
         commit = self.retrive_commit(day)
