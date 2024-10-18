@@ -93,17 +93,7 @@ def register_callback_query(dm, app):
             compute_score=True,
             user_id=current_user.id,
             for_each=False
-        )    
-
-        """
-        df = dm.get_report_dataset(
-                date_value,
-                columns=["data", "ip", "port", "city", "os", "org_clean", "hostnames", "domains", "meta_id", "vulns_epss"],
-                sort_by='score',
-                ascending=False,
-                compute_score=True
-            )
-        """
+        )
 
         if df.empty:
             return [{}]

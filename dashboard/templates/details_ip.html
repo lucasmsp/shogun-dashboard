@@ -371,11 +371,19 @@ function getEntries(data) {
    
 
     const rawJsonContainer = document.getElementById('raw-json-content');
-    
-    delete data["vulns"];
-    delete data['meta_id'];
-    delete data['vulns_scores'];
-    
+
+    props = [
+        'meta_id', 'vulns_cve_id', 'vulns_cve_verified', 'vulns_cvss_rank', 'vulns_cvss_score',
+        'vulns_cvss_version', 'vulns_cwe', 'vulns_epss', 'vulns_epss_rank', 'vulns_cpes',
+        'vulns_cisa_vendor', 'vulns_cisa_product', 'vulns_cisa_name', 'vulns_cisa_knownRansomwareCampaignUse',
+        'vulns_cisa_description', 'vulns_cisa_date_added'];
+
+    for(var i = 0; i < props.length; i++) {
+        if(data.hasOwnProperty(props[i])) {
+            delete data[props[i]];
+        }
+    }
+
     rawJsonContainer.textContent = JSON.stringify(data, null, 2);
 }
 
