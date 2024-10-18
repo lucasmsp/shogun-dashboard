@@ -84,7 +84,7 @@ def register_callback_query(dm, app):
     def update_table5(date_value):
 
         print("[INFO][query5] - update_table5: ", date_value)
-        
+
         df = dm.get_report_dataset(
             date_value,
             columns=["data", "ip", "port", "city", "os", "org_clean", "hostnames", "domains", "meta_id", "vulns_epss"],
@@ -92,7 +92,7 @@ def register_callback_query(dm, app):
             ascending=False,
             compute_score=True,
             user_id=current_user.id,
-            for_each=True
+            for_each=False
         )    
 
         """

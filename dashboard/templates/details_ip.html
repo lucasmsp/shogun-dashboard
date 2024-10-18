@@ -10,6 +10,7 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.datatables.net/2.0.8/js/dataTables.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/2.3.6/purify.min.js"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='dataTables.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='details_ip.css') }}">
     <title>Loading...</title>
@@ -85,7 +86,7 @@
                   <h2>HTTP</h2>
               </div>
               <div class="info-content">
-                  <iframe id="data-iframe" style="width:100%; height:500px;" frameborder="0"></iframe>
+                <iframe id="data-iframe" style="width:100%; height:500px;" src="about:blank" frameborder="0"></iframe>
               </div>
           </div>
       </div>
@@ -312,8 +313,9 @@ function getEntries(data) {
             }
             if (key === 'http') {
                 const iframe = document.getElementById("data-iframe");
+                const sanitizedHTML = DOMPurify.sanitize(data[key]);
                 iframe.contentWindow.document.open();
-                iframe.contentWindow.document.write(data[key]);
+                iframe.contentWindow.document.write(sanitizedHTML);
                 iframe.contentWindow.document.close();
             }
             if (Array.isArray(latitude)) {
@@ -384,22 +386,27 @@ function getEntries(data) {
     function processJsonData(data) {
         const vulnerabilitiesTable = $('#vulnerabilitiesTable').DataTable();
         let vulnerabilities = [];
-        const vulnsArray = data.vulns;
-        const vulns = vulnsArray[0];
 
+        const vulnsCveIdArray = data.vulns_cve_id[0];
+        const vulnsCvssScoreArray = data.vulns_cvss_score[0];
+        const vulnsEpssArray = data.vulns_epss[0];
+        const vulnsDescriptionArray = data.vulns_cisa_description[0];
+        
         let maxEpss = 0;
 
-        vulns.forEach(vuln => {
+        for (let i = 0; i < vulnsCveIdArray.length; i++) {
+            let epss = vulnsEpssArray[i] || 0;
             vulnerabilities.push({
-                cve_id: vuln.cve_id,
-                description: vuln.description,
-                cvss_score: vuln.cvss_score,
-                epss: vuln.epss
+                cve_id: vulnsCveIdArray[i],
+                description: vulnsDescriptionArray[i] || 'No description available', 
+                cvss_score: vulnsCvssScoreArray[i] || 0,
+                epss: epss
             });
-            if (vuln.epss > maxEpss) {
-                maxEpss = vuln.epss;
+
+            if (epss > maxEpss) {
+                maxEpss = epss;
             }
-        });
+        }
 
         document.getElementById('score').textContent = `Score: ${maxEpss}`;
 
@@ -415,16 +422,12 @@ function getEntries(data) {
             ]);
         });
 
-        // fix later
         vulnerabilities.sort((a, b) => b.cvss_score - a.cvss_score);
         createCVSSChart(vulnerabilities);
 
         vulnerabilities.sort((a, b) => b.epss - a.epss);
         createEPSSChart(vulnerabilities);
         vulnerabilitiesTable.draw();
-
-        //vulnerabilities.sort((a, b) => b.cvss_score - a.cvss_score);
-        vulnerabilities.sort((a, b) => b.epss - a.epss);
 
         const cveTagsContainer = document.getElementById('cve-tags-container');
         cveTagsContainer.innerHTML = '';
@@ -438,9 +441,7 @@ function getEntries(data) {
         function updateCveTags() {
             cveTagsContainer.innerHTML = '';
             vulnerabilities.slice(0, visibleCount).forEach(vuln => {
-                console.log(vuln);
                 const cveTag = document.createElement('a');
-                //cveTag.href = `https://cve.mitre.org/cgi-bin/cvename.cgi?name=${vuln.cve_id}`;
                 cveTag.href = `https://nvd.nist.gov/vuln/detail/${vuln.cve_id}`;
                 cveTag.target = '_blank';
                 cveTag.className = 'cve-tag';
