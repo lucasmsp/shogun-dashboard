@@ -3,40 +3,32 @@ import dash_bootstrap_components as dbc
 from dash.dependencies import Output, Input
 
 import plotly.express as px
+import plotly.graph_objs as go
 import dash_ag_grid as dag
 
-from project.auxiliar import gen_subgraphs, header_mapping
+from project.auxiliar import gen_subgraphs, gen_columns_def
 
 INPUT_DATA = '1'
 
 def register_layout_query(filter_modal={}):
+
+    columns, raw_data = gen_columns_def(['vulns_epss_rank', 'n_cves', 'n_ips', 'n_orgs', 'n_as'])
+    aggrid = dag.AgGrid(
+        id='query-1-table',
+        columnDefs=columns,
+        rowData=columns,
+        defaultColDef={"flex": 1, "resizable": False},
+        columnSize="responsiveSizeToFit",
+        columnSizeOptions={"skipHeader": False},
+        dashGridOptions={"animateRows": False},
+        style={"height": 260}
+    )
+
     elements = [
         html.H1(children="View 1 - EPSS summary", className='wrapper', style={'textAlign': 'center'}),
         dbc.Container(
             [
-                dbc.Row(
-                    dag.AgGrid(
-                        id='query-1-table',
-                        columnDefs=[
-                            {"field": "vulns_epss_rank", "headerName": header_mapping['epss_rank']['name'], "flex": 1,
-                             'headerTooltip': header_mapping['epss_rank']['description']},
-                            {"field": 'n_cves', "headerName": header_mapping['n_cves']['name'], "flex": 1,
-                             'headerTooltip': header_mapping['n_cves']['description']},
-                            {"field": 'n_ips', "headerName": header_mapping['n_ips']['name'], "flex": 1,
-                             'headerTooltip': header_mapping['n_ips']['description']},
-                            {"field": 'n_orgs', "headerName": header_mapping['n_orgs']['name'], "flex": 1,
-                             'headerTooltip': header_mapping['n_orgs']['description']},
-                            {"field": "n_as", "headerName": header_mapping['n_as']['name'], "flex": 1,
-                             'headerTooltip': header_mapping['n_as']['description']},
-                        ],
-                        rowData = [{"vulns_epss_rank": "Processing...", "n_cves": 0, "n_ips": 0, "n_orgs": 0, 'n_as': 0}],
-                        defaultColDef={"flex": 1, "resizable": False},
-                        columnSize="responsiveSizeToFit",
-                        columnSizeOptions= {"skipHeader": False},
-                        dashGridOptions={"animateRows": False},
-                        style={"height": 260}
-                    ),
-                ),
+                dbc.Row(aggrid),
                 dbc.Row(dbc.Col(html.Hr(style={"width": "100%", 'top-padding': '10px'}), width={'size': 10, 'offset': 1})),
                 dbc.Row([html.Div(id='query-1-graph', children=[])]
                 )
@@ -82,20 +74,35 @@ def register_callback_query(dm, app):
                 { "y_column": "n_cves", "graph_type": "bar plot", "y_label": "# CVEs",
                   'x_column': 'vulns_epss_rank', 'x_label': "EPSS Rank"},
 
+            "CDF/PDF plot - Number of CVEs by EPSS Rank":
+                {"y_column": "n_cves", "graph_type": "cdf/pdf plot", "y_label": "Probability",
+                 'x_column': 'vulns_epss_rank', 'x_label': "EPSS Rank"},
+
+
             "Bar plot - Number of organizations by EPSS Rank":
                 {"y_column": "n_orgs", "graph_type": "bar plot", "y_label": "# Orgs",
                  'x_column': 'vulns_epss_rank', 'x_label': "EPSS Rank"},
+
+            "CDF/PDF plot - Number of organizations by EPSS Rank":
+                {"y_column": "n_orgs", "graph_type": "cdf/pdf plot", "y_label": "Probability",
+                 'x_column': 'vulns_epss_rank', 'x_label': "EPSS Rank"},
+
 
             "Bar plot - Number of IPs by EPSS Rank":
                 {"y_column": "n_ips", "graph_type": "bar plot", "y_label": "# IPs",
                  'x_column': 'vulns_epss_rank', 'x_label': "EPSS Rank"},
 
-            "PDF plot - Number of CVEs by EPSS Rank":
-                {"y_column": "n_cves", "graph_type": "pdf plot", "y_label": "# CVEs",
+            "CDF/PDF plot - Number of IPs by EPSS Rank":
+                {"y_column": "n_ips", "graph_type": "cdf/pdf plot", "y_label": "Probability",
                  'x_column': 'vulns_epss_rank', 'x_label': "EPSS Rank"},
 
-            "CDF plot - Number of CVEs by EPSS Rank":
-                {"y_column": "n_cves", "graph_type": "cdf plot", "y_label": "# CVEs",
+
+            "Bar plot - Number of AS by EPSS Rank":
+                {"y_column": "n_as", "graph_type": "bar plot", "y_label": "# AS",
+                 'x_column': 'vulns_epss_rank', 'x_label': "EPSS Rank"},
+
+            "CDF/PDF plot - Number of AS by EPSS Rank":
+                {"y_column": "n_as", "graph_type": "cdf/pdf plot", "y_label": "Probability",
                  'x_column': 'vulns_epss_rank', 'x_label': "EPSS Rank"},
 
         }
@@ -120,34 +127,21 @@ def register_callback_query(dm, app):
                              title= title
                 )
 
-            elif graph_type == "pdf plot":
-                df['pdf'] = df[y_column] / sum(df[y_column])
-                df = df.reset_index()
-                fig = px.line(df,
-                              x=x_column,
-                              y='pdf',
-                              range_y=(0, 1),
-                              title= title,
-                              labels={
-                                  x_column: x_label,
-                                  'pdf': "PDF"
-                              }
-                )
+            elif graph_type == "cdf/pdf plot":
+                tmp = df.copy()
+                tmp['pdf'] = tmp[y_column] / sum(df[y_column])
+                tmp['cdf'] = tmp['pdf'].cumsum()
+                tmp = tmp.reset_index()
 
+                fig = go.Figure()
+                fig.add_trace(go.Scatter(x=df[x_column], y=tmp['pdf'], mode='lines', name='PDF'))
+                fig.add_trace(go.Scatter(x=df[x_column], y=tmp['cdf'], mode='lines', name='CDF'))
+                fig.update_layout(title=title,
+                                  xaxis_title=x_label,
+                                  yaxis_title=y_label,
+                                  showlegend=True)
             else:
-                df['pdf'] = df[y_column] / sum(df[y_column])
-                df['cdf'] = df['pdf'].cumsum()
-                df = df.reset_index()
-                fig = px.line(df,
-                              x=x_column,
-                              y='cdf',
-                              range_y=(0, 1),
-                              title= title,
-                              labels={
-                                  x_column: x_label,
-                                  'cdf': "CDF"
-                              }
-                )
+                fig = go.Figure()
 
             graph = dcc.Graph(figure=fig,
                               config={

@@ -14,6 +14,122 @@ INPUT_DATA = '3'
 
 # constructs the layout for View 3
 def register_layout_query(filter_modal={}):
+
+    aggrid = dag.AgGrid(
+        id="query-3-ag",
+        rowData = [{"vulns_cve_id": "Processing...", "vulns_cvss_score": 0, "vulns_epss": 0, "n_ips": 0, 'n_orgs': 0}],
+        columnDefs=[
+            {"field": 'vulns_cve_id', "headerName": 'CVE', "cellRenderer": "GoToMitre",
+             "tooltipValueGetter": {"function": "'Click on the cell for more details'"},
+             "filterParams": {"filterOptions": ["equals", "notEqual", 'contains']},
+                 # "cellStyle": {
+                 #     "styleConditions": [
+                 #         {
+                 #             "condition": "params.data.verified === true",
+                 #             "style": {"backgroundColor": "lightgreen"},
+                 #         },
+                 #         {
+                 #             "condition": "params.data.verified === false",
+                 #             "style": {"backgroundColor": "lightcoral"},
+                 #         },
+                 #         {
+                 #             "condition": "params.data.verified === null",
+                 #             "style": {"backgroundColor": "lightgrey"},
+                 #         },
+                 #
+                 #     ],
+                 # }
+            },
+            {"field": 'vulns_cvss_score', "headerName": 'CVSS',
+            'tooltipValueGetter': {"function": "'CVSS Version: ' + params.data.vulns_cvss_version"},
+             "filter": "agNumberColumnFilter", "filterParams": {"filterOptions": ["equals","notEqual",'lessThan', 'greaterThan', 'inRange']},
+                 "cellStyle": {
+                     "styleConditions": [
+                         {
+                             "condition": "params.data.vulns_cvss_score >= 0 && params.data.vulns_cvss_score <= 2",
+                             "style": {"backgroundColor": "#FFD700"},
+                         },
+                         {
+                             "condition": "params.data.vulns_cvss_score > 2 && params.data.vulns_cvss_score <= 4",
+                             "style": {"backgroundColor": "#FFA500"},
+                         },
+                         {
+                             "condition": "params.data.vulns_cvss_score > 4 && params.data.vulns_cvss_score <= 6",
+                             "style": {"backgroundColor": "#FF8C00"},
+                         },
+                         {
+                             "condition": "params.data.vulns_cvss_score > 6 && params.data.vulns_cvss_score <= 8",
+                             "style": {"backgroundColor": "#FF6347"},
+                         },
+                         {
+                             "condition": "params.data.vulns_cvss_score > 8 && params.data.vulns_cvss_score <= 10",
+                             "style": {"backgroundColor": "#FF4500"},
+                         },
+                     ],
+                 },
+             },
+            {"field": 'vulns_epss', "headerName": 'EPSS',
+             'tooltipValueGetter': {"function": "'EPSS: ' + params.data.vulns_epss_rank"},
+             "filter": "agNumberColumnFilter",
+             "filterParams": {"filterOptions": ["equals", "notEqual", 'lessThan', 'greaterThan', 'inRange']},
+                 "cellStyle": {
+                     "styleConditions": [
+                         {
+                             "condition": "params.data.vulns_epss >= 0 && params.data.vulns_epss <= 0.2",
+                             "style": {"backgroundColor": "#FFD700"},
+                         },
+                         {
+                             "condition": "params.data.vulns_epss > 0.2 && params.data.vulns_epss <= 0.4",
+                             "style": {"backgroundColor": "#FFA500"},
+                         },
+                         {
+                             "condition": "params.data.vulns_epss > 0.4 && params.data.vulns_epss <= 0.6",
+                             "style": {"backgroundColor": "#FF8C00"},
+                         },
+                         {
+                             "condition": "params.data.vulns_epss > 0.6 && params.data.vulns_epss <= 0.8",
+                             "style": {"backgroundColor": "#FF6347"},
+                         },
+                         {
+                             "condition": "params.data.vulns_epss > 0.8 && params.data.vulns_epss <= 1",
+                             "style": {"backgroundColor": "#FF4500"},
+                         },
+                     ],
+                 },
+             },
+            {"field": 'vulns_cwe', "headerName": "CWE"},
+            {"field": 'n_as', "headerName": "# AS"},
+            {"field": 'n_ips', "headerName": "# IPs",
+             "filter": "agNumberColumnFilter", "filterParams": {"filterOptions": ["equals","notEqual",'lessThan', 'greaterThan', 'inRange']}
+             },
+            {"field": 'n_orgs', "headerName": "# Organizations",
+             "filter": "agNumberColumnFilter", "filterParams": {"filterOptions": ["equals","notEqual",'lessThan', 'greaterThan', 'inRange']}
+             },
+            {"headerName": "Cisa's KEV",
+                    "suppressStickyLabel": True,
+                    "children": [
+                        {"field": "vulns_cisa_date_added", "headerName": "Date Added", "width": 140, "columnGroupShow": "closed"},
+                        {"field": "vulns_cisa_knownRansomwareCampaignUse", "headerName": "Ransomware Use", "width": 140,
+                         'tooltipValueGetter': {"function":
+                                                    "params.data.vulns_cisa_description"
+                                                },
+                         "columnGroupShow": "closed"
+                         }
+                    ],
+                },
+        ],
+        defaultColDef={"flex": 1, "filter": True},
+        columnSize="sizeToFit",
+        columnSizeOptions={"skipHeader": False},
+        dashGridOptions={
+            "rowSelection": "single",
+            'tooltipInteraction': True,
+            'tooltipShowDelay': 10,
+            'tooltipHideDelay': 1000,
+            "animateRows": False
+        }
+    )
+
     elements = [
         dbc.Row(
             html.Div([
@@ -26,123 +142,7 @@ def register_layout_query(filter_modal={}):
                 )
             ])
         ),
-
-        dcc.Loading([
-            dag.AgGrid(
-                id="query-3-ag",
-                rowData = [{"vulns_cve_id": "Processing...", "vulns_cvss_score": 0, "vulns_epss": 0, "n_ips": 0, 'n_orgs': 0}],
-                columnDefs=[
-                    {"field": 'vulns_cve_id', "headerName": 'CVE', "cellRenderer": "GoToMitre",
-                     "tooltipValueGetter": {"function": "'Click on the cell for more details'"},
-                     "filterParams": {"filterOptions": ["equals", "notEqual", 'contains']},
-                         # "cellStyle": {
-                         #     "styleConditions": [
-                         #         {
-                         #             "condition": "params.data.verified === true",
-                         #             "style": {"backgroundColor": "lightgreen"},
-                         #         },
-                         #         {
-                         #             "condition": "params.data.verified === false",
-                         #             "style": {"backgroundColor": "lightcoral"},
-                         #         },
-                         #         {
-                         #             "condition": "params.data.verified === null",
-                         #             "style": {"backgroundColor": "lightgrey"},
-                         #         },
-                         #
-                         #     ],
-                         # }
-                    },
-                    {"field": 'vulns_cvss_score', "headerName": 'CVSS',
-                    'tooltipValueGetter': {"function": "'CVSS Version: ' + params.data.vulns_cvss_version"},
-                     "filter": "agNumberColumnFilter", "filterParams": {"filterOptions": ["equals","notEqual",'lessThan', 'greaterThan', 'inRange']},
-                         "cellStyle": {
-                             "styleConditions": [
-                                 {
-                                     "condition": "params.data.vulns_cvss_score >= 0 && params.data.vulns_cvss_score <= 2",
-                                     "style": {"backgroundColor": "#FFD700"},
-                                 },
-                                 {
-                                     "condition": "params.data.vulns_cvss_score > 2 && params.data.vulns_cvss_score <= 4",
-                                     "style": {"backgroundColor": "#FFA500"},
-                                 },
-                                 {
-                                     "condition": "params.data.vulns_cvss_score > 4 && params.data.vulns_cvss_score <= 6",
-                                     "style": {"backgroundColor": "#FF8C00"},
-                                 },
-                                 {
-                                     "condition": "params.data.vulns_cvss_score > 6 && params.data.vulns_cvss_score <= 8",
-                                     "style": {"backgroundColor": "#FF6347"},
-                                 },
-                                 {
-                                     "condition": "params.data.vulns_cvss_score > 8 && params.data.vulns_cvss_score <= 10",
-                                     "style": {"backgroundColor": "#FF4500"},
-                                 },
-                             ],
-                         },
-                     },
-                    {"field": 'vulns_epss', "headerName": 'EPSS',
-                     'tooltipValueGetter': {"function": "'EPSS: ' + params.data.vulns_epss_rank"},
-                     "filter": "agNumberColumnFilter",
-                     "filterParams": {"filterOptions": ["equals", "notEqual", 'lessThan', 'greaterThan', 'inRange']},
-                         "cellStyle": {
-                             "styleConditions": [
-                                 {
-                                     "condition": "params.data.vulns_epss >= 0 && params.data.vulns_epss <= 0.2",
-                                     "style": {"backgroundColor": "#FFD700"},
-                                 },
-                                 {
-                                     "condition": "params.data.vulns_epss > 0.2 && params.data.vulns_epss <= 0.4",
-                                     "style": {"backgroundColor": "#FFA500"},
-                                 },
-                                 {
-                                     "condition": "params.data.vulns_epss > 0.4 && params.data.vulns_epss <= 0.6",
-                                     "style": {"backgroundColor": "#FF8C00"},
-                                 },
-                                 {
-                                     "condition": "params.data.vulns_epss > 0.6 && params.data.vulns_epss <= 0.8",
-                                     "style": {"backgroundColor": "#FF6347"},
-                                 },
-                                 {
-                                     "condition": "params.data.vulns_epss > 0.8 && params.data.vulns_epss <= 1",
-                                     "style": {"backgroundColor": "#FF4500"},
-                                 },
-                             ],
-                         },
-                     },
-                    {"field": 'vulns_cwe', "headerName": "CWE"},
-                    {"field": 'n_as', "headerName": "# AS"},
-                    {"field": 'n_ips', "headerName": "# IPs",
-                     "filter": "agNumberColumnFilter", "filterParams": {"filterOptions": ["equals","notEqual",'lessThan', 'greaterThan', 'inRange']}
-                     },
-                    {"field": 'n_orgs', "headerName": "# Organizations",
-                     "filter": "agNumberColumnFilter", "filterParams": {"filterOptions": ["equals","notEqual",'lessThan', 'greaterThan', 'inRange']}
-                     },
-                    {"headerName": "Cisa's KEV",
-                            "suppressStickyLabel": True,
-                            "children": [
-                                {"field": "vulns_cisa_date_added", "headerName": "Date Added", "width": 140, "columnGroupShow": "closed"},
-                                {"field": "vulns_cisa_knownRansomwareCampaignUse", "headerName": "Ransomware Use", "width": 140,
-                                 'tooltipValueGetter': {"function":
-                                                            "params.data.vulns_cisa_description"
-                                                        },
-                                 "columnGroupShow": "closed"
-                                 }
-                            ],
-                        },
-                ],
-                defaultColDef={"flex": 1, "filter": True},
-                columnSize="sizeToFit",
-                columnSizeOptions={"skipHeader": False},
-                dashGridOptions={
-                    "rowSelection": "single",
-                    'tooltipInteraction': True,
-                    'tooltipShowDelay': 10,
-                    'tooltipHideDelay': 1000,
-                    "animateRows": False
-                }
-            )
-        ]),
+        dcc.Loading([aggrid]),
         dbc.Row(dbc.Col(html.Hr(style={"width": "100%", 'top-padding': '10px'}), width={'size': 10, 'offset': 1})),
         dbc.Row([html.Div(id='query-3-graph', children=[])])
 
