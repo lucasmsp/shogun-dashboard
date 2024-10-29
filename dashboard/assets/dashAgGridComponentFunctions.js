@@ -128,3 +128,113 @@ dagcomponentfuncs.launchBtn = function (props) {
         options
     );
 };
+
+
+dagcomponentfuncs.CustomTooltipCvssV6 = function (props) {
+    return React.createElement(
+        'div',
+        {
+            style: {
+                border: '5px double',
+                backgroundColor: props.color || '#f0e5c7',
+                padding: 10,
+            },
+        },
+        [
+            React.createElement('b', {}, 'Min:'),
+            React.createElement('div', {}, props.data.min_cvss),
+            React.createElement('b', {}, 'Max:'),
+            React.createElement('div', {}, props.data.max_cvss),
+        ]
+    );
+};
+
+dagcomponentfuncs.CustomTooltipEpssV6 = function (props) {
+    return React.createElement(
+        'div',
+        {
+            style: {
+                border: '5px double',
+                backgroundColor: props.color || '#f0e5c7',
+                padding: 10,
+            },
+        },
+        [
+            React.createElement('b', {}, 'Min:'),
+            React.createElement('div', {}, props.data.min_epss),
+            React.createElement('b', {}, 'Max:'),
+            React.createElement('div', {}, props.data.max_epss),
+        ]
+    );
+};
+
+dagcomponentfuncs.CustomTooltipAsnV6 = function (props) {
+    return React.createElement(
+        'div',
+        {
+            style: {
+                border: '5px double',
+                backgroundColor: props.color || '#f0e5c7',
+                padding: 10,
+            },
+        },
+        [
+            React.createElement('b', {}, 'AS Name:'),
+            React.createElement('div', {}, props.data.as_name),
+            React.createElement('b', {}, 'AS Rank'),
+            React.createElement('div', {}, props.data.as_rank),
+        ]
+    );
+};
+
+dagcomponentfuncs.CustomTooltipOrgNameV6 = function (props) {
+    return React.createElement(
+        'div',
+        {
+            style: {
+                border: '5px double',
+                backgroundColor: props.color || '#f0e5c7',
+                padding: 10,
+            },
+        },
+        [
+            React.createElement('b', {}, '# Orgs:'),
+            React.createElement('div', {}, props.data.n_orgs),
+        ]
+    );
+};
+
+dagcomponentfuncs.CustomTooltipCountryNameV6 = function (props) {
+    return React.createElement(
+        'div',
+        {
+            style: {
+                border: '5px double',
+                backgroundColor: props.color || '#f0e5c7',
+                padding: 10,
+            },
+        },
+        [
+            React.createElement('b', {}, 'Org Country Name:'),
+            React.createElement('div', {}, props.data.as_org_country_name),
+        ]
+    );
+};
+
+
+dagcomponentfuncs.CustomTooltipPrefixesV6 = function (props) {
+    return React.createElement(
+        'div',
+        {
+            style: {
+                border: '5px double',
+                backgroundColor: props.color || '#f0e5c7',
+                padding: 10,
+            },
+        },
+        [
+            React.createElement('b', {}, '# Addresses: '),
+            React.createElement('div', {}, props.data.as_announcing_addresses),
+        ]
+    );
+};
