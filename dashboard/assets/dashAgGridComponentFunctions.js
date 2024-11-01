@@ -215,8 +215,8 @@ dagcomponentfuncs.CustomTooltipCountryNameV6 = function (props) {
             },
         },
         [
-            React.createElement('b', {}, 'Org Country Name:'),
-            React.createElement('div', {}, props.data.as_org_country_name),
+            React.createElement('b', {}, 'Number of Cities:'),
+            React.createElement('div', {}, props.data.n_cities),
         ]
     );
 };

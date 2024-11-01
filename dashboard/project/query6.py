@@ -23,42 +23,51 @@ def register_layout_query(filter_modal={}):
                     'headerName': 'ASN',
                     "field": "asn",
                     # "tooltipComponent": "CustomTooltipAsnV6"
+                    "cellStyle": {
+                        "styleConditions": [
+                            {
+                                "condition": "params.data.as_seen == 'True'",
+                                "style": {"backgroundColor": "lightgreen"},
+                            },
+                            {
+                                "condition": "params.data.as_seen == 'False'",
+                                "style": {"backgroundColor": "lightcoral"},
+                            },
+
+                        ],
+                    }
                 },
                 {
-                    'headerName': 'AS rank',
+                    'headerName': 'Rank',
                     "field": "as_rank",
                     # "tooltipComponent": "CustomTooltipAsnV6"
+                },
+                {
+                    'headerName': 'Addresses',
+                    "field": "as_announcing_addresses",
+                },
+                {
+                    'headerName': 'Country',
+                    "field": "as_country_name",
+                    "tooltipComponent": "CustomTooltipCountryNameV6",
+                    'tooltipField': 'n_cities',
                 }
             ]
         },
         {
-            'headerName': 'Location',
+            'headerName': 'Organization Owner',
             'children':[
                 {
-                    'headerName': 'AS Country',
-                    "field": "as_country_name",
+                    'headerName': 'Name',
+                    "field": "as_org_name",
                     # "tooltipComponent": "CustomTooltipAsnV6"
                 },
                 {
-                    'headerName': 'Org Country',
+                    'headerName': 'Country',
                     "field": "as_org_country_name",
                     # "tooltipComponent": "CustomTooltipAsnV6"
                 },
             ]
-        },
-        {
-            'headerName': 'Organization',
-            "field": "as_org_name",
-            'tooltipField': 'n_orgs',
-            # 'headerTooltip': "Organization Name - Tooltip shows number of organizations",
-            "tooltipComponent": "CustomTooltipOrgNameV6"
-        },
-        {
-            'headerName': 'Prefixes',
-            "field": "as_announcing_prefixes",
-            'tooltipField': 'as_announcing_addresses',
-            # 'headerTooltip': "Prefixes - Tooltip shows number of announcing addresses",
-            "tooltipComponent": "CustomTooltipPrefixesV6"
         },
         {
             'headerName': 'Avg CVSS',
@@ -75,6 +84,27 @@ def register_layout_query(filter_modal={}):
             # 'headerTooltip': "Avg EPSS - Tooltip shows min and max EPSS",
             "tooltipComponent": "CustomTooltipEpssV6",
             "valueFormatter": {"function": "params.value.toFixed(4)"}
+        },
+        {
+            'headerName': '# Orgs',
+            "field": "n_orgs",
+            # 'headerTooltip': "Avg EPSS - Tooltip shows min and max EPSS",
+            # "tooltipComponent": "CustomTooltipEpssV6",
+            # "valueFormatter": {"function": "params.value.toFixed(4)"}
+        },
+        {
+            'headerName': '# IPs',
+            "field": "n_ips",
+            # 'headerTooltip': "Avg EPSS - Tooltip shows min and max EPSS",
+            # "tooltipComponent": "CustomTooltipEpssV6",
+            # "valueFormatter": {"function": "params.value.toFixed(4)"}
+        },
+        {
+            'headerName': '# CVEs',
+            "field": "n_cve",
+            # 'headerTooltip': "Avg EPSS - Tooltip shows min and max EPSS",
+            # "tooltipComponent": "CustomTooltipEpssV6",
+            # "valueFormatter": {"function": "params.value.toFixed(4)"}
         },
     ]
     q6 = [
@@ -150,7 +180,7 @@ def register_layout_query(filter_modal={}):
                     #             (params) => {
                     #                 if (params.data.as_country_name !== params.data.as_org_country_name) {
                     #                     return { 'backgroundColor': 'lightyellow', 'color': 'black' };
-                    #                 }
+                    #                  }
                     #                 return {};
                     #             }
                     #         """
@@ -271,11 +301,14 @@ def register_callback_query(dm, app):
         df['as_announcing_prefixes'] = df['as_announcing_prefixes'].astype(int)
         df['as_announcing_addresses'] = df['as_announcing_addresses'].astype(int)
         df['asn'] = df['asn'].str.replace('AS', '').astype(int)
+        df["n_cities"] = df["cities"].apply(lambda x: len(x))
+        df["n_cisa"] = df["cisa_vulns"].apply(lambda x: len(x))
+        df["n_cve"] = df["cve_list"].apply(lambda x: len(x))
         
         # Filtrar apenas as colunas relevantes
         df_filtered = df[['asn', 'as_org_name', 'as_country_name', 'as_announcing_prefixes', 'avg_cvss', 'avg_epss',
                         'as_rank', 'n_orgs', 'as_org_country_name', 'as_announcing_addresses', 'min_cvss', 'max_cvss', 
-                        'min_epss', 'max_epss', 'as_seen']]
+                        'min_epss', 'max_epss', 'as_seen', 'n_cities', 'n_ips', 'n_cisa', 'n_cve']]
         
         return df_filtered.to_dict('records')
     
