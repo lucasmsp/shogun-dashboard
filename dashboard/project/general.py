@@ -8,6 +8,7 @@ import project.query2_ips as query2_ips
 import project.query3 as query3
 import project.query4 as query4
 import project.query5 as query5
+import project.query6 as query6
 
 
 def register_callback_query(dm, app):
@@ -87,6 +88,8 @@ def register_callback_query(dm, app):
             if aggrid_key in filters:
                 filters = filters[aggrid_key]
             content = query5.register_layout_query(filter_modal=filters)
+        elif pathname == "/dashboard/view6":
+            content = query6.register_layout_query(filter_modal={})
         else:
             content = query1.register_layout_query(filter_modal={})
 
