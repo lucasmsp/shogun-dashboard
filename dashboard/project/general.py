@@ -9,7 +9,7 @@ import project.query3 as query3
 import project.query4 as query4
 import project.query5 as query5
 import project.query6 as query6
-
+import project.query7 as query7
 
 def register_callback_query(dm, app):
 
@@ -90,6 +90,8 @@ def register_callback_query(dm, app):
             content = query5.register_layout_query(filter_modal=filters)
         elif pathname == "/dashboard/view6":
             content = query6.register_layout_query(filter_modal={})
+        elif pathname == "/dashboard/ports":
+            content = query7.register_layout_query(filter_modal=filters)
         else:
             content = query1.register_layout_query(filter_modal={})
 

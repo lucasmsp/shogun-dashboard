@@ -5,6 +5,7 @@ import project.query3 as query3
 import project.query4 as query4
 import project.query5 as query5
 import project.query6 as query6
+import project.query7 as query7
 import project.general as general
 import project.auth as auth
 
@@ -18,3 +19,4 @@ def register_callbacks(dm, app):
     query4.register_callback_query(dm, app)
     query5.register_callback_query(dm, app)
     query6.register_callback_query(dm, app)
+    query7.register_callback_query(dm, app)
