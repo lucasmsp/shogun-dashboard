@@ -90,6 +90,16 @@ header_mapping = {
         'description': "EPSS vary from 0 (0%) to 1 (100%)",
         'type': 'float'
     },
+    "avg_cvss": {
+        "name": 'Avg CVSS',
+        "description": '',
+        "type": 'string'
+    },
+    "avg_epss": {
+        "name": 'Avg EPSS',
+        "description": '',
+        "type": 'string'
+    },
 
     # Quantifications
     "n_as": {
@@ -145,7 +155,39 @@ header_mapping = {
         'description': "Port identification",
         'type': 'integer'
     },
-
+    'asn': {
+        "name": 'ASN',
+        "description": "ASNs seen in BGS are GREEN, not seen are RED",
+        "type": 'string'
+    },
+  
+    # About ASes
+    'as_rank': {
+        "name": 'Rank',
+        "description": '',
+        "type": 'float'
+    },
+    "as_announcing_addresses": {
+        "name": 'Addresses',
+        "description": '',
+        "type": 'integer'
+    },
+    "as_country_name": {
+        "name": 'Country',
+        "description": '',
+        "type": 'string'
+    },
+    "as_org_name": {
+        "name": 'Name',
+        "description": '',
+        "type": 'string'
+    },
+    "as_org_country_name": {
+        "name": 'Country',
+        "description": '',
+        "type": 'string'
+    },
+    
 
 }
 
