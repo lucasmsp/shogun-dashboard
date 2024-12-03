@@ -28,6 +28,7 @@ def register_layout_query(filter_modal={}):
                     {"field": 'port', "headerName": 'PORT', "resizable": False, 'width': 100, 'maxWidth': 100},
                     {"field": 'city', "headerName": "CITY", 'width': 150, "wrapText": True},
                     {"field": 'os', "headerName": "OS", 'width': 80, "wrapText": True},
+                    {"field": 'asn', "headerName": "ASN", 'width': 80, "wrapText": True},
                     {"field": 'org_clean', "headerName": "ORGANIZATION", "wrapText": True},
                     {"field": 'hostnames', "headerName": "HOSTNAMES", "wrapText": True, "cellRenderer": "markdown"},
                     {"field": 'domains', "headerName": "DOMAINS", "wrapText": True, "cellRenderer": "markdown"},
@@ -87,7 +88,7 @@ def register_callback_query(dm, app):
 
         df = dm.get_report_dataset(
             date_value,
-            columns=["data", "ip", "port", "city", "os", "org_clean", "hostnames", "domains", "meta_id", "vulns_epss"],
+            columns=["data", "ip", "port", "city", "os", "org_clean", "hostnames", "domains", "meta_id", "vulns_epss", "asn"],
             sort_by='score',
             ascending=False,
             compute_score=True,

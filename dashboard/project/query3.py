@@ -18,10 +18,11 @@ def register_layout_query(filter_modal={}):
     aggrid = dag.AgGrid(
         id="query-3-ag",
         rowData = [{"vulns_cve_id": "Processing...", "vulns_cvss_score": 0, "vulns_epss": 0, "n_ips": 0, 'n_orgs': 0}],
+        filterModel=filter_modal,
         columnDefs=[
             {"field": 'vulns_cve_id', "headerName": 'CVE', "cellRenderer": "GoToMitre",
              "tooltipValueGetter": {"function": "'Click on the cell for more details'"},
-             "filterParams": {"filterOptions": ["equals", "notEqual", 'contains']},
+             "filterParams": {"filterOptions": ["equals", "notEqual", 'contains'], "maxNumConditions": 100},
                  # "cellStyle": {
                  #     "styleConditions": [
                  #         {
