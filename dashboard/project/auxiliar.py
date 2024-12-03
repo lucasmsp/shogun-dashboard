@@ -20,15 +20,92 @@ def gen_subgraphs(n_cols, graphs):
 
 
 header_mapping = {
-    'vulns_epss_rank': {
-        'name': 'EPSS rank',
-        "description": "EPSS rank vary from 0 (0%) to 1 (100%)",
+
+
+    # Information related to a vulnerability
+    "vulns_cisa_date_added": {
+        'name': "Date Added",
+        "description": "Cisa's date added",
+        'type': 'date'
+    },
+    "vulns_cisa_knownRansomwareCampaignUse": {
+        'name': "Ransomware Use",
+        "description": "Association with known ransomware campaigns",
+        'type': "???" # TODO
+    },
+    "vulns_cisa_product_vendor": {
+        'name': "Product",
+        'description': "Cisa Vendor-Product Info",
         'type': 'string'
+    },
+    "vulns_cvss_score_max": {
+        'name': "CVSS (max)",
+        'description': "Max value of CVSS",
+        'type': 'float'
+    },
+    'vulns_cve_id': {
+        'name': 'CVE',
+        'description': "CVE Identifier",
+        'type': 'string'
+    },
+    'vulns_cvss_score': {
+        "name": 'CVSS',
+        "description": "CVSS stands for Common Vulnerability Scoring System, a standardized framework "
+                       "for measuring the severity of security flaws in information systems. "
+                       "The score vary from 0 to 10.",
+        'type': 'float'
+    },
+    "vulns_cwe": {
+        'name': "CWE",
+        "description": "CWE Identifier",
+        'type': 'list-string'
     },
     'vulns_epss': {
         'name': 'EPSS',
         "description": "EPSS Score vary from 0 (0%) to 1 (100%)",
         'type': 'float'
+    },
+    "vulns_epss_max": {  # rename vulns_epss
+        'name': "EPSS (max)",
+        'description': "Max value of EPSS",
+        'type': 'float'
+    },
+    'vulns_epss_rank': {
+        'name': 'EPSS rank',
+        "description": "EPSS rank vary from 0 (0%) to 1 (100%)",
+        'type': 'string'
+    },
+    'cpe_product': {
+        'name': "Product name",
+        'description': "",
+        'type': 'string'
+    },
+    "cisa_info": {
+        'name': "Cisa's KEV",
+        "description": "CISA Vulnerability Information",
+        'type': '????'
+    },
+    "epss_major": {  # rename  vulns_epss
+        'name': "EPSS (major)",
+        'description': "EPSS vary from 0 (0%) to 1 (100%)",
+        'type': 'float'
+    },
+    "avg_cvss": {
+        "name": 'Avg CVSS',
+        "description": '',
+        "type": 'string'
+    },
+    "avg_epss": {
+        "name": 'Avg EPSS',
+        "description": '',
+        "type": 'string'
+    },
+
+    # Quantifications
+    "n_as": {
+        'name': "# AS",
+        "description": "Number of Autonomous Systems",
+        "type": 'integer'
     },
     'n_cves': {
         'name': '# CVEs',
@@ -42,46 +119,49 @@ header_mapping = {
     },
     'n_orgs': {
         'name': '# Organizations',
+        'short_name': "# Orgs",
         "description": "Number of organizations",
         "type": 'integer'
     },
-    "n_as": {
-        'name': "# AS",
-        "description": "Number of Autonomous Systems",
+    "n_port": {
+        'name': "# Ports",
+        'description': "Number of ports",
         "type": 'integer'
+    },
+    "n_products": {
+        'name': "# Products",
+        'description': "# Products",
+        "type": 'integer'
+    },
+    "n_vulns_in_cisa": {
+        'name': "# CVEs in CISA",
+        'description': "Number of vulnerabilities by CISA",
+        'type': 'integer'
+    },
+
+
+    'ip': {
+        "name": 'IP',
+        'description': "",
+        'type': 'string',
     },
     'org_clean': {
         'name': "Organization",
         'description': "Organization registered as being responsible for the IP",
         'type': 'string'
     },
-    'ip': {
-        "name": 'IP',
-        'description': "",
-        'type': 'string',
-    },
-    'cpe_product': {
-        'name': "Product name",
-        'description': "",
-        'type': 'string'
-    },
-    'vulns_cve_id': {
-        'name': 'CVE',
-        'description': "",
-        'type': 'string'
-    },
-    'vulns_cvss_score': {
-        "name": 'CVSS',
-        "description": "CVSS stands for Common Vulnerability Scoring System, a standardized framework "
-                       "for measuring the severity of security flaws in information systems. "
-                       "The score vary from 0 to 10.",
-        'type': 'float'
+    "port": {
+        'name': "Port",
+        'description': "Port identification",
+        'type': 'integer'
     },
     'asn': {
         "name": 'ASN',
         "description": "ASNs seen in BGS are GREEN, not seen are RED",
         "type": 'string'
     },
+  
+    # About ASes
     'as_rank': {
         "name": 'Rank',
         "description": '',
@@ -107,16 +187,8 @@ header_mapping = {
         "description": '',
         "type": 'string'
     },
-    "avg_cvss": {
-        "name": 'Avg CVSS',
-        "description": '',
-        "type": 'string'
-    },
-    "avg_epss": {
-        "name": 'Avg EPSS',
-        "description": '',
-        "type": 'string'
-    },
+    
+
 }
 
 def gen_columns_def(columns_names):

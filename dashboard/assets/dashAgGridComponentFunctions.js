@@ -11,6 +11,18 @@ dagcomponentfuncs.GoToMitre = function (props) {
     );
 };
 
+dagcomponentfuncs.GoToCWE = function (props) {
+    const cweNumber = props.value.replace('CWE-', '');
+    return React.createElement(
+        'a',
+        {
+            href: `https://cwe.mitre.org/data/definitions/${cweNumber}.html`,
+            target: '_blank',
+            rel: 'noopener noreferrer'
+        },
+        props.value
+    );
+};
 
 dagcomponentfuncs.IPLink = function (props) {
 
