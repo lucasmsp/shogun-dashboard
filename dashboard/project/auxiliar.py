@@ -118,8 +118,7 @@ header_mapping = {
         "type": 'integer'
     },
     'n_orgs': {
-        'name': '# Organizations',
-        'short_name': "# Orgs",
+        'name': '# Orgs',
         "description": "Number of organizations",
         "type": 'integer'
     },

@@ -116,26 +116,6 @@ def register_layout_query(filter_modal={}):
                         columnSize="sizeToFit",
                         dashGridOptions={'tooltipShowDelay': 0, 'tooltipHideDelay': 50000},
                         style={"height": 360},
-                        # getRowStyle={
-                        #     "function": """
-                        #         (params) => {
-                        #             if (params.data.as_country_name !== params.data.as_org_country_name) {
-                        #                 return { 'backgroundColor': 'lightyellow', 'color': 'black' };
-                        #             }
-                        #             return {};
-                        #         }
-                        #     """,
-                        #     "styleConditions": [
-                        #         {
-                        #             "condition": "params.data.as_seen == 'True'",
-                        #             "style": {"backgroundColor": "lightgreen", "color": "black"},
-                        #         },
-                        #         {
-                        #             "condition": "params.data.as_seen == 'False'",
-                        #             "style": {"backgroundColor": "lightcoral", "color": "black"},
-                        #         },
-                        #     ]   
-                        # }
                     )
                 ),
                 dbc.Row(dbc.Col(html.Hr(style={"width": "100%", 'top-padding': '10px'}), width={'size': 10, 'offset': 1})),
@@ -186,94 +166,6 @@ def register_callback_query(dm, app):
         
         return df_filtered.to_dict('records')
     
-        
-    # @app.callback(
-    #     Output("query-6-graph", "children"),
-    #     Input('date-picker-single', 'value')
-    # )
-    # def update_asn_chart(date_value):
-    #     print(f"[INFO][query_asn] update_asn_chart: {date_value}")
-    #     df = dm.get_view_dataset(date_value, INPUT_DATA_V6)
-
-    #     if df.empty:
-    #         return []
-
-    #     df_top_ips = df.nlargest(10, 'n_ips')
-    #     df_top_orgs = df.nlargest(10, 'n_orgs')
-
-    #     # Função para extrair o estado das cidades no formato "Cidade, UF"
-    #     def extract_state(city):
-    #         if pd.isna(city):
-    #             return None
-    #         try:
-    #             return city.split(", ")[-1]
-    #         except IndexError:
-    #             return None
-
-    #     all_states = []
-    #     for cities_list in df['cities']:
-    #         for city in cities_list:
-    #             state = extract_state(city)
-    #             if state:
-    #                 all_states.append(state)
-
-    #     state_df = pd.DataFrame(all_states, columns=['state'])
-    #     df_ips_by_state = state_df.value_counts().reset_index(name='n_ips')
-    #     df_ips_by_state.columns = ['state', 'n_ips']
-    #     df_ips_by_state = df_ips_by_state.sort_values(by='n_ips', ascending=True).tail(10)
-
-
-    #     fig_horizontal_bar = px.bar(
-    #         df_ips_by_state,
-    #         y='state',
-    #         x='n_ips',
-    #         orientation='h',
-    #         labels={'state': 'Estado', 'n_ips': 'Número de IPs'},
-    #         title='Número de IPs por Estado Brasileiro'
-    #     )
-
-    #     graphs_type = {
-    #         "Bar plot - Top 10 ASN by Number of IPs": {
-    #             "y_column": "n_ips", "graph_type": "bar plot", "y_label": "# IPs",
-    #             'x_column': 'asn', 'x_label': "ASN", 'df': df_top_ips
-    #         },
-    #         "Bar plot - Top 10 ASN by Number of Organizations": {
-    #             "y_column": "n_orgs", "graph_type": "bar plot", "y_label": "# Orgs",
-    #             'x_column': 'asn', 'x_label': "ASN", 'df': df_top_orgs
-    #         },
-    #         "Bar plot - Average CVSS by ASN (Top 10 IPs)": {
-    #             "y_column": "avg_cvss", "graph_type": "bar plot", "y_label": "Average CVSS",
-    #             'x_column': 'asn', 'x_label': "ASN", 'df': df_top_ips
-    #         },
-    #         "Bar plot - Average EPSS by ASN (Top 10 IPs)": {
-    #             "y_column": "avg_epss", "graph_type": "bar plot", "y_label": "Average EPSS",
-    #             'x_column': 'asn', 'x_label': "ASN", 'df': df_top_ips
-    #         }
-    #     }
-
-    #     graphs = []
-    #     graphs.append(dcc.Graph(figure=fig_horizontal_bar, config={'displayModeBar': False, 'scrollZoom': False}))
-    #     for title, configs in graphs_type.items():
-    #         y_column = configs['y_column']
-    #         x_column = configs['x_column']
-    #         y_label = configs['y_label']
-    #         x_label = configs['x_label']
-    #         graph_type = configs['graph_type']
-    #         df_filtered = configs['df']
-    #         if graph_type == "bar plot":
-    #             fig = px.bar(df_filtered,
-    #                         x=x_column,
-    #                         y=y_column,
-    #                         barmode="group",
-    #                         labels={x_column: x_label, y_column: y_label},
-    #                         title=title)
-    #         graph = dcc.Graph(figure=fig, config={'displayModeBar': False, 'scrollZoom': False})
-    #         graphs.append(graph)
-
-
-    #     children = gen_subgraphs(n_cols=2, graphs=graphs)
-    #     return children
-
     @app.callback(
         Output("query-6-graph", "children"),
         Input('date-picker-single', 'value')
@@ -320,8 +212,8 @@ def register_callback_query(dm, app):
             orientation='h',
             color='n_ips',  # Adicionando cores baseadas na quantidade
             color_continuous_scale=custom_scale,  # Escolha de escala de cores
-            labels={'state': 'Estado', 'n_ips': 'Número de IPs'},
-            title='Número de IPs por Estado Brasileiro'
+            labels={'state': 'State', 'n_ips': 'Number of IPs'},
+            title='# IPs per Brazilian state'
         )
 
         graphs_type = {
