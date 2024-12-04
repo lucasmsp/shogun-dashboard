@@ -17,8 +17,10 @@ INPUT_DATA_V2 = '2'
 
 def register_layout_query(filter_modal={}):
     columns, raw_data = gen_columns_def(['org_clean', 'vulns_epss'])
-    columns[1]['headerName'] += " (major)"
 
+    columns[0]["maxNumConditions"] = 500
+    columns[1]['headerName'] += " (major)"
+    
     aggrid = dag.AgGrid(
                     id="query-2b-grid",
                     rowData=raw_data,

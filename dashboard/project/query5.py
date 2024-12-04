@@ -28,7 +28,7 @@ def register_layout_query(filter_modal={}):
                     {"field": 'port', "headerName": 'PORT', "resizable": False, 'width': 100, 'maxWidth': 100},
                     {"field": 'city', "headerName": "CITY", 'width': 150, "wrapText": True},
                     {"field": 'os', "headerName": "OS", 'width': 80, "wrapText": True},
-                    {"field": 'asn', "headerName": "ASN", 'width': 80, "wrapText": True},
+                    {"field": 'asn', "headerName": "ASN",  'maxWidth': 120, "wrapText": True},
                     {"field": 'org_clean', "headerName": "ORGANIZATION", "wrapText": True},
                     {"field": 'hostnames', "headerName": "HOSTNAMES", "wrapText": True, "cellRenderer": "markdown"},
                     {"field": 'domains', "headerName": "DOMAINS", "wrapText": True, "cellRenderer": "markdown"},
@@ -127,10 +127,5 @@ def register_callback_query(dm, app):
             return text
 
         df['data'] = df.apply(lambda row: format_data(row['data']), axis=1)
-        df['hostnames']= df['hostnames'].fillna('')
-        df['domains']= df['domains'].fillna('')
-        df['hostnames'] = ['\n\n'.join(map(str, l)) for l in df['hostnames']]
-        df['domains'] = ['\n\n'.join(map(str, l)) for l in df['domains']]
-
 
         return df.to_dict('records')

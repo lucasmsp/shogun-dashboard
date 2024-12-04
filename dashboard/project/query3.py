@@ -6,7 +6,7 @@ import dash_ag_grid as dag
 import plotly.express as px
 import plotly.figure_factory as ff
 
-from project.auxiliar import gen_subgraphs
+from project.auxiliar import gen_subgraphs, header_mapping
 
 import pandas as pd
 
@@ -23,23 +23,6 @@ def register_layout_query(filter_modal={}):
             {"field": 'vulns_cve_id', "headerName": 'CVE', "cellRenderer": "GoToMitre",
              "tooltipValueGetter": {"function": "'Click on the cell for more details'"},
              "filterParams": {"filterOptions": ["equals", "notEqual", 'contains'], "maxNumConditions": 100},
-                 # "cellStyle": {
-                 #     "styleConditions": [
-                 #         {
-                 #             "condition": "params.data.verified === true",
-                 #             "style": {"backgroundColor": "lightgreen"},
-                 #         },
-                 #         {
-                 #             "condition": "params.data.verified === false",
-                 #             "style": {"backgroundColor": "lightcoral"},
-                 #         },
-                 #         {
-                 #             "condition": "params.data.verified === null",
-                 #             "style": {"backgroundColor": "lightgrey"},
-                 #         },
-                 #
-                 #     ],
-                 # }
             },
             {"field": 'vulns_cvss_score', "headerName": 'CVSS',
             'tooltipValueGetter': {"function": "'CVSS Version: ' + params.data.vulns_cvss_version"},
@@ -111,11 +94,17 @@ def register_layout_query(filter_modal={}):
                     "children": [
                         {"field": "vulns_cisa_date_added", "headerName": "Date Added", "width": 140, "columnGroupShow": "closed"},
                         {"field": "vulns_cisa_knownRansomwareCampaignUse", "headerName": "Ransomware Use", "width": 140,
+                         "columnGroupShow": "closed"
+                         },
+                        {"field": "vulns_cisa_product_vendor",
+                         "headerName": header_mapping['vulns_cisa_product_vendor']['name'],
+                         'headerTooltip': header_mapping['vulns_cisa_product_vendor']['description'],
+                         'minWidth': 500, "resizable": False,
                          'tooltipValueGetter': {"function":
                                                     "params.data.vulns_cisa_description"
                                                 },
-                         "columnGroupShow": "closed"
-                         }
+
+                         },
                     ],
                 },
         ],
@@ -168,6 +157,18 @@ def find_expression(string):
         if index != -1:
             return i
 
+def known_f(x):
+    if x == "Known":
+        return 1
+    else:
+        return 0
+
+
+def unknown_f(x):
+    if x == "Unknown":
+        return 1
+    else:
+        return 0
 
 # register all the callbacks in one place
 def register_callback_query(dm, app):
@@ -182,10 +183,13 @@ def register_callback_query(dm, app):
             return [{}]
 
         df['vulns_cwe'] = df['vulns_cwe'].apply(lambda x: ','.join(map(str, x)))
-        #
-        # df['cisa_info'] = df['cisa_info'].apply(lambda x: {} if pd.isna(x) else x)
-        # tmp = pd.json_normalize(df.pop("cisa_info"))[['date_added', 'description', 'knownRansomwareCampaignUse']]
-        # df = pd.concat([df, tmp], axis=1)
+        df['vulns_cisa_knownRansomwareCampaignUse'] = df['vulns_cisa_knownRansomwareCampaignUse'].apply(
+            lambda x: (x == 'Known' and '✅') or
+                      (x == 'Unknown' and '❌') or '➖')
+
+        df['vulns_cisa_product_vendor'] = df[['vulns_cisa_vendor', 'vulns_cisa_product']]\
+                .fillna('').agg('/'.join,axis=1)
+        df['vulns_cisa_product_vendor'] = df['vulns_cisa_product_vendor'].apply(lambda x: "" if x == '/' else x)
 
         return df.to_dict('records')
 
@@ -315,6 +319,75 @@ def register_callback_query(dm, app):
         graph = dcc.Graph(figure=fig, config={'displayModeBar': False, 'scrollZoom': False})
         graphs.append(graph)
 
+        # fig 7
+        tmp6 = df.assign(names=df.vulns_cwe.str.split(",")).explode('vulns_cwe')
+        tmp6 = tmp6.loc[~tmp6['vulns_cwe'].isin(["NVD-CWE-noinfo", "NVD-CWE-Other"])]
+        tmp6 = tmp6.groupby('vulns_cwe').sum('n_ips').reset_index()
+        final_df = tmp6.sort_values(by=['n_ips'], ascending=False)
+        final_df = final_df[0:25]
+
+        fig = px.bar(final_df, x='vulns_cwe', y='n_ips', title="Bar char - # IP's by CWE", color="n_ips",
+                     color_continuous_scale=px.colors.sequential.Viridis)
+        fig.update_layout(
+            xaxis_title="CWE",
+            yaxis_title="# IP's",
+            title_x=0.5,
+            coloraxis_colorbar=dict(
+                title=dict(text="")),
+        )
+
+        graph = dcc.Graph(figure=fig, config={'displayModeBar': False, 'scrollZoom': False})
+        graphs.append(graph)
+
+        # fig 8
+        tmp8 = df[["vulns_epss_rank", "vulns_cisa_knownRansomwareCampaignUse", "vulns_cvss_score"]].copy()
+        tmp8["Unknown"] = tmp8["vulns_cisa_knownRansomwareCampaignUse"].apply(unknown_f)
+        tmp8["Known"] = tmp8["vulns_cisa_knownRansomwareCampaignUse"].apply(known_f)
+
+        tmp8_aux1 = tmp8.groupby('vulns_epss_rank', as_index=False)['vulns_cvss_score'].mean()
+        tmp8_aux2 = tmp8.groupby("vulns_epss_rank").sum(["Known", "Unknown"]).reset_index()
+
+        tmp8_aux1['vulns_cvss_score'] = tmp8_aux1['vulns_cvss_score'].apply(lambda x: '{:,.2f}'.format(x))
+        tmp8_final = pd.merge(tmp8_aux1, tmp8_aux2, how='left', on="vulns_epss_rank")
+
+        fig = px.bar(tmp8_final, x="vulns_epss_rank", y=["Known", "Unknown"],
+                     title="Bar char - # Ransowares by EPSS rank",
+                     hover_data={"vulns_cvss_score_x": True},
+                     labels={'vulns_cvss_score_x': 'CVSS Avg'},
+                     )
+        fig.update_layout(
+            xaxis_title="EPSS Rank",
+            yaxis_title="# Campaign",
+            title_x=0.5,
+            legend_title_text=""
+        )
+        graph = dcc.Graph(figure=fig, config={'displayModeBar': False, 'scrollZoom': False})
+        graphs.append(graph)
+
+        # fig 9
+        tmp9 = df.assign(names=df.vulns_cwe.str.split(",")).explode('vulns_cwe')
+        tmp9 = tmp9.loc[~tmp9['vulns_cwe'].isin(["NVD-CWE-noinfo", "NVD-CWE-Other"])]
+        tmp9 = tmp9.groupby("vulns_cwe")["vulns_cve_id"].count().reset_index()
+        tmp9 = tmp9.sort_values(by=['vulns_cve_id'], ascending=False)[0:25]
+
+        fig = px.bar(tmp9, x="vulns_cwe", y="vulns_cve_id",
+                     title="Bar char - Number of CVEs by CWE",
+                     # hover_data={"vulns_cvss_score_x": True},
+                     labels={'vulns_cve_id': 'Number of CVEs'},
+                     color="vulns_cve_id",
+                     color_continuous_scale=px.colors.sequential.Viridis
+                     )
+        fig.update_layout(
+            xaxis_title="CWE",
+            yaxis_title="Number of CVEs",
+            title_x=0.5,
+            legend_title_text="",
+            coloraxis_colorbar=dict(
+                title=dict(text="")),
+        )
+        graph = dcc.Graph(figure=fig, config={'displayModeBar': False, 'scrollZoom': False})
+        graphs.append(graph)
+
         children = gen_subgraphs(n_cols=3, graphs=graphs)
         return children
 
@@ -328,10 +401,53 @@ def register_callback_query(dm, app):
     def select_orgs_ips(cell, row):
         print(f"[INFO] select_orgs_ips: Cell {cell} and row {row}")
         if cell and row:
-            if cell.get("colId", "") == "n_orgs":
-                cve_value = row[0].get('vulns_cve_id')
+            if cell.get("colId", "") == "n_ips":
+                res = [d.get('vulns_cve_id', None) for d in row]
+                cve_value = ' '.join(map(str, res))
                 filter_opt = {
                     "query-2a-grid": {'vulns_cve_id': {'filterType': 'text', 'type': 'contains', 'filter': cve_value}}}
                 return "/dashboard/view2a", filter_opt
+
+        return no_update, no_update
+
+    @app.callback(
+        Output("url-redirect", "pathname", allow_duplicate=True),
+        Output('store-filters', 'data', allow_duplicate=True),
+        Input("query-3-ag", "cellClicked"),
+        Input("query-3-ag", "selectedRows"),
+        Input('date-picker-single', 'value'),
+        # Input("query-2b-grid", "data"),
+        prevent_initial_call=True,
+    )
+    def filter_asn(cell, row, date_value):
+
+        print(f"[INFO] filter_asn: Cell {cell} and row {row}")
+        df_q2 = dm.get_view_dataset(date_value, '2')
+        # TODO: Não esta filtrando todos os elementos da lista, no maximo 2, e existem
+        # informações que não estao sendo filtradas pela tabela de org_clean
+        if cell:
+            if cell.get("colId", "") == "n_orgs":
+                res = [d.get('vulns_cve_id', None) for d in row]
+                cve_value = ' '.join(map(str, res))
+
+                org_df = df_q2[df_q2["vulns_cve_id"] == cve_value]["org_clean"]
+                print("Tamanho da lista ", len(org_df))
+                print("Dataframe org_clean", org_df)
+                filter_opt = {
+                    "query-2b-grid": {
+                        'org_clean': {
+                            "filterType": "text",
+                            "operator": "OR",
+                            "conditions": [
+                                {
+                                    "filter": org,
+                                    "filterType": "text",
+                                    "type": "equals"
+                                } for org in org_df.tolist()
+                            ]
+                        }
+                    }
+                }
+                return "/dashboard/view2b", filter_opt
 
         return no_update, no_update

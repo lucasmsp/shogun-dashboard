@@ -181,7 +181,7 @@ def register_callback_query(dm, app):
 
         fig.add_trace(go.Bar(x=top_products.cpe_product,
                              y=top_products.percent,
-                             name='Top 10 products'))
+                             name='Top 10 vulnerable products'))
 
         fig.update_layout(
             title="Bar plot - Top 10 vulnerable products",

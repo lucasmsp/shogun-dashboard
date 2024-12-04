@@ -60,7 +60,7 @@ def register_layout(dm):
                 dbc.Nav(
                     [
                         dbc.NavLink(
-                            "Summary",
+                            "EPSS Summary",
                             href="/dashboard/view1",
                             active="exact",
                         ),
@@ -73,18 +73,33 @@ def register_layout(dm):
                             dbc.Nav(
                                 children=[
                                     dbc.NavLink(
-                                        "by Organization",
+                                        "ORG - Highest vulnerability per Organization",
                                         href="/dashboard/view2b",
                                         active="exact",
                                         style={"margin-top": "0px", "padding-top": "0px"}
 
                                     ),
                                     dbc.NavLink(
-                                        "by IP",
+                                        "IP - Highest vulnerability per IP",
                                         href="/dashboard/view2a",
                                         active="exact",
                                         style={"margin-top": "0px", "padding-top": "0px"}
-                                    )
+                                    ),
+                                    dbc.NavLink(
+                                        "CVE - Report of Common Vulnerabilities and Exposures",
+                                        href="/dashboard/view3",
+                                        active="exact",
+                                    ),
+                                    dbc.NavLink(
+                                        "AS - AS Summary",
+                                        href="/dashboard/view6",
+                                        active="exact",
+                                    ),
+                                    dbc.NavLink(
+                                        "PORT - Vulnerable Ports Summary",
+                                        href="/dashboard/ports",
+                                        active="exact",
+                                    ),
                                 ],
                                 vertical=True,
                                 pills=True,
@@ -94,12 +109,7 @@ def register_layout(dm):
                             style={"padding-left": "15px", "padding-top": "0px"}
                         ),
                         dbc.NavLink(
-                            "Report of Common Vulnerabilities and Exposures (CVE)",
-                            href="/dashboard/view3",
-                            active="exact",
-                        ),
-                        dbc.NavLink(
-                            "Representation of data through maps",
+                            "Geoanalysis",
                             href="/dashboard/view4",
                             active="exact",
                         ),
@@ -108,16 +118,7 @@ def register_layout(dm):
                             href="/dashboard/report",
                             active="exact",
                         ),
-                        dbc.NavLink(
-                            "AS Summary",
-                            href="/dashboard/view6",
-                            active="exact",
-                        ),
-                        dbc.NavLink(
-                            "Vulnerable Ports Summary",
-                            href="/dashboard/ports",
-                            active="exact",
-                        ),
+
                     ],
                     vertical=True,
                     pills=True,
