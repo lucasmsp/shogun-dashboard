@@ -43,4 +43,4 @@ if __name__ == '__main__':
                         " or `yyyymmdd` to a specific date.", type=str)
     args, _ = parser.parse_known_args()
 
-    external_scheduler(mode="latest")
+    external_scheduler(mode=args.mode)

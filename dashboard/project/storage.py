@@ -209,12 +209,12 @@ class DatasetManager(object):
         return stats
 
     def waiting_next_file(self, mode="latest"):
-        next_date = self.last_dump_date().replace("-", "")
-
+        next_date = self.last_dump_date()
         filepath =  SHODAN_FOLDER + "/BR.{pattern}.json.bz2"
         available_dates = [os.path.basename(s)[3:-9] for s in sorted(glob.glob(filepath.format(pattern="*")))]
 
-        found_files = [day[0:4]+"-"+day[4:6]+"-"+day[6:8] for day in available_dates if next_date < day]
+        found_files = [day[0:4]+"-"+day[4:6]+"-"+day[6:8] for day in available_dates]
+        found_files = [d for d in found_files if next_date < d]
         if len(found_files) > 0:
             if mode == "all":
                 print("[INFO][waiting_next_file][all] Found a new Shodan dump for day: ", found_files, flush=True)
@@ -222,9 +222,11 @@ class DatasetManager(object):
             elif mode == "latest":
                 print("[INFO][waiting_next_file][latest] Found a new Shodan dump for day: ", found_files[-1], flush=True)
                 return [found_files[-1]]
-            elif mode in found_files:
-                print("[INFO][waiting_next_file][yyyy-mm-dd] Found a new Shodan dump for day: ", mode, flush=True)
-                return [mode]
+            elif len(mode) == 8:
+                mode_adj = mode[0:4]+"-"+mode[4:6]+"-"+mode[6:8]
+                if mode_adj in found_files:
+                    print("[INFO][waiting_next_file][yyyy-mm-dd] Found a new Shodan dump for day: ", mode_adj, flush=True)
+                    return [mode_adj]
 
         return None
 
