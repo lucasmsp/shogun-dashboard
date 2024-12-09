@@ -55,7 +55,7 @@ def start_flask(dm):
     @server.route('/')
     def root():
         if current_user.is_authenticated:
-            return redirect('/dashboard/')
+            return redirect('/dashboard/view1')
         else:
             return redirect('/login')
 
@@ -68,7 +68,7 @@ def start_flask(dm):
                 user = User.query.filter_by(username=username).first()
                 if user and user.check_password(password):
                     login_user(user)
-                    return redirect('/dashboard/')
+                    return redirect('/dashboard/view1')
             except:
                 pass
         return render_template('login.html')
@@ -178,43 +178,6 @@ def set_routes(server, db, login_manager, app):
             filtered_data = {}
         return jsonify(filtered_data)
 
-    @server.route('/api/data_count', methods=['GET'])
-    @login_required
-    def get_data_count():
-        try:
-            selected_ip = request.args.get('ip', default = '', type = str)
-            print(f"get_data_count: {selected_ip}")
-            date_value = global_date()
-            total_entries = dm.get_total_entries_new(date_value)
-        except:
-            total_entries = -1
-        return jsonify({'total_entries': total_entries})
-
-    @server.route('/api/data/<page>', methods=['GET'])
-    @login_required
-    def get_details(page):
-        try:
-            date_value = global_date()
-            page_size = 10
-            page_int = int(page)
-            start = (page_int - 1) * page_size
-            finish = page_int * page_size
-
-            df = dm.get_report_dataset(
-                date_value, 
-                columns=["data", "ip", "port", "city", "os", "org", "hostnames", "domains", "meta_id", "vulns_scores"], 
-                start=start, 
-                finish=finish,
-                sort_by='epss',
-                ascending=False,
-                compute_score=True
-            )
-
-            partial = df.to_json(orient='records')
-        except:
-            partial = {}
-        return partial
-    
     @server.route('/admin')
     @login_required
     def admin_page():
@@ -319,5 +282,25 @@ def set_routes(server, db, login_manager, app):
     def profile():
         user = current_user
         return render_template('profile.html', user=user)
+    
+    @server.route('/remove_vote', methods=['POST'])
+    def remove_vote():
+        data = request.get_json()
+        meta_id = data.get('meta_id')
+
+        if not meta_id:
+            return jsonify({'status': 'error', 'message': 'Meta ID not provided'}), 400
+
+        try:
+            vote = Vote.query.filter_by(meta_id=meta_id).first()
+
+            if vote:
+                db.session.delete(vote)
+                db.session.commit()
+                return jsonify({'status': 'success'})
+            else:
+                return jsonify({'status': 'error', 'message': 'Vote not found'}), 404
+        except Exception as e:
+            return jsonify({'status': 'error', 'message': str(e)}), 500
 
     return app

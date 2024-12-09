@@ -24,7 +24,6 @@ dm.check_available_datasets()
 server, db, login_manager = start_flask(dm)
 app = Dash("TLHOP/SAM Cybersecurity Dashboards", server=server, external_stylesheets=external_stylesheets)
 app.title = "TLHOP/SAM Cybersecurity Dashboards"
-app.scan_enabled = True 
 app.dm = dm
 app.layout = html.Div()
 app = set_routes(server, db, login_manager, app)

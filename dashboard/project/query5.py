@@ -1,4 +1,3 @@
-import itertools
 from dash import html, dcc, html, Input, Output
 import dash_ag_grid as dag
 
@@ -6,9 +5,11 @@ import dash_bootstrap_components as dbc
 
 import re
 
+from flask_login import current_user
+
 TAB_VIEW = "tab-4"
 
-def register_layout_query(dm):
+def register_layout_query(filter_modal={}):
 
     aggrid = dag.AgGrid(
                 id="query-5-ag",
@@ -16,6 +17,7 @@ def register_layout_query(dm):
                             "org_clean": "", "hostnames": "", "domains": "", "score": 0, "meta_id": ""
                             }],
                 persistence=True,
+                filterModel=filter_modal,
                 columnDefs=[
                     {"field": 'data', "headerName": 'SERVICE', "cellRenderer": "markdown",
                       'width': 300, 'maxWidth': 500, "resizable": True, },
@@ -26,6 +28,7 @@ def register_layout_query(dm):
                     {"field": 'port', "headerName": 'PORT', "resizable": False, 'width': 100, 'maxWidth': 100},
                     {"field": 'city', "headerName": "CITY", 'width': 150, "wrapText": True},
                     {"field": 'os', "headerName": "OS", 'width': 80, "wrapText": True},
+                    {"field": 'asn', "headerName": "ASN",  'maxWidth': 120, "wrapText": True},
                     {"field": 'org_clean', "headerName": "ORGANIZATION", "wrapText": True},
                     {"field": 'hostnames', "headerName": "HOSTNAMES", "wrapText": True, "cellRenderer": "markdown"},
                     {"field": 'domains', "headerName": "DOMAINS", "wrapText": True, "cellRenderer": "markdown"},
@@ -48,14 +51,8 @@ def register_layout_query(dm):
                 style={"height": "1000px"},
                 className="ag-theme-alpine compact"
             )
-    
-    layout = [
-        dbc.Row(
-            dcc.Loading([aggrid])
-        )
-    ]
 
-    q5 = [
+    elements = [
         html.H2(
             children=("Shodan's banners about IPs with vulnerabilities in Brazil. "
                       "Using this interface, users can filter banners by each column, "
@@ -63,35 +60,41 @@ def register_layout_query(dm):
                       ),
             style={'fontSize': '20px', 'padding': 20}
         ),
-
-        dbc.Tab(layout, label="Table")
+        dbc.Row(dcc.Loading([aggrid]))
     ]
 
-    return q5
+    tab5_content = dbc.Card(
+        dbc.CardBody(
+            html.Div(children=[dbc.Row(children=elements)], className="wrapper_table",
+                     style={"width": "100%", "height": "100%"}),
+        ),
+        className="mt-3",
+        id="tab5_content"
+    )
+
+    return tab5_content
 
 def register_callback_query(dm, app):
 
     @app.callback(
         Output('query-5-ag', "rowData"),
         [
-            Input('date-picker-single', 'value'),
-            Input("general-tabs", "active_tab")
-        ],
-        prevent_initial_call=True
+            Input('date-picker-single', 'value')
+        ]
     )
-    def update_table5(date_value, active_tab=None):
+    def update_table5(date_value):
 
-        if TAB_VIEW != active_tab:
-            return [{}]
         print("[INFO][query5] - update_table5: ", date_value)
 
         df = dm.get_report_dataset(
-                date_value,
-                columns=["data", "ip", "port", "city", "os", "org_clean", "hostnames", "domains", "meta_id", "vulns_scores"], 
-                sort_by='score',
-                ascending=False,
-                compute_score=True
-            )
+            date_value,
+            columns=["data", "ip", "port", "city", "os", "org_clean", "hostnames", "domains", "meta_id", "vulns_epss", "asn"],
+            sort_by='score',
+            ascending=False,
+            compute_score=True,
+            user_id=current_user.id,
+            for_each=False
+        )
 
         if df.empty:
             return [{}]
@@ -101,9 +104,7 @@ def register_callback_query(dm, app):
             if not raw:
                 raw = ""
 
-            if len(raw) > 500:
-                raw = raw[0:500]
-
+            # TODO: apply all this changes in processing stage
             space_index = raw.find(' ')
             if space_index != -1:
                 truncate_data = raw[0:space_index]
@@ -126,10 +127,5 @@ def register_callback_query(dm, app):
             return text
 
         df['data'] = df.apply(lambda row: format_data(row['data']), axis=1)
-        df['hostnames']= df['hostnames'].fillna('')
-        df['domains']= df['domains'].fillna('')
-        df['hostnames'] = ['\n\n'.join(map(str, l)) for l in df['hostnames']]
-        df['domains'] = ['\n\n'.join(map(str, l)) for l in df['domains']]
-
 
         return df.to_dict('records')

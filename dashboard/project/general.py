@@ -1,16 +1,15 @@
-from dash.dependencies import Output, Input
-from dash.long_callback import DiskcacheLongCallbackManager
-from dash import no_update
+from dash.dependencies import Input, Output, State
+from dash import no_update, html, dcc, ctx, no_update
 from flask_login import current_user
 
-from datetime import datetime
-import project.computation as spark
-import sys
-
-## Diskcache
-import diskcache
-cache = diskcache.Cache("./cache")
-long_callback_manager = DiskcacheLongCallbackManager(cache)
+import project.query1 as query1
+import project.query2_orgs as query2_orgs
+import project.query2_ips as query2_ips
+import project.query3 as query3
+import project.query4 as query4
+import project.query5 as query5
+import project.query6 as query6
+import project.query7 as query7
 
 def register_callback_query(dm, app):
 
@@ -21,10 +20,8 @@ def register_callback_query(dm, app):
     )
     def cur_user(style):
         if current_user.is_authenticated:
-
             if current_user.username == "admin":
                 style = {'display': 'block'}
-
             return current_user.username, style
         else:
             return 'Empty', style
@@ -41,32 +38,16 @@ def register_callback_query(dm, app):
     def update_dump_message(n_intervals, value, old_opts):
         print("[INFO][update_dump_message] Checking for new any changes.")
 
-        obs = ""
+        dm.check_available_datasets()
         last_date_commit = dm.last_commit()
-        next_run = dm.compute_next_dump(last_date_commit) 
 
         if not last_date_commit:
             last_date_commit = "Empty"
         else:
             last_date_commit = last_date_commit.strftime("%Y-%m-%d %H:%M:%S")
 
-        print(f"[INFO][update_dump_message] - ", app.scan_enabled)
-        if app.scan_enabled:
-            print(f"[INFO][update_dump_message] waiting_next_execution - Last dump {last_date_commit}. Next run will be at {next_run}", flush=True)
-            if datetime.now() >= next_run:
-                day_fmt1 = dm.waiting_next_file()
-                if day_fmt1:
-                    day_fmt1 = day_fmt1[0]
-                    msg = f"Processing dump {day_fmt1}. It may take a while..."
-                else:
-                    msg = "Last dump: {last}."
+        msg = "Last dump: {last}".format(last=last_date_commit)
 
-            msg = "Last dump: {last}.".format(last=last_date_commit, new=next_run)
-
-        else:
-            msg = "Last dump: {last}".format(last=last_date_commit)
-
-        dm.check_available_datasets()
         options = dm.get_date_dumps()
         if not value:
             if len(options) > 0:
@@ -79,29 +60,87 @@ def register_callback_query(dm, app):
         return msg, options, value
 
 
-    @app.long_callback(
-        Output(component_id='last_dump_message', component_property='children', allow_duplicate=True),
-        Input(component_id='last_dump_message', component_property='children'), 
-        running=[
-            (Output("last_dump_check", "disabled"), True, False),
-        ],
-        manager=long_callback_manager,
-        prevent_initial_call=True,
-    )
-    def processing_new_dump(msg):
-        print("[INFO][processing_new_dump] ", msg)
-        if "Processing dump" in msg:
-            day_fmt1 = dm.waiting_next_file()
-            if day_fmt1:
-                day_fmt1 = day_fmt1[0]
-                last_date_commit = datetime.now()
-                status = spark.start_processing(dm, day_fmt1)
-                # TODO: status
-                next_run = dm.compute_next_dump(last_date_commit)
-                last_date_commit = last_date_commit.strftime("%Y-%m-%d %H:%M:%S")
-                msg = "Last dump: {last}.".format(last=last_date_commit)
-        return msg
 
+    @app.callback(
+        Output("page-content", "children"),
+
+        State('store-filters', 'data'),
+        Input("url-redirect", "pathname")
+
+    )
+    def render_page_content(filters, pathname):
+        print("render_page_content:", pathname)
+        print(filters)
+
+        if pathname == "/dashboard/view2a":
+            aggrid_key = 'query-2a-grid'
+            if aggrid_key in filters:
+                filters = filters[aggrid_key]
+            content = query2_ips.register_layout_query(filter_modal=filters)
+        elif pathname == "/dashboard/view2b":
+            content = query2_orgs.register_layout_query(filter_modal={})
+        elif pathname == "/dashboard/view3":
+            aggrid_key = 'query-3-ag'
+            if aggrid_key in filters:
+                filters = filters[aggrid_key]
+            content = query3.register_layout_query(filter_modal=filters)
+        elif pathname == "/dashboard/view4":
+            content = query4.register_layout_query(filter_modal={})
+        elif pathname == "/dashboard/report":
+            aggrid_key = 'query-5-ag'
+            if aggrid_key in filters:
+                filters = filters[aggrid_key]
+            content = query5.register_layout_query(filter_modal=filters)
+        elif pathname == "/dashboard/view6":
+            content = query6.register_layout_query(filter_modal={})
+        elif pathname == "/dashboard/ports":
+            content = query7.register_layout_query(filter_modal=filters)
+        else:
+            content = query1.register_layout_query(filter_modal={})
+
+        return content
+
+    @app.callback(
+        Output("sidebar", "className"),
+        [Input("sidebar-toggle", "n_clicks")],
+        [State("sidebar", "className")],
+    )
+    def toggle_classname(n, classname):
+        if n and classname == "":
+            return "collapsed"
+        return ""
+
+    @app.callback(
+        Output("collapse", "is_open"),
+        [Input("navbar-toggle", "n_clicks")],
+        [State("collapse", "is_open")],
+    )
+    def toggle_collapse(n, is_open):
+        # used in submenu (Aggregated vulnerabilities)
+        if n:
+            return not is_open
+        return is_open
+
+    @app.callback(
+        Output("submenu-v2-collapse", "is_open"),
+        Input("submenu-v2", "n_clicks"),
+        State("submenu-v2-collapse", "is_open"),
+        prevent_initial_call='initial_duplicate'
+    )
+    def collapse_submenu(btn, is_open):
+        # used in submenu (Aggregated vulnerabilities)
+        if "submenu-v2" == ctx.triggered_id:
+            return not is_open
+        return is_open
+
+    @app.callback(
+        Output("arrow-v2", "className"),
+        [Input("submenu-v2-collapse", "is_open")],
+    )
+    def set_navitem_class(is_open):
+        if is_open:
+            return "fas fa-chevron-down me-3"
+        return "fas fa-chevron-right me-3"
 
 
         
