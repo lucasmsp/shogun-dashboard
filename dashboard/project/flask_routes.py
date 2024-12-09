@@ -93,7 +93,7 @@ def start_flask(dm):
 def set_routes(server, db, login_manager, app):
     dm = app.dm
 
-    @server.route('/dashboard/')
+    @server.route('/dashboard/summary')
     @login_required
     def dashboard():
         app.layout = register_layout(dm)
