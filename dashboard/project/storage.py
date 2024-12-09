@@ -217,11 +217,14 @@ class DatasetManager(object):
         found_files = [day[0:4]+"-"+day[4:6]+"-"+day[6:8] for day in available_dates if next_date < day]
         if len(found_files) > 0:
             if mode == "all":
-                print("[INFO][waiting_next_file] Found a new Shodan dump for day: ", found_files, flush=True)
+                print("[INFO][waiting_next_file][all] Found a new Shodan dump for day: ", found_files, flush=True)
                 return found_files
             elif mode == "latest":
-                print("[INFO][waiting_next_file] Found a new Shodan dump for day: ", found_files[-1], flush=True)
+                print("[INFO][waiting_next_file][latest] Found a new Shodan dump for day: ", found_files[-1], flush=True)
                 return [found_files[-1]]
+            elif mode in found_files:
+                print("[INFO][waiting_next_file][yyyy-mm-dd] Found a new Shodan dump for day: ", mode, flush=True)
+                return [mode]
 
         return None
 
