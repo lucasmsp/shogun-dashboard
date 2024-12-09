@@ -55,7 +55,7 @@ def start_flask(dm):
     @server.route('/')
     def root():
         if current_user.is_authenticated:
-            return redirect('/dashboard/view1')
+            return redirect('/dashboard/summary')
         else:
             return redirect('/login')
 
@@ -68,7 +68,7 @@ def start_flask(dm):
                 user = User.query.filter_by(username=username).first()
                 if user and user.check_password(password):
                     login_user(user)
-                    return redirect('/dashboard/view1')
+                    return redirect('/dashboard/summary')
             except:
                 pass
         return render_template('login.html')

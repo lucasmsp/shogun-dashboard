@@ -1,23 +1,23 @@
 from dash import html, dcc, callback_context
 import dash_bootstrap_components as dbc
 
-import project.query1 as query1
+import project.query1_summary as query1_summary
 import project.query2_orgs as query2_orgs
 import project.query2_ips as query2_ips
-import project.query3 as query3
-import project.query4 as query4
-import project.query5 as query5
-import project.query6 as query6
-import project.query7 as query7
+import project.query3_cve as query3_cve
+import project.query4_geo as query4_geo
+import project.query5_report as query5_report
+import project.query6_as as query6_as
+import project.query7_ports as query7_ports
 
-tab1_content = query1.register_layout_query(filter_modal={})
+tab1_content = query1_summary.register_layout_query(filter_modal={})
 tab2_content_orgs =  query2_orgs.register_layout_query(filter_modal={})
 tab2_content_ips = query2_ips.register_layout_query(filter_modal={})
-tab3_content = query3.register_layout_query(filter_modal={})
-tab4_content = query4.register_layout_query(filter_modal={})
-tab5_content = query5.register_layout_query(filter_modal={})
-tab6_content = query6.register_layout_query(filter_modal={})
-tab7_content = query7.register_layout_query(filter_modal={})
+tab3_content = query3_cve.register_layout_query(filter_modal={})
+tab4_content = query4_geo.register_layout_query(filter_modal={})
+tab5_content = query5_report.register_layout_query(filter_modal={})
+tab6_content = query6_as.register_layout_query(filter_modal={})
+tab7_content = query7_ports.register_layout_query(filter_modal={})
 
 def register_layout(dm):
 
@@ -61,7 +61,7 @@ def register_layout(dm):
                     [
                         dbc.NavLink(
                             "EPSS Summary",
-                            href="/dashboard/view1",
+                            href="/dashboard/summary",
                             active="exact",
                         ),
                         dbc.NavLink(
@@ -74,25 +74,25 @@ def register_layout(dm):
                                 children=[
                                     dbc.NavLink(
                                         "ORG - Highest vulnerability per Organization",
-                                        href="/dashboard/view2b",
+                                        href="/dashboard/orgs",
                                         active="exact",
                                         style={"margin-top": "0px", "padding-top": "0px"}
 
                                     ),
                                     dbc.NavLink(
                                         "IP - Highest vulnerability per IP",
-                                        href="/dashboard/view2a",
+                                        href="/dashboard/ips",
                                         active="exact",
                                         style={"margin-top": "0px", "padding-top": "0px"}
                                     ),
                                     dbc.NavLink(
                                         "CVE - Report of Common Vulnerabilities and Exposures",
-                                        href="/dashboard/view3",
+                                        href="/dashboard/cve",
                                         active="exact",
                                     ),
                                     dbc.NavLink(
                                         "AS - AS Summary",
-                                        href="/dashboard/view6",
+                                        href="/dashboard/as",
                                         active="exact",
                                     ),
                                     dbc.NavLink(
@@ -110,7 +110,7 @@ def register_layout(dm):
                         ),
                         dbc.NavLink(
                             "Geoanalysis",
-                            href="/dashboard/view4",
+                            href="/dashboard/geo",
                             active="exact",
                         ),
                         dbc.NavLink(

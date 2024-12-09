@@ -298,7 +298,7 @@ def register_callback_query(dm, app):
                         }
                     }
                 }
-                return "/dashboard/view3", filter_opt
+                return "/dashboard/cve", filter_opt
             return no_update, no_update
         return no_update, no_update
     
