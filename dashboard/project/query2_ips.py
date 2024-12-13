@@ -32,8 +32,18 @@ def register_layout_query(filter_modal={}):
         dashGridOptions={
             'tooltipInteraction': True,
             'tooltipShowDelay': 10,
-            'tooltipHideDelay': 10000
-        }
+            'tooltipHideDelay': 10000,
+            # The number of rows rendered outside the viewable area the grid renders.
+            "rowBuffer": 0,
+            # How many blocks to keep in the store. Default is no limit, so every requested block is kept.
+            "maxBlocksInCache": 2,
+            "cacheBlockSize": 5000, # complete data has +- 35k records
+            "cacheOverflowSize": 2,
+            "maxConcurrentDatasourceRequests": 2,
+            "infiniteInitialRowCount": 1,
+        },
+        rowModelType="infinite",
+        getRowId="params.data.index"
     )
 
     elements = [
@@ -50,7 +60,6 @@ def register_layout_query(filter_modal={}):
         dcc.Loading([aggrid]),
         dbc.Row(dbc.Col(html.Hr(style={"width": "100%", 'top-padding': '10px'}), width={'size': 10, 'offset': 1})),
         dbc.Row([html.Div(id='query-2a-graph', children=[])]),
-        #html.Div(id='query-5-ag')
     ]
 
     tab2_content_ips = dbc.Card(
@@ -69,20 +78,45 @@ def register_layout_query(filter_modal={}):
 def register_callback_query(dm, app):
 
     @app.callback(
-        Output('query-2a-grid', "rowData"),
+        Output('query-2a-grid', "getRowsResponse"),
         [
             Input('date-picker-single', 'value'),
+            Input("query-2a-grid", "getRowsRequest"),
         ]
     )
-    def update_grid2a(date_value):
+    def update_grid2a(date_value, request):
 
         print("[INFO] query 2 - update_table2a: ", date_value)
         df = dm.get_view_dataset(date_value, INPUT_DATA_V2)
+        print(f"[INFO] query 2 - original dataset has {len(df)} lines")
 
-        if df.empty:
-            return [{}]
-        
-        return df.to_dict('records')
+        if request:
+            if request["filterModel"]:
+                filters = request["filterModel"]
+                for col, filter_conf in filters.items():
+                    try:
+                        df = filter_by_model(filter_conf, df, col)
+                    except:
+                        print("[ERROR] query 2 - error filter grid2a")
+
+            if request["sortModel"]:
+                sorting = []
+                asc = []
+                for sort in request["sortModel"]:
+                    sorting.append(sort["colId"])
+                    if sort["sort"] == "asc":
+                        asc.append(True)
+                    else:
+                        asc.append(False)
+                df = df.sort_values(by=sorting, ascending=asc)
+
+            lines = len(df.index)
+            if lines == 0:
+                lines = 1
+
+            partial = df.iloc[request["startRow"]: request["endRow"]]
+
+            return {"rowData": partial.to_dict("records"), "rowCount": lines}
 
     @app.callback(
         Output('query-2a-graph', 'children'),
