@@ -41,7 +41,6 @@ def register_layout_query(filter_modal={}):
             "cacheOverflowSize": 2,
             "maxConcurrentDatasourceRequests": 2,
             "infiniteInitialRowCount": 1,
-            "rowSelection": "multiple",
         },
         rowModelType="infinite",
         getRowId="params.data.index"
