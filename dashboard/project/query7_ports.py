@@ -1,10 +1,11 @@
-from dash import html, dcc
+from dash import html, dcc, no_update
 import dash_bootstrap_components as dbc
 from dash.dependencies import Output, Input
 
 import plotly.express as px
 import dash_ag_grid as dag
-
+import plotly.graph_objects as go
+import pandas as pd
 
 from project.auxiliar import gen_subgraphs, gen_columns_def
 
@@ -76,25 +77,37 @@ def register_callback_query(dm, app):
         if df.empty:
             return []
 
-        # Gráfico de barra: n_vulns (CISA e Known) por porta (Top 20)
-        df_vulns_by_port = df[['port', 'n_vulns_in_cisa', 'n_vulns_cisa_knownRansomwareCampaignUse']].copy()
-        df_vulns_by_port = df_vulns_by_port.groupby('port').sum().reset_index()
-        df_vulns_by_port = df_vulns_by_port.nlargest(20, ['n_vulns_in_cisa', 'n_vulns_cisa_knownRansomwareCampaignUse'])
-        df_vulns_by_port['port'] = df_vulns_by_port['port'].astype(str)  # Convertendo para categórico
-        fig_vulns_port = px.bar(
-            df_vulns_by_port.sort_values(by='n_vulns_in_cisa', ascending=False),
+        # Gráfico de barra: n_vulns_in_cisa por porta (Top 20)
+        df_cisa = df[['port', 'n_vulns_in_cisa']].copy()
+        df_cisa = df_cisa.groupby('port').sum().reset_index()
+        df_cisa = df_cisa.nlargest(20, 'n_vulns_in_cisa')
+        df_cisa['port'] = df_cisa['port'].astype(str)
+        fig_vulns_cisa = px.bar(
+            df_cisa.sort_values(by='n_vulns_in_cisa', ascending=False),
             x='port',
-            y=['n_vulns_in_cisa', 'n_vulns_cisa_knownRansomwareCampaignUse'],
-            barmode='group',
-            labels={'value': '# Vulnerabilities', 'port': 'Port'},
-            title='Top 20 Ports by Number of Vulnerabilities (CISA and Known Ransomware)'
+            y='n_vulns_in_cisa',
+            labels={'n_vulns_in_cisa': '# Vulnerabilities', 'port': 'Port'},
+            title='Top 20 Ports by Number of Vulnerabilities (CISA)'
+        )
+
+        # Gráfico de barra: n_vulns_cisa_knownRansomwareCampaignUse por porta (Top 20)
+        df_known = df[['port', 'n_vulns_cisa_knownRansomwareCampaignUse']].copy()
+        df_known = df_known.groupby('port').sum().reset_index()
+        df_known = df_known.nlargest(20, 'n_vulns_cisa_knownRansomwareCampaignUse')
+        df_known['port'] = df_known['port'].astype(str)
+        fig_vulns_known = px.bar(
+            df_known.sort_values(by='n_vulns_cisa_knownRansomwareCampaignUse', ascending=False),
+            x='port',
+            y='n_vulns_cisa_knownRansomwareCampaignUse',
+            labels={'n_vulns_cisa_knownRansomwareCampaignUse': '# Vulnerabilities', 'port': 'Port'},
+            title='Top 20 Ports by Number of Vulnerabilities (Known Ransomware)'
         )
 
         # Gráfico de barra: n_products por porta (Top 20)
         df_products_by_port = df[['port', 'n_products']].copy()
         df_products_by_port = df_products_by_port.groupby('port').sum().reset_index()
         df_products_by_port = df_products_by_port.nlargest(20, 'n_products')
-        df_products_by_port['port'] = df_products_by_port['port'].astype(str)  # Convertendo para categórico
+        df_products_by_port['port'] = df_products_by_port['port'].astype(str)
         fig_products_port = px.bar(
             df_products_by_port.sort_values(by='n_products', ascending=False),
             x='port',
@@ -103,40 +116,176 @@ def register_callback_query(dm, app):
             title='Top 20 Ports by Number of Products'
         )
 
-        # Lista de produtos por quantidade de portas (Top 10 portas)
-        df_products_list = df.explode('product_list')[['port', 'product_list']].copy()
-        df_products_list = df_products_list.groupby('product_list')['port'].nunique().reset_index()
-        df_products_list = df_products_list.rename(columns={'port': 'n_ports'}).nlargest(10, 'n_ports')
-        fig_top_products = px.bar(
-            df_products_list.sort_values(by='n_ports', ascending=False),
-            x='product_list',
-            y='n_ports',
-            labels={'product_list': 'Product', 'n_ports': '# Ports'},
-            title='Top 10 Products by Number of Ports'
+        # Gráfico de CVSS (três linhas: avg, min, max)
+        df_cvss_std = df[['port', 'vulns_cvss_score_max', 'vulns_cvss_score_min']].copy()
+        df_cvss_std['cvss_std'] = (df_cvss_std['vulns_cvss_score_max'] - df_cvss_std['vulns_cvss_score_min']).abs()
+        df_cvss_std = df_cvss_std.groupby('port').agg({
+            'cvss_std': 'mean',
+            'vulns_cvss_score_max': 'max',
+            'vulns_cvss_score_min': 'min'
+        }).reset_index()
+        df_cvss_std = df_cvss_std.sort_values(by='cvss_std', ascending=False)
+        df_cvss_std['port'] = df_cvss_std['port'].astype(str)
+        
+        fig_cvss_std = go.Figure()
+        fig_cvss_std.add_trace(go.Scatter(
+            x=df_cvss_std['port'],
+            y=df_cvss_std['cvss_std'],
+            mode='lines',
+            name='CVSS Avg',
+            line=dict(color='blue')
+        ))
+        fig_cvss_std.add_trace(go.Scatter(
+            x=df_cvss_std['port'],
+            y=df_cvss_std['vulns_cvss_score_min'],
+            mode='lines',
+            name='CVSS Min',
+            line=dict(color='red')
+        ))
+        fig_cvss_std.add_trace(go.Scatter(
+            x=df_cvss_std['port'],
+            y=df_cvss_std['vulns_cvss_score_max'],
+            mode='lines',
+            name='CVSS Max',
+            line=dict(color='green')
+        ))
+        fig_cvss_std.update_layout(
+            title='Ports by CVSS Standard Deviation (Avg, Min, Max)',
+            xaxis_title='Port',
+            yaxis_title='CVSS Value',
+            showlegend=True,
+            xaxis=dict(showticklabels=False)  # Remove os rótulos inicialmente
         )
 
-        # Gráfico de erro de CVSS e EPSS (Top 20 portas)
-        df_error_metrics = df[['port', 'vulns_cvss_score_max', 'vulns_cvss_score_min', 'vulns_epss_max', 'vulns_epss_min']].copy()
-        df_error_metrics['cvss_error'] = df_error_metrics['vulns_cvss_score_max'] - df_error_metrics['vulns_cvss_score_min']
-        df_error_metrics['epss_error'] = df_error_metrics['vulns_epss_max'] - df_error_metrics['vulns_epss_min']
-        df_error_metrics = df_error_metrics.nlargest(20, ['cvss_error', 'epss_error'])
-        df_error_metrics['port'] = df_error_metrics['port'].astype(str)  # Convertendo para categórico
-        fig_error_metrics = px.bar(
-            df_error_metrics.sort_values(by='cvss_error', ascending=False),
-            x='port',
-            y=['cvss_error', 'epss_error'],
-            barmode='group',
-            labels={'value': 'Error', 'port': 'Port'},
-            title='Top 20 Ports by Error Metrics (CVSS and EPSS)'
+        # Gráfico de EPSS (três linhas: avg, min, max)
+        df_epss_std = df[['port', 'vulns_epss_max', 'vulns_epss_min']].copy()
+        df_epss_std['epss_std'] = (df_epss_std['vulns_epss_max'] - df_epss_std['vulns_epss_min']).abs()
+        df_epss_std = df_epss_std.groupby('port').agg({
+            'epss_std': 'mean',
+            'vulns_epss_max': 'max',
+            'vulns_epss_min': 'min'
+        }).reset_index()
+        df_epss_std = df_epss_std.sort_values(by='epss_std', ascending=False)
+        df_epss_std['port'] = df_epss_std['port'].astype(str)
+        
+        fig_epss_std = go.Figure()
+        fig_epss_std.add_trace(go.Scatter(
+            x=df_epss_std['port'],
+            y=df_epss_std['epss_std'],
+            mode='lines',
+            name='EPSS Avg',
+            line=dict(color='blue')
+        ))
+        fig_epss_std.add_trace(go.Scatter(
+            x=df_epss_std['port'],
+            y=df_epss_std['vulns_epss_min'],
+            mode='lines',
+            name='EPSS Min',
+            line=dict(color='red')
+        ))
+        fig_epss_std.add_trace(go.Scatter(
+            x=df_epss_std['port'],
+            y=df_epss_std['vulns_epss_max'],
+            mode='lines',
+            name='EPSS Max',
+            line=dict(color='green')
+        ))
+        fig_epss_std.update_layout(
+            title='Ports by EPSS Standard Deviation (Avg, Min, Max)',
+            xaxis_title='Port',
+            yaxis_title='EPSS Value',
+            showlegend=True,
+            xaxis=dict(showticklabels=False)  # Remove os rótulos inicialmente
         )
-
         # Configuração de layout e gráficos
         graphs = [
-            dcc.Graph(figure=fig_vulns_port, config={'displayModeBar': False, 'scrollZoom': False}),
+            dcc.Graph(figure=fig_vulns_cisa, config={'displayModeBar': False, 'scrollZoom': False}),
+            dcc.Graph(figure=fig_vulns_known, config={'displayModeBar': False, 'scrollZoom': False}),
             dcc.Graph(figure=fig_products_port, config={'displayModeBar': False, 'scrollZoom': False}),
-            dcc.Graph(figure=fig_top_products, config={'displayModeBar': False, 'scrollZoom': False}),
-            dcc.Graph(figure=fig_error_metrics, config={'displayModeBar': False, 'scrollZoom': False}),
+            dcc.Graph(figure=fig_cvss_std, config={'displayModeBar': False, 'scrollZoom': False}),
+            dcc.Graph(figure=fig_epss_std, config={'displayModeBar': False, 'scrollZoom': False}),
         ]
 
         children = gen_subgraphs(n_cols=2, graphs=graphs)
         return children
+
+
+    # @app.callback(
+    #     Output("url-redirect", "pathname", allow_duplicate=True),
+    #     Output('store-filters', 'data', allow_duplicate=True),
+    #     Input("query-7-table", "cellClicked"),
+    #     Input('date-picker-single', 'value'),
+    #     prevent_initial_call=True,
+    # )
+    # def filter_by_port(cell, date_value):
+    #     print(f"[INFO] Cell clicked: {cell}, Date: {date_value}")
+
+    #     # Obter o dataset com base na data selecionada
+    #     df = dm.get_view_dataset(date_value, INPUT_DATA)
+
+    #     if cell:
+    #         col_id = cell.get("colId", "")
+    #         row_id = int(cell.get("rowId", 0)) if "rowId" in cell else None
+            
+    #         if col_id == "port" and row_id is not None:
+    #             # Obter a porta clicada
+    #             port = df.at[row_id, "port"]
+    #             print(f"[INFO] Filtering by port: {port}")
+                
+    #             # Configurar o filtro
+    #             filter_opt = {
+    #                 "query-7-ag": {
+    #                     'port': {
+    #                         "filterType": "text",
+    #                         "type": "equals",
+    #                         "filter": port
+    #                     },
+    #                     'epss': {
+    #                         "filterType": "text",
+    #                         "type": "contains",  # Ajuste conforme a lógica do filtro desejado
+    #                         "filter": str(port)
+    #                     },
+    #                     'cvss': {
+    #                         "filterType": "text",
+    #                         "type": "contains",  # Ajuste conforme a lógica do filtro desejado
+    #                         "filter": str(port)
+    #                     }
+    #                 }
+    #             }
+    #             print(filter_opt)
+    #             return "/dashboard/report", filter_opt
+
+    #     return no_update, no_update
+
+    @app.callback(
+        Output("url-redirect", "pathname", allow_duplicate=True),
+        Output("store-filters", "data", allow_duplicate=True),
+        Input("query-7-graph", "clickData"),
+        Input('date-picker-single', 'value'),
+        prevent_initial_call=True,
+    )
+    def filter_by_graph_point(click_data, date_value):
+        print(f"[INFO] Point clicked: {click_data}, Date: {date_value}")
+
+        # Obter o dataset com base na data selecionada
+        df = dm.get_view_dataset(date_value, INPUT_DATA)
+
+        if click_data:
+            # Obter a porta clicada (eixo x)
+            port = click_data["points"][0]["x"]  # O 'x' representa a porta
+            print(f"[INFO] Filtering by port: {port}")
+
+            # Configurar os filtros
+            filter_opt = {
+                "query-7-ag": {
+                    'port': {
+                        "filterType": "text",
+                        "type": "equals",
+                        "filter": port
+                    }
+                }
+            }
+            
+            return "/dashboard/report", filter_opt
+
+        return no_update, no_update
