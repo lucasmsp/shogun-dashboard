@@ -6,117 +6,84 @@ import dash_ag_grid as dag
 import plotly.express as px
 import plotly.figure_factory as ff
 
-from project.auxiliar import gen_subgraphs, header_mapping
+from project.auxiliar import gen_subgraphs, header_mapping, gen_columns_def, gen_style_condition
 
 import pandas as pd
 
 INPUT_DATA = '3'
 
+
 # constructs the layout for View 3
 def register_layout_query(filter_modal={}):
 
+    columns, raw_data = gen_columns_def(['vulns_cve_id', 'vulns_cvss_score', 'vulns_epss', 'vulns_cwe',
+                                         'n_as', 'n_ips', 'n_orgs', 'n_port', 'vulns_cisa_date_added',
+                                         'vulns_cisa_knownRansomwareCampaignUse', 'vulns_cisa_product_vendor',
+                                         'vulns_cvss_version', 'vulns_epss_rank',
+                                         'vulns_cisa_description'])
+
+    for column in columns:
+        column['resizable'] = False
+
+    columns[0]["maxNumConditions"] = 500
+
+    columns[0]['tooltipValueGetter'] = {"function": "'Click on the cell for more details'"}
+    columns[0]['minWidth'] = 150
+    columns[0]['pinned'] = 'left'
+    columns[0]['cellRenderer'] = "GoToMitre"
+
+    columns[1]['tooltipValueGetter'] = {"function": "'CVSS Version: ' + params.data.vulns_cvss_version"}
+    columns[1]['minWidth'] = 100
+    columns[1]['cellStyle'] = {
+        "styleConditions": gen_style_condition("vulns_cvss_score")
+    }
+
+    columns[2]['tooltipValueGetter'] = {"function": "'EPSS: ' + params.data.vulns_epss_rank"}
+    columns[2]['minWidth'] = 100
+    columns[2]['cellStyle'] = {
+        "styleConditions": gen_style_condition("vulns_epss")
+    }
+
+    columns[3]['tooltipValueGetter'] = {"function": "'Click on the cell for more details'"}
+    columns[3]['cellRenderer'] = "GoToCWE"
+    columns[3]['minWidth'] = 160
+
+    columns[4]['minWidth'] = 100
+
+    columns[5]['minWidth'] = 110
+
+    columns[6]['minWidth'] = 110
+
+    columns[7]['minWidth'] = 110
+
+    columns[8]['width'] = 140
+    columns[8]['minWidth'] = 130
+
+    columns[9]['minWidth'] = 160
+    columns[9]['cellStyle'] = {'textAlign': 'center'}
+
+    columns[10]['minWidth'] = 500
+    columns[10]['tooltipValueGetter'] = {"function":
+                                             "params.data.vulns_cisa_description == '-' ? '' : params.data.vulns_cisa_description"}
+
+    columns = columns[:8] + [{
+        "headerName": header_mapping['cisa_info']['name'],
+        "headerTooltip": header_mapping['cisa_info']['description'],
+        "children": columns[8:11],
+    }]
+
     aggrid = dag.AgGrid(
         id="query-3-ag",
-        rowData = [{"vulns_cve_id": "Processing...", "vulns_cvss_score": 0, "vulns_epss": 0, "n_ips": 0, 'n_orgs': 0}],
-        filterModel=filter_modal,
-        columnDefs=[
-            {"field": 'vulns_cve_id', "headerName": 'CVE', "cellRenderer": "GoToMitre",
-             "tooltipValueGetter": {"function": "'Click on the cell for more details'"},
-             "filterParams": {"filterOptions": ["equals", "notEqual", 'contains'], "maxNumConditions": 100},
-            },
-            {"field": 'vulns_cvss_score', "headerName": 'CVSS',
-            'tooltipValueGetter': {"function": "'CVSS Version: ' + params.data.vulns_cvss_version"},
-             "filter": "agNumberColumnFilter", "filterParams": {"filterOptions": ["equals","notEqual",'lessThan', 'greaterThan', 'inRange']},
-                 "cellStyle": {
-                     "styleConditions": [
-                         {
-                             "condition": "params.data.vulns_cvss_score >= 0 && params.data.vulns_cvss_score <= 2",
-                             "style": {"backgroundColor": "#FFD700"},
-                         },
-                         {
-                             "condition": "params.data.vulns_cvss_score > 2 && params.data.vulns_cvss_score <= 4",
-                             "style": {"backgroundColor": "#FFA500"},
-                         },
-                         {
-                             "condition": "params.data.vulns_cvss_score > 4 && params.data.vulns_cvss_score <= 6",
-                             "style": {"backgroundColor": "#FF8C00"},
-                         },
-                         {
-                             "condition": "params.data.vulns_cvss_score > 6 && params.data.vulns_cvss_score <= 8",
-                             "style": {"backgroundColor": "#FF6347"},
-                         },
-                         {
-                             "condition": "params.data.vulns_cvss_score > 8 && params.data.vulns_cvss_score <= 10",
-                             "style": {"backgroundColor": "#FF4500"},
-                         },
-                     ],
-                 },
-             },
-            {"field": 'vulns_epss', "headerName": 'EPSS',
-             'tooltipValueGetter': {"function": "'EPSS: ' + params.data.vulns_epss_rank"},
-             "filter": "agNumberColumnFilter",
-             "filterParams": {"filterOptions": ["equals", "notEqual", 'lessThan', 'greaterThan', 'inRange']},
-                 "cellStyle": {
-                     "styleConditions": [
-                         {
-                             "condition": "params.data.vulns_epss >= 0 && params.data.vulns_epss <= 0.2",
-                             "style": {"backgroundColor": "#FFD700"},
-                         },
-                         {
-                             "condition": "params.data.vulns_epss > 0.2 && params.data.vulns_epss <= 0.4",
-                             "style": {"backgroundColor": "#FFA500"},
-                         },
-                         {
-                             "condition": "params.data.vulns_epss > 0.4 && params.data.vulns_epss <= 0.6",
-                             "style": {"backgroundColor": "#FF8C00"},
-                         },
-                         {
-                             "condition": "params.data.vulns_epss > 0.6 && params.data.vulns_epss <= 0.8",
-                             "style": {"backgroundColor": "#FF6347"},
-                         },
-                         {
-                             "condition": "params.data.vulns_epss > 0.8 && params.data.vulns_epss <= 1",
-                             "style": {"backgroundColor": "#FF4500"},
-                         },
-                     ],
-                 },
-             },
-            {"field": 'vulns_cwe', "headerName": "CWE"},
-            {"field": 'n_as', "headerName": "# AS"},
-            {"field": 'n_ips', "headerName": "# IPs",
-             "filter": "agNumberColumnFilter", "filterParams": {"filterOptions": ["equals","notEqual",'lessThan', 'greaterThan', 'inRange']}
-             },
-            {"field": 'n_orgs', "headerName": "# Organizations",
-             "filter": "agNumberColumnFilter", "filterParams": {"filterOptions": ["equals","notEqual",'lessThan', 'greaterThan', 'inRange']}
-             },
-            {"headerName": "Cisa's KEV",
-                    "suppressStickyLabel": True,
-                    "children": [
-                        {"field": "vulns_cisa_date_added", "headerName": "Date Added", "width": 140, "columnGroupShow": "closed"},
-                        {"field": "vulns_cisa_knownRansomwareCampaignUse", "headerName": "Ransomware Use", "width": 140,
-                         "columnGroupShow": "closed"
-                         },
-                        {"field": "vulns_cisa_product_vendor",
-                         "headerName": header_mapping['vulns_cisa_product_vendor']['name'],
-                         'headerTooltip': header_mapping['vulns_cisa_product_vendor']['description'],
-                         'minWidth': 500, "resizable": False,
-                         'tooltipValueGetter': {"function":
-                                                    "params.data.vulns_cisa_description"
-                                                },
-
-                         },
-                    ],
-                },
-        ],
+        rowData=raw_data,
+        columnDefs=columns,
         defaultColDef={"flex": 1, "filter": True},
         columnSize="sizeToFit",
+        filterModel=filter_modal,
         columnSizeOptions={"skipHeader": False},
         dashGridOptions={
-            "rowSelection": "single",
             'tooltipInteraction': True,
             'tooltipShowDelay': 10,
-            'tooltipHideDelay': 1000,
-            "animateRows": False
+            'tooltipHideDelay': 10000
         }
     )
 
@@ -157,6 +124,7 @@ def find_expression(string):
         if index != -1:
             return i
 
+
 def known_f(x):
     if x == "Known":
         return 1
@@ -170,6 +138,7 @@ def unknown_f(x):
     else:
         return 0
 
+
 # register all the callbacks in one place
 def register_callback_query(dm, app):
     @app.callback(
@@ -182,16 +151,23 @@ def register_callback_query(dm, app):
         if df.empty:
             return [{}]
 
-        df['vulns_cwe'] = df['vulns_cwe'].apply(lambda x: ','.join(map(str, x)))
-        df['vulns_cisa_knownRansomwareCampaignUse'] = df['vulns_cisa_knownRansomwareCampaignUse'].apply(
+        df_exploded = df.explode('vulns_cwe')
+
+        df_exploded['vulns_cisa_knownRansomwareCampaignUse'] = df_exploded[
+            'vulns_cisa_knownRansomwareCampaignUse'].apply(
             lambda x: (x == 'Known' and '✅') or
                       (x == 'Unknown' and '❌') or '➖')
 
-        df['vulns_cisa_product_vendor'] = df[['vulns_cisa_vendor', 'vulns_cisa_product']]\
-                .fillna('').agg('/'.join,axis=1)
-        df['vulns_cisa_product_vendor'] = df['vulns_cisa_product_vendor'].apply(lambda x: "" if x == '/' else x)
+        df_exploded['vulns_cisa_product_vendor'] = df_exploded[['vulns_cisa_vendor', 'vulns_cisa_product']] \
+            .fillna('').agg('/'.join, axis=1)
 
-        return df.to_dict('records')
+        df_exploded['vulns_cisa_product_vendor'] = df_exploded['vulns_cisa_product_vendor'].apply(
+            lambda x: "" if x == '-/-' else x)
+
+        df_exploded['vulns_cisa_date_added'] = df_exploded['vulns_cisa_date_added'].apply(
+            lambda x: "" if x == '-' else x)
+
+        return df_exploded.to_dict('records')
 
     # TODO: Atualizar gráficos para usar o filtermodal
     @app.callback(
@@ -396,16 +372,19 @@ def register_callback_query(dm, app):
         Output('store-filters', 'data', allow_duplicate=True),
         Input("query-3-ag", "cellClicked"),
         Input("query-3-ag", "selectedRows"),
+        Input('date-picker-single', 'value'),
         prevent_initial_call=True
     )
-    def select_orgs_ips(cell, row):
-        print(f"[INFO] select_orgs_ips: Cell {cell} and row {row}")
-        if cell and row:
+    def select_ips(cell, row, date_value):
+
+        df = dm.get_view_dataset(date_value, INPUT_DATA)
+        # print(f"[INFO] select_orgs_ips: Cell {cell} and row {row}")
+        if cell:
             if cell.get("colId", "") == "n_ips":
-                res = [d.get('vulns_cve_id', None) for d in row]
-                cve_value = ' '.join(map(str, res))
+                row_id = int(cell.get("rowId", 0))
+                cve = df.at[row_id, "vulns_cve_id"]
                 filter_opt = {
-                    "query-2a-grid": {'vulns_cve_id': {'filterType': 'text', 'type': 'contains', 'filter': cve_value}}}
+                    "query-2a-grid": {'vulns_cve_id': {'filterType': 'text', 'type': 'contains', 'filter': cve}}}
                 return "/dashboard/view2a", filter_opt
 
         return no_update, no_update
@@ -414,25 +393,19 @@ def register_callback_query(dm, app):
         Output("url-redirect", "pathname", allow_duplicate=True),
         Output('store-filters', 'data', allow_duplicate=True),
         Input("query-3-ag", "cellClicked"),
-        Input("query-3-ag", "selectedRows"),
         Input('date-picker-single', 'value'),
-        # Input("query-2b-grid", "data"),
         prevent_initial_call=True,
     )
-    def filter_asn(cell, row, date_value):
+    def select_orgs(cell, date_value):
 
-        print(f"[INFO] filter_asn: Cell {cell} and row {row}")
         df_q2 = dm.get_view_dataset(date_value, '2')
         # TODO: Não esta filtrando todos os elementos da lista, no maximo 2, e existem
-        # informações que não estao sendo filtradas pela tabela de org_clean
         if cell:
             if cell.get("colId", "") == "n_orgs":
-                res = [d.get('vulns_cve_id', None) for d in row]
-                cve_value = ' '.join(map(str, res))
+                row_id = int(cell.get("rowId", 0))
+                cve_value = df_q2.at[row_id, "vulns_cve_id"]
+                org_list = df_q2.loc[df_q2["vulns_cve_id"] == cve_value, "org_clean"].drop_duplicates()
 
-                org_df = df_q2[df_q2["vulns_cve_id"] == cve_value]["org_clean"]
-                print("Tamanho da lista ", len(org_df))
-                print("Dataframe org_clean", org_df)
                 filter_opt = {
                     "query-2b-grid": {
                         'org_clean': {
@@ -443,11 +416,10 @@ def register_callback_query(dm, app):
                                     "filter": org,
                                     "filterType": "text",
                                     "type": "equals"
-                                } for org in org_df.tolist()
+                                } for org in org_list.tolist()
                             ]
                         }
                     }
                 }
                 return "/dashboard/view2b", filter_opt
-
         return no_update, no_update

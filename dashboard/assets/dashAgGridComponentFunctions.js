@@ -5,24 +5,30 @@ dagcomponentfuncs.GoToMitre = function (props) {
         'a',
         {
             href: 'https://cve.mitre.org/cgi-bin/cvename.cgi?name='+props.value,
-            target: '_blank', 
+            target: '_blank',
             rel: 'noopener noreferrer'},
         props.value
     );
 };
 
 dagcomponentfuncs.GoToCWE = function (props) {
-    const cweNumber = props.value.replace('CWE-', '');
-    return React.createElement(
-        'a',
-        {
-            href: `https://cwe.mitre.org/data/definitions/${cweNumber}.html`,
-            target: '_blank',
-            rel: 'noopener noreferrer'
-        },
-        props.value
-    );
-};
+
+    if(props.value == null){
+        return null;
+    }
+    else{
+        const cweNumber = props.value.replace("CWE-", "");
+        return React.createElement(
+            'a',
+            {
+                href: `https://cwe.mitre.org/data/definitions/${cweNumber}.html`,
+                target: '_blank',
+                rel: 'noopener noreferrer'
+            },
+            props.value
+        );
+       }
+    };
 
 dagcomponentfuncs.IPLink = function (props) {
 

@@ -2,7 +2,7 @@ from dash import html, dcc, dash_table, callback_context, ctx, no_update
 from dash.dependencies import Output, Input, State
 import dash_bootstrap_components as dbc
 import dash_ag_grid as dag
-from project.auxiliar import gen_subgraphs, header_mapping, gen_columns_def
+from project.auxiliar import gen_subgraphs, header_mapping, gen_columns_def, gen_style_condition
 
 import itertools
 import plotly.express as px
@@ -31,16 +31,7 @@ def register_layout_query(filter_modal={}):
         columnDefs.append(i)
 
     columnDefs[0]['children'][0]['cellStyle'] = {
-        "styleConditions": [
-            {
-                "condition": "params.data.as_seen == 'True'",
-                "style": {"backgroundColor": "lightgreen"},
-            },
-            {
-                "condition": "params.data.as_seen == 'False'",
-                "style": {"backgroundColor": "lightcoral"},
-            },
-        ],
+        "styleConditions": gen_style_condition("asn")
     }
     columnDefs[0]['children'][2]['tooltipField'] = 'as_announcing_prefixes'
     columnDefs[0]['children'][2]['tooltipComponent'] = 'CustomTooltipAddressesV6'
@@ -50,60 +41,18 @@ def register_layout_query(filter_modal={}):
     columnDefs[2]["tooltipComponent"] = "CustomTooltipCvssV6"
     columnDefs[2]["valueFormatter"] = {"function": "params.value.toFixed(4)"}
     columnDefs[2]["cellStyle"] = {
-        "styleConditions": [
-            {
-                "condition": "params.data.avg_cvss >= 0 && params.data.avg_cvss <= 2",
-                "style": {"backgroundColor": "#FFD700"},
-            },
-            {
-                "condition": "params.data.avg_cvss > 2 && params.data.avg_cvss <= 4",
-                "style": {"backgroundColor": "#FFA500"},
-            },
-            {
-                "condition": "params.data.avg_cvss > 4 && params.data.avg_cvss <= 6",
-                "style": {"backgroundColor": "#FF8C00"},
-            },
-            {
-                "condition": "params.data.avg_cvss > 6 && params.data.avg_cvss <= 8",
-                "style": {"backgroundColor": "#FF6347"},
-            },
-            {
-                "condition": "params.data.avg_cvss > 8 && params.data.avg_cvss <= 10",
-                "style": {"backgroundColor": "#FF4500"},
-            },
-        ],
+        "styleConditions": gen_style_condition("as_announcing_addresses")
     }
     columnDefs[3]['tooltipField'] = 'min_epss'
     columnDefs[3]["tooltipComponent"] = "CustomTooltipEpssV6"
     columnDefs[3]["valueFormatter"] = {"function": "params.value.toFixed(4)"}
     columnDefs[3]["cellStyle"] = {
-        "styleConditions": [
-            {
-                "condition": "params.data.avg_epss >= 0 && params.data.avg_epss <= 0.2",
-                "style": {"backgroundColor": "#FFD700"},
-            },
-            {
-                "condition": "params.data.avg_epss > 0.2 && params.data.avg_epss <= 0.4",
-                "style": {"backgroundColor": "#FFA500"},
-            },
-            {
-                "condition": "params.data.avg_epss > 0.4 && params.data.avg_epss <= 0.6",
-                "style": {"backgroundColor": "#FF8C00"},
-            },
-            {
-                "condition": "params.data.avg_epss > 0.6 && params.data.avg_epss <= 0.8",
-                "style": {"backgroundColor": "#FF6347"},
-            },
-            {
-                "condition": "params.data.avg_epss > 0.8 && params.data.avg_epss <= 1",
-                "style": {"backgroundColor": "#FF4500"},
-            },
-        ],
+        "styleConditions": gen_style_condition("as_country_name")
     }
     columnDefs[6]["headerTooltip"] = "Clicking a cell filters the data based on the selected value, " \
                                      "showing the top 100 most recent CVE codes associated with the chosen entry."
 
-    
+
     q6 = [
         html.H1(children="View 6 - AS summary", className='wrapper', style={'textAlign': 'center'}),
         dbc.Container(
@@ -158,14 +107,14 @@ def register_callback_query(dm, app):
         df["n_cities"] = df["cities"].apply(lambda x: len(x))
         df["n_cisa"] = df["cisa_vulns"].apply(lambda x: len(x))
         df["n_cves"] = df["cve_list"].apply(lambda x: len(x))
-        
+
         # Filtrar apenas as colunas relevantes
         df_filtered = df[['asn', 'as_org_name', 'as_country_name', 'as_announcing_prefixes', 'avg_cvss', 'avg_epss',
-                        'as_rank', 'n_orgs', 'as_org_country_name', 'as_announcing_addresses', 'min_cvss', 'max_cvss', 
+                        'as_rank', 'n_orgs', 'as_org_country_name', 'as_announcing_addresses', 'min_cvss', 'max_cvss',
                         'min_epss', 'max_epss', 'as_seen', 'n_cities', 'n_ips', 'n_cisa', 'n_cves']]
-        
+
         return df_filtered.to_dict('records')
-    
+
     @app.callback(
         Output("query-6-graph", "children"),
         Input('date-picker-single', 'value')
@@ -262,7 +211,7 @@ def register_callback_query(dm, app):
         children = gen_subgraphs(n_cols=2, graphs=graphs)
         return children
 
-    
+
     @app.callback(
         Output("url-redirect", "pathname", allow_duplicate=True),
         Output('store-filters', 'data', allow_duplicate=True),
@@ -301,4 +250,3 @@ def register_callback_query(dm, app):
                 return "/dashboard/view3", filter_opt
             return no_update, no_update
         return no_update, no_update
-    

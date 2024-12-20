@@ -78,7 +78,10 @@ def register_callback_query(dm, app):
                 filters = filters[aggrid_key]
             content = query2_ips.register_layout_query(filter_modal=filters)
         elif pathname == "/dashboard/view2b":
-            content = query2_orgs.register_layout_query(filter_modal={})
+            aggrid_key = 'query-2b-grid'
+            if aggrid_key in filters:
+                filters = filters[aggrid_key]
+            content = query2_orgs.register_layout_query(filter_modal=filters)
         elif pathname == "/dashboard/view3":
             aggrid_key = 'query-3-ag'
             if aggrid_key in filters:

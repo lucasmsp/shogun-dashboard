@@ -19,8 +19,244 @@ def gen_subgraphs(n_cols, graphs):
     return children
 
 
-header_mapping = {
+def gen_style_condition(column):
+    return [i for i in color_style[column]]
 
+
+color_style = {
+    'vulns_cvss_score': [
+        {
+            "condition": "params.data.vulns_cvss_score >= 0 && params.data.vulns_cvss_score <= 2",
+            "style": {"backgroundColor": "#FFD700"},
+        },
+        {
+            "condition": "params.data.vulns_cvss_score > 2 && params.data.vulns_cvss_score <= 4",
+            "style": {"backgroundColor": "#FFA500"},
+        },
+        {
+            "condition": "params.data.vulns_cvss_score > 4 && params.data.vulns_cvss_score <= 6",
+            "style": {"backgroundColor": "#FF8C00"},
+        },
+        {
+            "condition": "params.data.vulns_cvss_score > 6 && params.data.vulns_cvss_score <= 8",
+            "style": {"backgroundColor": "#FF6347"},
+        },
+        {
+            "condition": "params.data.vulns_cvss_score > 8 && params.data.vulns_cvss_score <= 10",
+            "style": {"backgroundColor": "#FF4500"},
+        },
+    ],
+    'vulns_epss': [
+        {
+            "condition": "params.data.vulns_epss >= 0 && params.data.vulns_epss <= 0.2",
+            "style": {"backgroundColor": "#FFD700"},
+        },
+        {
+            "condition": "params.data.vulns_epss > 0.2 && params.data.vulns_epss <= 0.4",
+            "style": {"backgroundColor": "#FFA500"},
+        },
+        {
+            "condition": "params.data.vulns_epss > 0.4 && params.data.vulns_epss <= 0.6",
+            "style": {"backgroundColor": "#FF8C00"},
+        },
+        {
+            "condition": "params.data.vulns_epss > 0.6 && params.data.vulns_epss <= 0.8",
+            "style": {"backgroundColor": "#FF6347"},
+        },
+        {
+            "condition": "params.data.vulns_epss > 0.8 && params.data.vulns_epss <= 1",
+            "style": {"backgroundColor": "#FF4500"},
+        },
+    ],
+    'vulns_epss_max': [
+        {
+            "condition": "params.data.vulns_epss_max >= 0 && params.data.vulns_epss_max <= 0.2",
+            "style": {"backgroundColor": "#FFD700"},
+        },
+        {
+            "condition": "params.data.vulns_epss_max > 0.2 && params.data.vulns_epss_max <= 0.4",
+            "style": {"backgroundColor": "#FFA500"},
+        },
+        {
+            "condition": "params.data.vulns_epss_max > 0.4 && params.data.vulns_epss_max <= 0.6",
+            "style": {"backgroundColor": "#FF8C00"},
+        },
+        {
+            "condition": "params.data.vulns_epss_max > 0.6 && params.data.vulns_epss_max <= 0.8",
+            "style": {"backgroundColor": "#FF6347"},
+        },
+        {
+            "condition": "params.data.vulns_epss_max > 0.8 && params.data.vulns_epss_max <= 1",
+            "style": {"backgroundColor": "#FF4500"},
+        },
+    ],
+    'vulns_epss_min': [
+        {
+            "condition": "params.data.vulns_epss_min >= 0 && params.data.vulns_epss_min <= 0.2",
+            "style": {"backgroundColor": "#FFD700"},
+        },
+        {
+            "condition": "params.data.vulns_epss_min > 0.2 && params.data.vulns_epss_min <= 0.4",
+            "style": {"backgroundColor": "#FFA500"},
+        },
+        {
+            "condition": "params.data.vulns_epss_min > 0.4 && params.data.vulns_epss_min <= 0.6",
+            "style": {"backgroundColor": "#FF8C00"},
+        },
+        {
+            "condition": "params.data.vulns_epss_min > 0.6 && params.data.vulns_epss_min <= 0.8",
+            "style": {"backgroundColor": "#FF6347"},
+        },
+        {
+            "condition": "params.data.vulns_epss_min > 0.8 && params.data.vulns_epss_min <= 1",
+            "style": {"backgroundColor": "#FF4500"},
+        },
+    ],
+    'vulns_epss_avg': [
+        {
+            "condition": "params.data.vulns_epss_avg >= 0 && params.data.vulns_epss_avg <= 0.2",
+            "style": {"backgroundColor": "#FFD700"},
+        },
+        {
+            "condition": "params.data.vulns_epss_avg > 0.2 && params.data.vulns_epss_avg <= 0.4",
+            "style": {"backgroundColor": "#FFA500"},
+        },
+        {
+            "condition": "params.data.vulns_epss_avg > 0.4 && params.data.vulns_epss_avg <= 0.6",
+            "style": {"backgroundColor": "#FF8C00"},
+        },
+        {
+            "condition": "params.data.vulns_epss_avg > 0.6 && params.data.vulns_epss_avg <= 0.8",
+            "style": {"backgroundColor": "#FF6347"},
+        },
+        {
+            "condition": "params.data.vulns_epss_avg > 0.8 && params.data.vulns_epss_avg <= 1",
+            "style": {"backgroundColor": "#FF4500"},
+        },
+    ],
+    'vulns_cvss_score_max': [
+        {
+            "condition": "params.data.vulns_cvss_score_max >= 0 && params.data.vulns_cvss_score_max <= 2",
+            "style": {"backgroundColor": "#FFD700"},
+        },
+        {
+            "condition": "params.data.vulns_cvss_score_max > 2 && params.data.vulns_cvss_score_max <= 4",
+            "style": {"backgroundColor": "#FFA500"},
+        },
+        {
+            "condition": "params.data.vulns_cvss_score_max > 4 && params.data.vulns_cvss_score_max <= 6",
+            "style": {"backgroundColor": "#FF8C00"},
+        },
+        {
+            "condition": "params.data.vulns_cvss_score_max > 6 && params.data.vulns_cvss_score_max <= 8",
+            "style": {"backgroundColor": "#FF6347"},
+        },
+        {
+            "condition": "params.data.vulns_cvss_score_max > 8 && params.data.vulns_cvss_score_max <= 10",
+            "style": {"backgroundColor": "#FF4500"},
+        },
+    ],
+    'vulns_cvss_score_min': [
+        {
+            "condition": "params.data.vulns_cvss_score_min >= 0 && params.data.vulns_cvss_score_min <= 2",
+            "style": {"backgroundColor": "#FFD700"},
+        },
+        {
+            "condition": "params.data.vulns_cvss_score_min > 2 && params.data.vulns_cvss_score_min <= 4",
+            "style": {"backgroundColor": "#FFA500"},
+        },
+        {
+            "condition": "params.data.vulns_cvss_score_min > 4 && params.data.vulns_cvss_score_min <= 6",
+            "style": {"backgroundColor": "#FF8C00"},
+        },
+        {
+            "condition": "params.data.vulns_cvss_score_min > 6 && params.data.vulns_cvss_score_min <= 8",
+            "style": {"backgroundColor": "#FF6347"},
+        },
+        {
+            "condition": "params.data.vulns_cvss_score_min > 8 && params.data.vulns_cvss_score_min <= 10",
+            "style": {"backgroundColor": "#FF4500"},
+        },
+    ],
+    'vulns_cvss_score_avg': [
+        {
+            "condition": "params.data.vulns_cvss_score_avg >= 0 && params.data.vulns_cvss_score_avg <= 2",
+            "style": {"backgroundColor": "#FFD700"},
+        },
+        {
+            "condition": "params.data.vulns_cvss_score_avg > 2 && params.data.vulns_cvss_score_avg <= 4",
+            "style": {"backgroundColor": "#FFA500"},
+        },
+        {
+            "condition": "params.data.vulns_cvss_score_avg > 4 && params.data.vulns_cvss_score_avg <= 6",
+            "style": {"backgroundColor": "#FF8C00"},
+        },
+        {
+            "condition": "params.data.vulns_cvss_score_avg > 6 && params.data.vulns_cvss_score_avg <= 8",
+            "style": {"backgroundColor": "#FF6347"},
+        },
+        {
+            "condition": "params.data.vulns_cvss_score_avg > 8 && params.data.vulns_cvss_score_avg <= 10",
+            "style": {"backgroundColor": "#FF4500"},
+        },
+    ],
+    "asn": [
+        {
+            "condition": "params.data.as_seen == 'True'",
+            "style": {"backgroundColor": "lightgreen"},
+        },
+        {
+            "condition": "params.data.as_seen == 'False'",
+            "style": {"backgroundColor": "lightcoral"},
+        },
+    ],
+    "as_announcing_addresses": [
+        {
+            "condition": "params.data.avg_cvss >= 0 && params.data.avg_cvss <= 2",
+            "style": {"backgroundColor": "#FFD700"},
+        },
+        {
+            "condition": "params.data.avg_cvss > 2 && params.data.avg_cvss <= 4",
+            "style": {"backgroundColor": "#FFA500"},
+        },
+        {
+            "condition": "params.data.avg_cvss > 4 && params.data.avg_cvss <= 6",
+            "style": {"backgroundColor": "#FF8C00"},
+        },
+        {
+            "condition": "params.data.avg_cvss > 6 && params.data.avg_cvss <= 8",
+            "style": {"backgroundColor": "#FF6347"},
+        },
+        {
+            "condition": "params.data.avg_cvss > 8 && params.data.avg_cvss <= 10",
+            "style": {"backgroundColor": "#FF4500"},
+        },
+    ],
+    "as_country_name": [
+        {
+            "condition": "params.data.avg_epss >= 0 && params.data.avg_epss <= 0.2",
+            "style": {"backgroundColor": "#FFD700"},
+        },
+        {
+            "condition": "params.data.avg_epss > 0.2 && params.data.avg_epss <= 0.4",
+            "style": {"backgroundColor": "#FFA500"},
+        },
+        {
+            "condition": "params.data.avg_epss > 0.4 && params.data.avg_epss <= 0.6",
+            "style": {"backgroundColor": "#FF8C00"},
+        },
+        {
+            "condition": "params.data.avg_epss > 0.6 && params.data.avg_epss <= 0.8",
+            "style": {"backgroundColor": "#FF6347"},
+        },
+        {
+            "condition": "params.data.avg_epss > 0.8 && params.data.avg_epss <= 1",
+            "style": {"backgroundColor": "#FF4500"},
+        },
+    ],
+}
+
+header_mapping = {
 
     # Information related to a vulnerability
     "vulns_cisa_date_added": {
@@ -31,7 +267,7 @@ header_mapping = {
     "vulns_cisa_knownRansomwareCampaignUse": {
         'name': "Ransomware Use",
         "description": "Association with known ransomware campaigns",
-        'type': "???" # TODO
+        'type': "???"  # TODO
     },
     "vulns_cisa_product_vendor": {
         'name': "Product",
@@ -41,6 +277,16 @@ header_mapping = {
     "vulns_cvss_score_max": {
         'name': "CVSS (max)",
         'description': "Max value of CVSS",
+        'type': 'float'
+    },
+    "vulns_cvss_score_min": {
+        'name': "CVSS (min)",
+        'description': "Min value of CVSS",
+        'type': 'float'
+    },
+    "vulns_cvss_score_avg": {
+        'name': "CVSS (avg)",
+        'description': "Avg of CVSS",
         'type': 'float'
     },
     'vulns_cve_id': {
@@ -70,9 +316,29 @@ header_mapping = {
         'description': "Max value of EPSS",
         'type': 'float'
     },
+    "vulns_epss_avg": {
+        'name': "EPSS (avg)",
+        'description': "Avg of EPSS",
+        'type': 'float'
+    },
     'vulns_epss_rank': {
         'name': 'EPSS rank',
         "description": "EPSS rank vary from 0 (0%) to 1 (100%)",
+        'type': 'string'
+    },
+    'vulns_epss_min': {
+        'name': 'EPSS (min)',
+        "description": "EPSS vary from 0 (0%) to 1 (100%)",
+        'type': 'string'
+    },
+    'vulns_cvss_version': {
+        'name': 'CVSS version',
+        'description': 'Version of CVSS',
+        'type': 'float'
+    },
+    'vulns_cisa_description': {
+        'name': "Cisa's information",
+        'description': "Cisa's vulnerability description",
         'type': 'string'
     },
     'cpe_product': {
@@ -83,6 +349,16 @@ header_mapping = {
     "cisa_info": {
         'name': "Cisa's KEV",
         "description": "CISA Vulnerability Information",
+        'type': '????'
+    },
+    "epss_info": {
+        'name': "EPSS scores",
+        "description": "EPSS scores information",
+        'type': '????'
+    },
+    "cvss_info": {
+        'name': "CVSS scores",
+        "description": "CVSS scores information",
         'type': '????'
     },
     "epss_major": {  # rename  vulns_epss
@@ -137,7 +413,16 @@ header_mapping = {
         'description': "Number of vulnerabilities by CISA",
         'type': 'integer'
     },
-
+    "n_vulns": {
+        'name': "# CVEs",
+        'description': "Number of vulnerabilities",
+        'type': 'integer'
+    },
+    'n_vulns_cisa_knownRansomwareCampaignUse': {
+        'name': '# Ransomware Use',
+        'description': 'Association with known ransomware campaigns',
+        'type': 'integer'
+    },
 
     'ip': {
         "name": 'IP',
@@ -159,7 +444,7 @@ header_mapping = {
         "description": "ASNs seen in BGS are GREEN, not seen are RED",
         "type": 'string'
     },
-  
+
     # About ASes
     'as_rank': {
         "name": 'Rank',
@@ -186,9 +471,9 @@ header_mapping = {
         "description": '',
         "type": 'string'
     },
-    
 
 }
+
 
 def gen_columns_def(columns_names):
     columns = []
@@ -213,6 +498,5 @@ def gen_columns_def(columns_names):
             raw_data[c] = 0.0
         else:
             raw_data[c] = "-"
-
         columns.append(new_column)
     return columns, [raw_data]
