@@ -19,184 +19,48 @@ def gen_subgraphs(n_cols, graphs):
     return children
 
 
-def gen_style_condition(column):
-    return [i for i in color_style[column]]
-
-
 color_style = {
-    'vulns_cvss_score': [
+    '<CVSS>': [
         {
-            "condition": "params.data.vulns_cvss_score >= 0 && params.data.vulns_cvss_score <= 2",
+            "condition": "params.data.<CVSS> >= 0 && params.data.<CVSS> <= 2",
             "style": {"backgroundColor": "#FFD700"},
         },
         {
-            "condition": "params.data.vulns_cvss_score > 2 && params.data.vulns_cvss_score <= 4",
+            "condition": "params.data.<CVSS> > 2 && params.data.<CVSS> <= 4",
             "style": {"backgroundColor": "#FFA500"},
         },
         {
-            "condition": "params.data.vulns_cvss_score > 4 && params.data.vulns_cvss_score <= 6",
+            "condition": "params.data.<CVSS> > 4 && params.data.<CVSS> <= 6",
             "style": {"backgroundColor": "#FF8C00"},
         },
         {
-            "condition": "params.data.vulns_cvss_score > 6 && params.data.vulns_cvss_score <= 8",
+            "condition": "params.data.<CVSS> > 6 && params.data.<CVSS> <= 8",
             "style": {"backgroundColor": "#FF6347"},
         },
         {
-            "condition": "params.data.vulns_cvss_score > 8 && params.data.vulns_cvss_score <= 10",
+            "condition": "params.data.<CVSS> > 8 && params.data.<CVSS> <= 10",
             "style": {"backgroundColor": "#FF4500"},
         },
     ],
-    'vulns_epss': [
+    '<EPSS>': [
         {
-            "condition": "params.data.vulns_epss >= 0 && params.data.vulns_epss <= 0.2",
+            "condition": "params.data.<EPSS> >= 0 && params.data.<EPSS> <= 20",
             "style": {"backgroundColor": "#FFD700"},
         },
         {
-            "condition": "params.data.vulns_epss > 0.2 && params.data.vulns_epss <= 0.4",
+            "condition": "params.data.<EPSS> > 20 && params.data.<EPSS> <= 40",
             "style": {"backgroundColor": "#FFA500"},
         },
         {
-            "condition": "params.data.vulns_epss > 0.4 && params.data.vulns_epss <= 0.6",
+            "condition": "params.data.<EPSS> > 40 && params.data.<EPSS> <= 60",
             "style": {"backgroundColor": "#FF8C00"},
         },
         {
-            "condition": "params.data.vulns_epss > 0.6 && params.data.vulns_epss <= 0.8",
+            "condition": "params.data.<EPSS> > 60 && params.data.<EPSS> <= 80",
             "style": {"backgroundColor": "#FF6347"},
         },
         {
-            "condition": "params.data.vulns_epss > 0.8 && params.data.vulns_epss <= 1",
-            "style": {"backgroundColor": "#FF4500"},
-        },
-    ],
-    'vulns_epss_max': [
-        {
-            "condition": "params.data.vulns_epss_max >= 0 && params.data.vulns_epss_max <= 0.2",
-            "style": {"backgroundColor": "#FFD700"},
-        },
-        {
-            "condition": "params.data.vulns_epss_max > 0.2 && params.data.vulns_epss_max <= 0.4",
-            "style": {"backgroundColor": "#FFA500"},
-        },
-        {
-            "condition": "params.data.vulns_epss_max > 0.4 && params.data.vulns_epss_max <= 0.6",
-            "style": {"backgroundColor": "#FF8C00"},
-        },
-        {
-            "condition": "params.data.vulns_epss_max > 0.6 && params.data.vulns_epss_max <= 0.8",
-            "style": {"backgroundColor": "#FF6347"},
-        },
-        {
-            "condition": "params.data.vulns_epss_max > 0.8 && params.data.vulns_epss_max <= 1",
-            "style": {"backgroundColor": "#FF4500"},
-        },
-    ],
-    'vulns_epss_min': [
-        {
-            "condition": "params.data.vulns_epss_min >= 0 && params.data.vulns_epss_min <= 0.2",
-            "style": {"backgroundColor": "#FFD700"},
-        },
-        {
-            "condition": "params.data.vulns_epss_min > 0.2 && params.data.vulns_epss_min <= 0.4",
-            "style": {"backgroundColor": "#FFA500"},
-        },
-        {
-            "condition": "params.data.vulns_epss_min > 0.4 && params.data.vulns_epss_min <= 0.6",
-            "style": {"backgroundColor": "#FF8C00"},
-        },
-        {
-            "condition": "params.data.vulns_epss_min > 0.6 && params.data.vulns_epss_min <= 0.8",
-            "style": {"backgroundColor": "#FF6347"},
-        },
-        {
-            "condition": "params.data.vulns_epss_min > 0.8 && params.data.vulns_epss_min <= 1",
-            "style": {"backgroundColor": "#FF4500"},
-        },
-    ],
-    'vulns_epss_avg': [
-        {
-            "condition": "params.data.vulns_epss_avg >= 0 && params.data.vulns_epss_avg <= 0.2",
-            "style": {"backgroundColor": "#FFD700"},
-        },
-        {
-            "condition": "params.data.vulns_epss_avg > 0.2 && params.data.vulns_epss_avg <= 0.4",
-            "style": {"backgroundColor": "#FFA500"},
-        },
-        {
-            "condition": "params.data.vulns_epss_avg > 0.4 && params.data.vulns_epss_avg <= 0.6",
-            "style": {"backgroundColor": "#FF8C00"},
-        },
-        {
-            "condition": "params.data.vulns_epss_avg > 0.6 && params.data.vulns_epss_avg <= 0.8",
-            "style": {"backgroundColor": "#FF6347"},
-        },
-        {
-            "condition": "params.data.vulns_epss_avg > 0.8 && params.data.vulns_epss_avg <= 1",
-            "style": {"backgroundColor": "#FF4500"},
-        },
-    ],
-    'vulns_cvss_score_max': [
-        {
-            "condition": "params.data.vulns_cvss_score_max >= 0 && params.data.vulns_cvss_score_max <= 2",
-            "style": {"backgroundColor": "#FFD700"},
-        },
-        {
-            "condition": "params.data.vulns_cvss_score_max > 2 && params.data.vulns_cvss_score_max <= 4",
-            "style": {"backgroundColor": "#FFA500"},
-        },
-        {
-            "condition": "params.data.vulns_cvss_score_max > 4 && params.data.vulns_cvss_score_max <= 6",
-            "style": {"backgroundColor": "#FF8C00"},
-        },
-        {
-            "condition": "params.data.vulns_cvss_score_max > 6 && params.data.vulns_cvss_score_max <= 8",
-            "style": {"backgroundColor": "#FF6347"},
-        },
-        {
-            "condition": "params.data.vulns_cvss_score_max > 8 && params.data.vulns_cvss_score_max <= 10",
-            "style": {"backgroundColor": "#FF4500"},
-        },
-    ],
-    'vulns_cvss_score_min': [
-        {
-            "condition": "params.data.vulns_cvss_score_min >= 0 && params.data.vulns_cvss_score_min <= 2",
-            "style": {"backgroundColor": "#FFD700"},
-        },
-        {
-            "condition": "params.data.vulns_cvss_score_min > 2 && params.data.vulns_cvss_score_min <= 4",
-            "style": {"backgroundColor": "#FFA500"},
-        },
-        {
-            "condition": "params.data.vulns_cvss_score_min > 4 && params.data.vulns_cvss_score_min <= 6",
-            "style": {"backgroundColor": "#FF8C00"},
-        },
-        {
-            "condition": "params.data.vulns_cvss_score_min > 6 && params.data.vulns_cvss_score_min <= 8",
-            "style": {"backgroundColor": "#FF6347"},
-        },
-        {
-            "condition": "params.data.vulns_cvss_score_min > 8 && params.data.vulns_cvss_score_min <= 10",
-            "style": {"backgroundColor": "#FF4500"},
-        },
-    ],
-    'vulns_cvss_score_avg': [
-        {
-            "condition": "params.data.vulns_cvss_score_avg >= 0 && params.data.vulns_cvss_score_avg <= 2",
-            "style": {"backgroundColor": "#FFD700"},
-        },
-        {
-            "condition": "params.data.vulns_cvss_score_avg > 2 && params.data.vulns_cvss_score_avg <= 4",
-            "style": {"backgroundColor": "#FFA500"},
-        },
-        {
-            "condition": "params.data.vulns_cvss_score_avg > 4 && params.data.vulns_cvss_score_avg <= 6",
-            "style": {"backgroundColor": "#FF8C00"},
-        },
-        {
-            "condition": "params.data.vulns_cvss_score_avg > 6 && params.data.vulns_cvss_score_avg <= 8",
-            "style": {"backgroundColor": "#FF6347"},
-        },
-        {
-            "condition": "params.data.vulns_cvss_score_avg > 8 && params.data.vulns_cvss_score_avg <= 10",
+            "condition": "params.data.<EPSS> > 80 && params.data.<EPSS> <= 100",
             "style": {"backgroundColor": "#FF4500"},
         },
     ],
@@ -209,51 +73,7 @@ color_style = {
             "condition": "params.data.as_seen == 'False'",
             "style": {"backgroundColor": "lightcoral"},
         },
-    ],
-    "as_announcing_addresses": [
-        {
-            "condition": "params.data.avg_cvss >= 0 && params.data.avg_cvss <= 2",
-            "style": {"backgroundColor": "#FFD700"},
-        },
-        {
-            "condition": "params.data.avg_cvss > 2 && params.data.avg_cvss <= 4",
-            "style": {"backgroundColor": "#FFA500"},
-        },
-        {
-            "condition": "params.data.avg_cvss > 4 && params.data.avg_cvss <= 6",
-            "style": {"backgroundColor": "#FF8C00"},
-        },
-        {
-            "condition": "params.data.avg_cvss > 6 && params.data.avg_cvss <= 8",
-            "style": {"backgroundColor": "#FF6347"},
-        },
-        {
-            "condition": "params.data.avg_cvss > 8 && params.data.avg_cvss <= 10",
-            "style": {"backgroundColor": "#FF4500"},
-        },
-    ],
-    "as_country_name": [
-        {
-            "condition": "params.data.avg_epss >= 0 && params.data.avg_epss <= 0.2",
-            "style": {"backgroundColor": "#FFD700"},
-        },
-        {
-            "condition": "params.data.avg_epss > 0.2 && params.data.avg_epss <= 0.4",
-            "style": {"backgroundColor": "#FFA500"},
-        },
-        {
-            "condition": "params.data.avg_epss > 0.4 && params.data.avg_epss <= 0.6",
-            "style": {"backgroundColor": "#FF8C00"},
-        },
-        {
-            "condition": "params.data.avg_epss > 0.6 && params.data.avg_epss <= 0.8",
-            "style": {"backgroundColor": "#FF6347"},
-        },
-        {
-            "condition": "params.data.avg_epss > 0.8 && params.data.avg_epss <= 1",
-            "style": {"backgroundColor": "#FF4500"},
-        },
-    ],
+    ]
 }
 
 header_mapping = {
@@ -277,17 +97,20 @@ header_mapping = {
     "vulns_cvss_score_max": {
         'name': "CVSS (max)",
         'description': "Max value of CVSS",
-        'type': 'float'
+        'type': 'float',
+        'color_style': '<CVSS>'
     },
     "vulns_cvss_score_min": {
         'name': "CVSS (min)",
         'description': "Min value of CVSS",
-        'type': 'float'
+        'type': 'float',
+        'color_style': '<CVSS>'
     },
     "vulns_cvss_score_avg": {
         'name': "CVSS (avg)",
         'description': "Avg of CVSS",
-        'type': 'float'
+        'type': 'float',
+        'color_style': '<CVSS>'
     },
     'vulns_cve_id': {
         'name': 'CVE',
@@ -299,7 +122,8 @@ header_mapping = {
         "description": "CVSS stands for Common Vulnerability Scoring System, a standardized framework "
                        "for measuring the severity of security flaws in information systems. "
                        "The score vary from 0 to 10.",
-        'type': 'float'
+        'type': 'float',
+        'color_style': '<CVSS>'
     },
     "vulns_cwe": {
         'name': "CWE",
@@ -309,17 +133,20 @@ header_mapping = {
     'vulns_epss': {
         'name': 'EPSS',
         "description": "EPSS Score vary from 0 (0%) to 1 (100%)",
-        'type': 'float'
+        'type': 'float',
+        'color_style': '<EPSS>'
     },
     "vulns_epss_max": {  # rename vulns_epss
         'name': "EPSS (max)",
         'description': "Max value of EPSS",
-        'type': 'float'
+        'type': 'float',
+        'color_style': '<EPSS>'
     },
     "vulns_epss_avg": {
         'name': "EPSS (avg)",
         'description': "Avg of EPSS",
-        'type': 'float'
+        'type': 'float',
+        'color_style': '<EPSS>'
     },
     'vulns_epss_rank': {
         'name': 'EPSS rank',
@@ -329,7 +156,8 @@ header_mapping = {
     'vulns_epss_min': {
         'name': 'EPSS (min)',
         "description": "EPSS vary from 0 (0%) to 1 (100%)",
-        'type': 'string'
+        'type': 'string',
+        'color_style': '<EPSS>'
     },
     'vulns_cvss_version': {
         'name': 'CVSS version',
@@ -364,17 +192,20 @@ header_mapping = {
     "epss_major": {  # rename  vulns_epss
         'name': "EPSS (major)",
         'description': "EPSS vary from 0 (0%) to 1 (100%)",
-        'type': 'float'
+        'type': 'float',
+        'color_style': '<EPSS>'
     },
     "avg_cvss": {
         "name": 'Avg CVSS',
         "description": '',
-        "type": 'string'
+        "type": 'float',
+        'color_style': '<CVSS>'
     },
     "avg_epss": {
         "name": 'Avg EPSS',
         "description": '',
-        "type": 'string'
+        "type": 'float',
+        'color_style': '<EPSS>'
     },
 
     # Quantifications
@@ -405,7 +236,7 @@ header_mapping = {
     },
     "n_products": {
         'name': "# Products",
-        'description': "# Products",
+        'description': "Number of products with different vulnerabilities",
         "type": 'integer'
     },
     "n_vulns_in_cisa": {
@@ -420,7 +251,7 @@ header_mapping = {
     },
     'n_vulns_cisa_knownRansomwareCampaignUse': {
         'name': '# Ransomware Use',
-        'description': 'Association with known ransomware campaigns',
+        'description': 'Number of known CVEs as being used in ransomware campaigns',
         'type': 'integer'
     },
 
@@ -490,6 +321,14 @@ def gen_columns_def(columns_names):
         else:
             new_column['filterParams'] = {"filterOptions": ["equals", "notEqual", 'contains']}
 
+        if "color_style" in header_mapping[c]:
+            key = header_mapping[c]["color_style"]
+            styles = color_style[key].copy()
+            for s in styles:
+                s['condition'] = s['condition'].replace(key, c)
+
+            new_column["cellStyle"] = { "styleConditions": styles }
+
         if i == 0:
             raw_data[c] = "Loading ..."
         elif header_mapping[c]['type'] == 'integer':
@@ -498,5 +337,6 @@ def gen_columns_def(columns_names):
             raw_data[c] = 0.0
         else:
             raw_data[c] = "-"
+
         columns.append(new_column)
     return columns, [raw_data]

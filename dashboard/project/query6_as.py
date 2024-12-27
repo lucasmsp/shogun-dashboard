@@ -2,7 +2,7 @@ from dash import html, dcc, dash_table, callback_context, ctx, no_update
 from dash.dependencies import Output, Input, State
 import dash_bootstrap_components as dbc
 import dash_ag_grid as dag
-from project.auxiliar import gen_subgraphs, header_mapping, gen_columns_def, gen_style_condition
+from project.auxiliar import gen_subgraphs, header_mapping, gen_columns_def #, gen_style_condition
 
 import itertools
 import plotly.express as px
@@ -30,9 +30,9 @@ def register_layout_query(filter_modal={}):
     for i in gen_columns_def(["avg_cvss", "avg_epss", "n_orgs", "n_ips", "n_cves"])[0]:
         columnDefs.append(i)
 
-    columnDefs[0]['children'][0]['cellStyle'] = {
-        "styleConditions": gen_style_condition("asn")
-    }
+    # columnDefs[0]['children'][0]['cellStyle'] = {
+    #     "styleConditions": gen_style_condition("asn")
+    # }
     columnDefs[0]['children'][2]['tooltipField'] = 'as_announcing_prefixes'
     columnDefs[0]['children'][2]['tooltipComponent'] = 'CustomTooltipAddressesV6'
     columnDefs[0]['children'][3]['tooltipField'] = 'n_cities'
@@ -40,15 +40,15 @@ def register_layout_query(filter_modal={}):
     columnDefs[2]['tooltipField'] = 'min_cvss'
     columnDefs[2]["tooltipComponent"] = "CustomTooltipCvssV6"
     columnDefs[2]["valueFormatter"] = {"function": "params.value.toFixed(4)"}
-    columnDefs[2]["cellStyle"] = {
-        "styleConditions": gen_style_condition("as_announcing_addresses")
-    }
+    # columnDefs[2]["cellStyle"] = {
+    #     "styleConditions": gen_style_condition("as_announcing_addresses")
+    # }
     columnDefs[3]['tooltipField'] = 'min_epss'
     columnDefs[3]["tooltipComponent"] = "CustomTooltipEpssV6"
     columnDefs[3]["valueFormatter"] = {"function": "params.value.toFixed(4)"}
-    columnDefs[3]["cellStyle"] = {
-        "styleConditions": gen_style_condition("as_country_name")
-    }
+    # columnDefs[3]["cellStyle"] = {
+    #     "styleConditions": gen_style_condition("as_country_name")
+    # }
     columnDefs[6]["headerTooltip"] = "Clicking a cell filters the data based on the selected value, " \
                                      "showing the top 100 most recent CVE codes associated with the chosen entry."
 
@@ -64,7 +64,7 @@ def register_layout_query(filter_modal={}):
                         defaultColDef={"flex": 1, "filter": True, "resizable": True},
                         columnSize="sizeToFit",
                         dashGridOptions={'tooltipShowDelay': 0, 'tooltipHideDelay': 50000},
-                        style={"height": 360},
+                        # style={"height": 360},
                     )
                 ),
                 dbc.Row(dbc.Col(html.Hr(style={"width": "100%", 'top-padding': '10px'}), width={'size': 10, 'offset': 1})),

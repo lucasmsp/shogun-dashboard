@@ -6,7 +6,7 @@ import dash_ag_grid as dag
 import plotly.express as px
 import plotly.figure_factory as ff
 
-from project.auxiliar import gen_subgraphs, header_mapping, gen_columns_def, gen_style_condition
+from project.auxiliar import gen_subgraphs, header_mapping, gen_columns_def #, gen_style_condition
 
 import pandas as pd
 
@@ -34,15 +34,15 @@ def register_layout_query(filter_modal={}):
 
     columns[1]['tooltipValueGetter'] = {"function": "'CVSS Version: ' + params.data.vulns_cvss_version"}
     columns[1]['minWidth'] = 100
-    columns[1]['cellStyle'] = {
-        "styleConditions": gen_style_condition("vulns_cvss_score")
-    }
+    # columns[1]['cellStyle'] = {
+    #     "styleConditions": gen_style_condition("vulns_cvss_score")
+    # }
 
     columns[2]['tooltipValueGetter'] = {"function": "'EPSS: ' + params.data.vulns_epss_rank"}
     columns[2]['minWidth'] = 100
-    columns[2]['cellStyle'] = {
-        "styleConditions": gen_style_condition("vulns_epss")
-    }
+    # columns[2]['cellStyle'] = {
+    #     "styleConditions": gen_style_condition("vulns_epss")
+    # }
 
     columns[3]['tooltipValueGetter'] = {"function": "'Click on the cell for more details'"}
     columns[3]['cellRenderer'] = "GoToCWE"
@@ -333,7 +333,7 @@ def register_callback_query(dm, app):
                      )
         fig.update_layout(
             xaxis_title="EPSS Rank",
-            yaxis_title="# Campaign",
+            yaxis_title="# Campaigns",
             title_x=0.5,
             legend_title_text=""
         )

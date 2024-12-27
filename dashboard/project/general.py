@@ -77,27 +77,34 @@ def register_callback_query(dm, app):
             if aggrid_key in filters:
                 filters = filters[aggrid_key]
             content = query2_ips.register_layout_query(filter_modal=filters)
+
         elif pathname == "/dashboard/orgs":
             aggrid_key = 'query-2b-grid'
             if aggrid_key in filters:
                 filters = filters[aggrid_key]
             content = query2_orgs.register_layout_query(filter_modal=filters)
+
         elif pathname == "/dashboard/cve":
             aggrid_key = 'query-3-ag'
             if aggrid_key in filters:
                 filters = filters[aggrid_key]
             content = query3_cve.register_layout_query(filter_modal=filters)
+
         elif pathname == "/dashboard/geo":
             content = query4_geo.register_layout_query(filter_modal={})
+
         elif pathname == "/dashboard/report":
             aggrid_key = 'query-5-ag'
             if aggrid_key in filters:
                 filters = filters[aggrid_key]
             content = query5_report.register_layout_query(filter_modal=filters)
+
         elif pathname == "/dashboard/as":
             content = query6_as.register_layout_query(filter_modal={})
+
         elif pathname == "/dashboard/ports":
             content = query7_ports.register_layout_query(filter_modal=filters)
+
         else:
             content = query1_summary.register_layout_query(filter_modal={})
 
