@@ -2,14 +2,14 @@ from dash.dependencies import Input, Output, State
 from dash import no_update, html, dcc, ctx, no_update
 from flask_login import current_user
 
-import project.query1 as query1
+import project.query1_summary as query1_summary
 import project.query2_orgs as query2_orgs
 import project.query2_ips as query2_ips
-import project.query3 as query3
-import project.query4 as query4
-import project.query5 as query5
-import project.query6 as query6
-import project.query7 as query7
+import project.query3_cve as query3_cve
+import project.query4_geo as query4_geo
+import project.query5_report as query5_report
+import project.query6_as as query6_as
+import project.query7_ports as query7_ports
 
 def register_callback_query(dm, app):
 
@@ -72,34 +72,34 @@ def register_callback_query(dm, app):
         print("render_page_content:", pathname)
         print(filters)
 
-        if pathname == "/dashboard/view2a":
+        if pathname == "/dashboard/ips":
             aggrid_key = 'query-2a-grid'
             if aggrid_key in filters:
                 filters = filters[aggrid_key]
             content = query2_ips.register_layout_query(filter_modal=filters)
-        elif pathname == "/dashboard/view2b":
+        elif pathname == "/dashboard/orgs":
             aggrid_key = 'query-2b-grid'
             if aggrid_key in filters:
                 filters = filters[aggrid_key]
             content = query2_orgs.register_layout_query(filter_modal=filters)
-        elif pathname == "/dashboard/view3":
+        elif pathname == "/dashboard/cve":
             aggrid_key = 'query-3-ag'
             if aggrid_key in filters:
                 filters = filters[aggrid_key]
-            content = query3.register_layout_query(filter_modal=filters)
-        elif pathname == "/dashboard/view4":
-            content = query4.register_layout_query(filter_modal={})
+            content = query3_cve.register_layout_query(filter_modal=filters)
+        elif pathname == "/dashboard/geo":
+            content = query4_geo.register_layout_query(filter_modal={})
         elif pathname == "/dashboard/report":
             aggrid_key = 'query-5-ag'
             if aggrid_key in filters:
                 filters = filters[aggrid_key]
-            content = query5.register_layout_query(filter_modal=filters)
-        elif pathname == "/dashboard/view6":
-            content = query6.register_layout_query(filter_modal={})
+            content = query5_report.register_layout_query(filter_modal=filters)
+        elif pathname == "/dashboard/as":
+            content = query6_as.register_layout_query(filter_modal={})
         elif pathname == "/dashboard/ports":
-            content = query7.register_layout_query(filter_modal=filters)
+            content = query7_ports.register_layout_query(filter_modal=filters)
         else:
-            content = query1.register_layout_query(filter_modal={})
+            content = query1_summary.register_layout_query(filter_modal={})
 
         return content
 

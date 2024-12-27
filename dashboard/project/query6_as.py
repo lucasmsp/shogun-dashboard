@@ -247,6 +247,26 @@ def register_callback_query(dm, app):
                         }
                     }
                 }
-                return "/dashboard/view3", filter_opt
+                return "/dashboard/cve", filter_opt
+            elif cell.get("colId", "") == "n_cves":
+                row_id = int(cell.get("rowId", 0))
+                cve_list = df.at[row_id, "cve_list"]
+                top_100_cves = heapq.nlargest(100, cve_list)
+                filter_opt = {
+                    "query-3-ag": {
+                        'vulns_cve_id': {
+                            "filterType": "text",
+                            "operator": "OR",
+                            "conditions":[
+                                {
+                                    "filter": cve,
+                                    "filterType": "text",
+                                    "type": "equals"
+                                } for cve in top_100_cves
+                            ]
+                        }
+                    }
+                }
+                return "/dashboard/orgs", filter_opt
             return no_update, no_update
         return no_update, no_update

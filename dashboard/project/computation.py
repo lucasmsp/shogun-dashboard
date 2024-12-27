@@ -62,6 +62,7 @@ def run(day_str, first_execution=False):
     algorithm.gen_extra_query2()
     algorithm.gen_extra_query3()
     algorithm.gen_extra_query4()
+    algorithm.gen_extra_query5()
 
     spark.stop()
     t2 = time.time()
