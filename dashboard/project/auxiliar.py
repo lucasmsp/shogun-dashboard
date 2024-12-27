@@ -19,8 +19,64 @@ def gen_subgraphs(n_cols, graphs):
     return children
 
 
-header_mapping = {
+color_style = {
+    '<CVSS>': [
+        {
+            "condition": "params.data.<CVSS> >= 0 && params.data.<CVSS> <= 2",
+            "style": {"backgroundColor": "#FFD700"},
+        },
+        {
+            "condition": "params.data.<CVSS> > 2 && params.data.<CVSS> <= 4",
+            "style": {"backgroundColor": "#FFA500"},
+        },
+        {
+            "condition": "params.data.<CVSS> > 4 && params.data.<CVSS> <= 6",
+            "style": {"backgroundColor": "#FF8C00"},
+        },
+        {
+            "condition": "params.data.<CVSS> > 6 && params.data.<CVSS> <= 8",
+            "style": {"backgroundColor": "#FF6347"},
+        },
+        {
+            "condition": "params.data.<CVSS> > 8 && params.data.<CVSS> <= 10",
+            "style": {"backgroundColor": "#FF4500"},
+        },
+    ],
+    '<EPSS>': [
+        {
+            "condition": "params.data.<EPSS> >= 0 && params.data.<EPSS> <= 20",
+            "style": {"backgroundColor": "#FFD700"},
+        },
+        {
+            "condition": "params.data.<EPSS> > 20 && params.data.<EPSS> <= 40",
+            "style": {"backgroundColor": "#FFA500"},
+        },
+        {
+            "condition": "params.data.<EPSS> > 40 && params.data.<EPSS> <= 60",
+            "style": {"backgroundColor": "#FF8C00"},
+        },
+        {
+            "condition": "params.data.<EPSS> > 60 && params.data.<EPSS> <= 80",
+            "style": {"backgroundColor": "#FF6347"},
+        },
+        {
+            "condition": "params.data.<EPSS> > 80 && params.data.<EPSS> <= 100",
+            "style": {"backgroundColor": "#FF4500"},
+        },
+    ],
+    "asn": [
+        {
+            "condition": "params.data.as_seen == 'True'",
+            "style": {"backgroundColor": "lightgreen"},
+        },
+        {
+            "condition": "params.data.as_seen == 'False'",
+            "style": {"backgroundColor": "lightcoral"},
+        },
+    ]
+}
 
+header_mapping = {
 
     # Information related to a vulnerability
     "vulns_cisa_date_added": {
@@ -31,7 +87,7 @@ header_mapping = {
     "vulns_cisa_knownRansomwareCampaignUse": {
         'name': "Ransomware Use",
         "description": "Association with known ransomware campaigns",
-        'type': "???" # TODO
+        'type': "???"  # TODO
     },
     "vulns_cisa_product_vendor": {
         'name': "Product",
@@ -41,7 +97,20 @@ header_mapping = {
     "vulns_cvss_score_max": {
         'name': "CVSS (max)",
         'description': "Max value of CVSS",
-        'type': 'float'
+        'type': 'float',
+        'color_style': '<CVSS>'
+    },
+    "vulns_cvss_score_min": {
+        'name': "CVSS (min)",
+        'description': "Min value of CVSS",
+        'type': 'float',
+        'color_style': '<CVSS>'
+    },
+    "vulns_cvss_score_avg": {
+        'name': "CVSS (avg)",
+        'description': "Avg of CVSS",
+        'type': 'float',
+        'color_style': '<CVSS>'
     },
     'vulns_cve_id': {
         'name': 'CVE',
@@ -53,7 +122,8 @@ header_mapping = {
         "description": "CVSS stands for Common Vulnerability Scoring System, a standardized framework "
                        "for measuring the severity of security flaws in information systems. "
                        "The score vary from 0 to 10.",
-        'type': 'float'
+        'type': 'float',
+        'color_style': '<CVSS>'
     },
     "vulns_cwe": {
         'name': "CWE",
@@ -63,16 +133,40 @@ header_mapping = {
     'vulns_epss': {
         'name': 'EPSS',
         "description": "EPSS Score vary from 0 (0%) to 1 (100%)",
-        'type': 'float'
+        'type': 'float',
+        'color_style': '<EPSS>'
     },
     "vulns_epss_max": {  # rename vulns_epss
         'name': "EPSS (max)",
         'description': "Max value of EPSS",
-        'type': 'float'
+        'type': 'float',
+        'color_style': '<EPSS>'
+    },
+    "vulns_epss_avg": {
+        'name': "EPSS (avg)",
+        'description': "Avg of EPSS",
+        'type': 'float',
+        'color_style': '<EPSS>'
     },
     'vulns_epss_rank': {
         'name': 'EPSS rank',
         "description": "EPSS rank vary from 0 (0%) to 1 (100%)",
+        'type': 'string'
+    },
+    'vulns_epss_min': {
+        'name': 'EPSS (min)',
+        "description": "EPSS vary from 0 (0%) to 1 (100%)",
+        'type': 'string',
+        'color_style': '<EPSS>'
+    },
+    'vulns_cvss_version': {
+        'name': 'CVSS version',
+        'description': 'Version of CVSS',
+        'type': 'float'
+    },
+    'vulns_cisa_description': {
+        'name': "Cisa's information",
+        'description': "Cisa's vulnerability description",
         'type': 'string'
     },
     'cpe_product': {
@@ -85,20 +179,33 @@ header_mapping = {
         "description": "CISA Vulnerability Information",
         'type': '????'
     },
+    "epss_info": {
+        'name': "EPSS scores",
+        "description": "EPSS scores information",
+        'type': '????'
+    },
+    "cvss_info": {
+        'name': "CVSS scores",
+        "description": "CVSS scores information",
+        'type': '????'
+    },
     "epss_major": {  # rename  vulns_epss
         'name': "EPSS (major)",
         'description': "EPSS vary from 0 (0%) to 1 (100%)",
-        'type': 'float'
+        'type': 'float',
+        'color_style': '<EPSS>'
     },
     "avg_cvss": {
         "name": 'Avg CVSS',
         "description": '',
-        "type": 'string'
+        "type": 'float',
+        'color_style': '<CVSS>'
     },
     "avg_epss": {
         "name": 'Avg EPSS',
         "description": '',
-        "type": 'string'
+        "type": 'float',
+        'color_style': '<EPSS>'
     },
 
     # Quantifications
@@ -129,7 +236,7 @@ header_mapping = {
     },
     "n_products": {
         'name': "# Products",
-        'description': "# Products",
+        'description': "Number of products with different vulnerabilities",
         "type": 'integer'
     },
     "n_vulns_in_cisa": {
@@ -137,7 +244,16 @@ header_mapping = {
         'description': "Number of vulnerabilities by CISA",
         'type': 'integer'
     },
-
+    "n_vulns": {
+        'name': "# CVEs",
+        'description': "Number of vulnerabilities",
+        'type': 'integer'
+    },
+    'n_vulns_cisa_knownRansomwareCampaignUse': {
+        'name': '# Ransomware Use',
+        'description': 'Number of known CVEs as being used in ransomware campaigns',
+        'type': 'integer'
+    },
 
     'ip': {
         "name": 'IP',
@@ -159,7 +275,7 @@ header_mapping = {
         "description": "ASNs seen in BGS are GREEN, not seen are RED",
         "type": 'string'
     },
-  
+
     # About ASes
     'as_rank': {
         "name": 'Rank',
@@ -186,9 +302,9 @@ header_mapping = {
         "description": '',
         "type": 'string'
     },
-    
 
 }
+
 
 def gen_columns_def(columns_names):
     columns = []
@@ -204,6 +320,14 @@ def gen_columns_def(columns_names):
             new_column['filterParams'] = {"filterOptions": ["equals", "notEqual", 'lessThan', 'greaterThan', 'inRange']}
         else:
             new_column['filterParams'] = {"filterOptions": ["equals", "notEqual", 'contains']}
+
+        if "color_style" in header_mapping[c]:
+            key = header_mapping[c]["color_style"]
+            styles = color_style[key].copy()
+            for s in styles:
+                s['condition'] = s['condition'].replace(key, c)
+
+            new_column["cellStyle"] = { "styleConditions": styles }
 
         if i == 0:
             raw_data[c] = "Loading ..."

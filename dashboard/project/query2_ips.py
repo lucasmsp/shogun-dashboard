@@ -18,6 +18,7 @@ def register_layout_query(filter_modal={}):
     columns, raw_data = gen_columns_def(['org_clean', 'ip', 'vulns_cve_id', 'vulns_cvss_score',
                                'vulns_epss', "cpe_product"])
 
+    columns[1]["maxNumConditions"] = 500
     columns[1]["tooltipValueGetter"]= {"function": "'Click on the cell for more details'"}
     columns[4]["tooltipField"] = "vulns_epss_rank"
 
