@@ -2,7 +2,7 @@ from dash import html, dcc, dash_table, callback_context, ctx, no_update
 from dash.dependencies import Output, Input, State
 import dash_bootstrap_components as dbc
 import dash_ag_grid as dag
-from project.auxiliar import gen_subgraphs, header_mapping, gen_columns_def #, gen_style_condition
+from project.auxiliar import gen_subgraphs, header_mapping, gen_columns_def
 
 import itertools
 import plotly.express as px
@@ -16,86 +16,97 @@ INPUT_DATA_V6 = '4'
 
 def register_layout_query(filter_modal={}):
 
-    columnDefs = [
+    special_config = {
+        'asn': {'pinned': 'left'},
+        'as_announcing_addresses': {
+            'tooltipField': 'as_announcing_prefixes',
+            'tooltipComponent': 'CustomTooltipAddressesV6'
+        },
+        'as_country_name': {'tooltipField': 'n_cities', 'tooltipComponent': 'CustomTooltipCountryNameV6'}
+    }
+    as_info_columns, raw_data1 = gen_columns_def(["asn", "as_rank", "as_announcing_addresses", "as_country_name"],
+                                        special_configs=special_config)
+    org_columns, raw_data2 = gen_columns_def(["as_org_name", "as_org_country_name"])
+    columns = [
         {
             'headerName': 'AS Info',
-            'children': gen_columns_def(["asn", "as_rank", "as_announcing_addresses", "as_country_name"])[0]
+            'children': list(as_info_columns.values())
         },
         {
             'headerName': 'Organization Owner',
-            'children': gen_columns_def(["as_org_name", "as_org_country_name"])[0]
+            'children': list(org_columns.values())
         },
     ]
 
-    for i in gen_columns_def(["avg_cvss", "avg_epss", "n_orgs", "n_ips", "n_cves"])[0]:
-        columnDefs.append(i)
+    special_config = {
+        "avg_cvss": {
+            'tooltipField':  'min_cvss',
+            "tooltipComponent": "CustomTooltipCvssV6"
 
-    # columnDefs[0]['children'][0]['cellStyle'] = {
-    #     "styleConditions": gen_style_condition("asn")
-    # }
-    columnDefs[0]['children'][2]['tooltipField'] = 'as_announcing_prefixes'
-    columnDefs[0]['children'][2]['tooltipComponent'] = 'CustomTooltipAddressesV6'
-    columnDefs[0]['children'][3]['tooltipField'] = 'n_cities'
-    columnDefs[0]['children'][3]['tooltipComponent'] = 'CustomTooltipCountryNameV6'
-    columnDefs[2]['tooltipField'] = 'min_cvss'
-    columnDefs[2]["tooltipComponent"] = "CustomTooltipCvssV6"
-    columnDefs[2]["valueFormatter"] = {"function": "params.value.toFixed(4)"}
-    # columnDefs[2]["cellStyle"] = {
-    #     "styleConditions": gen_style_condition("as_announcing_addresses")
-    # }
-    columnDefs[3]['tooltipField'] = 'min_epss'
-    columnDefs[3]["tooltipComponent"] = "CustomTooltipEpssV6"
-    columnDefs[3]["valueFormatter"] = {"function": "params.value.toFixed(4)"}
-    # columnDefs[3]["cellStyle"] = {
-    #     "styleConditions": gen_style_condition("as_country_name")
-    # }
-    columnDefs[6]["headerTooltip"] = "Clicking a cell filters the data based on the selected value, " \
-                                     "showing the top 100 most recent CVE codes associated with the chosen entry."
+        },
+        "avg_epss": {
+            'tooltipField': 'min_epss',
+            "tooltipComponent": "CustomTooltipEpssV6",
+        },
+        'n_cves': { "headerTooltip":
+                        "Clicking a cell filters the data based on the selected value, "
+                        "showing the top 100 most recent CVE codes associated with the chosen entry."}
+    }
+
+    remaining_columns, raw_data3 = gen_columns_def(["avg_cvss", "avg_epss", "n_orgs", "n_ips", "n_cves"],
+                                            special_configs=special_config)
+    columns += list(remaining_columns.values())
+    raw_data = raw_data1 + raw_data2 + raw_data3 # is it really necessary?
 
 
-    q6 = [
-        html.H1(children="View 6 - AS summary", className='wrapper', style={'textAlign': 'center'}),
-        dbc.Container(
-            [
-                dbc.Row(
-                    dag.AgGrid(
-                        id="query-6-table",
-                        columnDefs=columnDefs,
-                        defaultColDef={"flex": 1, "filter": True, "resizable": True},
-                        columnSize="sizeToFit",
-                        dashGridOptions={'tooltipShowDelay': 0, 'tooltipHideDelay': 50000},
-                        # style={"height": 360},
-                    )
-                ),
-                dbc.Row(dbc.Col(html.Hr(style={"width": "100%", 'top-padding': '10px'}), width={'size': 10, 'offset': 1})),
-                dbc.Row([html.Div(id='query-6-graph', children=[])])
-            ]
-        )
+    aggrid = dag.AgGrid(
+        id="query-6-table",
+        #rowData=raw_data,
+        columnDefs=columns,
+        defaultColDef={"flex": 1, "filter": True, "resizable": True},
+        columnSize="sizeToFit",
+        filterModel=filter_modal,
+        dashGridOptions={
+            "rowSelection": "single",
+            'tooltipShowDelay': 0,
+            'tooltipHideDelay': 50000,
+            "animateRows": False
+        },
+    )
+
+    elements = [
+        dbc.Row(
+            html.Div([
+                html.H1(children="View 6 - AS summary", className='wrapper', style={'textAlign': 'center'}),
+                html.H2(
+                    children="This visualization allows the analysis of Autonomous Systems.",
+                    style={'fontSize': '20px', 'top-padding': '40px', 'bottom-padding': '40px'}
+                )
+            ])
+        ),
+        dcc.Loading([aggrid]),
+        dbc.Row(dbc.Col(html.Hr(style={"width": "100%", 'top-padding': '10px'}), width={'size': 10, 'offset': 1})),
+        dbc.Row([html.Div(id='query-6-graph', children=[])])
     ]
 
-    layout = dbc.Card(
+    tab6_content = dbc.Card(
         dbc.CardBody(
-            html.Div(
-                q6,
-                className="wrapper"
-            )
+            html.Div(children=[dbc.Row(children=elements)], className="wrapper"),
         ),
         className="mt-3",
         id="tab6_content_asn"
     )
 
-    return layout
+    return tab6_content
 
 def register_callback_query(dm, app):
 
     @app.callback(
         Output('query-6-table', "rowData"),
-        [
-            Input('date-picker-single', 'value'),
-        ]
+        Input('date-picker-single', 'value')
     )
     def update_grid6(date_value):
-        print("[INFO] query 2 - update_table2a: ", date_value)
+        print("[INFO] query 6 - update_table6: ", date_value)
         df = dm.get_view_dataset(date_value, INPUT_DATA_V6)
 
         if df.empty:
@@ -165,6 +176,8 @@ def register_callback_query(dm, app):
             title='# IPs per Brazilian state'
         )
 
+        graphs = [dcc.Graph(figure=fig_horizontal_bar, config={'displayModeBar': False, 'scrollZoom': False})]
+
         graphs_type = {
             "Bar plot - Top 10 ASN by Number of IPs": {
                 "y_column": "n_ips", "graph_type": "bar plot", "y_label": "# IPs",
@@ -183,9 +196,6 @@ def register_callback_query(dm, app):
                 'x_column': 'asn', 'x_label': "ASN", 'df': df_top_ips
             }
         }
-
-        graphs = []
-        graphs.append(dcc.Graph(figure=fig_horizontal_bar, config={'displayModeBar': False, 'scrollZoom': False}))
         for title, configs in graphs_type.items():
             y_column = configs['y_column']
             x_column = configs['x_column']
@@ -216,7 +226,7 @@ def register_callback_query(dm, app):
         Output("url-redirect", "pathname", allow_duplicate=True),
         Output('store-filters', 'data', allow_duplicate=True),
         Input("query-6-table", "cellClicked"),
-        Input('date-picker-single', 'value'),
+        State('date-picker-single', 'value'),
         prevent_initial_call=True,
     )
     def filter_asn(cell, date_value):
@@ -228,6 +238,7 @@ def register_callback_query(dm, app):
                 filter_opt = {
                     "query-5-ag": {'asn': {'filterType': 'text', 'type': 'equals', 'filter': cell.get("value", "")}}}
                 return "/dashboard/report", filter_opt
+
             elif cell.get("colId", "") == "n_cves":
                 row_id = int(cell.get("rowId", 0))
                 cve_list = df.at[row_id, "cve_list"]
@@ -248,25 +259,5 @@ def register_callback_query(dm, app):
                     }
                 }
                 return "/dashboard/cve", filter_opt
-            elif cell.get("colId", "") == "n_cves":
-                row_id = int(cell.get("rowId", 0))
-                cve_list = df.at[row_id, "cve_list"]
-                top_100_cves = heapq.nlargest(100, cve_list)
-                filter_opt = {
-                    "query-3-ag": {
-                        'vulns_cve_id': {
-                            "filterType": "text",
-                            "operator": "OR",
-                            "conditions":[
-                                {
-                                    "filter": cve,
-                                    "filterType": "text",
-                                    "type": "equals"
-                                } for cve in top_100_cves
-                            ]
-                        }
-                    }
-                }
-                return "/dashboard/orgs", filter_opt
-            return no_update, no_update
+
         return no_update, no_update

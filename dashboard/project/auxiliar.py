@@ -1,6 +1,7 @@
 from dash import html, dcc
 import dash_bootstrap_components as dbc
 
+from collections import OrderedDict
 
 def gen_subgraphs(n_cols, graphs):
     children = []
@@ -82,7 +83,11 @@ header_mapping = {
     "vulns_cisa_date_added": {
         'name': "Date Added",
         "description": "Cisa's date added",
-        'type': 'date'
+        'type': 'date',
+        'general_config': {
+            'width': 130,
+            'minWidth': 140
+        }
     },
     "vulns_cisa_knownRansomwareCampaignUse": {
         'name': "Ransomware Use",
@@ -98,24 +103,48 @@ header_mapping = {
         'name': "CVSS (max)",
         'description': "Max value of CVSS",
         'type': 'float',
-        'color_style': '<CVSS>'
+        'color_style': '<CVSS>',
+        'general_config': {
+            'width': 125,
+            'minWidth': 125,
+            "valueFormatter": {"function": "params.value.toFixed(1)"}
+        }
     },
     "vulns_cvss_score_min": {
         'name': "CVSS (min)",
         'description': "Min value of CVSS",
         'type': 'float',
-        'color_style': '<CVSS>'
+        'color_style': '<CVSS>',
+        'general_config': {
+            'width': 125,
+            'minWidth': 125,
+            "valueFormatter": {"function": "params.value.toFixed(1)"}
+        }
     },
     "vulns_cvss_score_avg": {
         'name': "CVSS (avg)",
         'description': "Avg of CVSS",
         'type': 'float',
-        'color_style': '<CVSS>'
+        'color_style': '<CVSS>',
+        'general_config': {
+            'width': 125,
+            'minWidth': 125,
+            "valueFormatter": {"function": "params.value.toFixed(1)"}
+        }
     },
     'vulns_cve_id': {
         'name': 'CVE',
         'description': "CVE Identifier",
-        'type': 'string'
+        'type': 'string',
+        'general_config': {
+            'width': 150,
+            'minWidth': 150,
+        }
+    },
+    'vulns_cvss_version': {
+        'name': 'CVSS version',
+        'description': 'Version of CVSS',
+        'type': 'float'
     },
     'vulns_cvss_score': {
         "name": 'CVSS',
@@ -123,30 +152,54 @@ header_mapping = {
                        "for measuring the severity of security flaws in information systems. "
                        "The score vary from 0 to 10.",
         'type': 'float',
-        'color_style': '<CVSS>'
+        'color_style': '<CVSS>',
+        'general_config': {
+            'width': 100,
+            'minWidth': 100,
+            # "valueFormatter": {"function": "params.value.toFixed(1)"}
+        }
     },
     "vulns_cwe": {
         'name': "CWE",
         "description": "CWE Identifier",
-        'type': 'list-string'
+        'type': 'list-string',
+        'general_config': {
+            'width': 160,
+            'minWidth': 160
+        }
     },
     'vulns_epss': {
         'name': 'EPSS',
         "description": "EPSS Score vary from 0 (0%) to 1 (100%)",
         'type': 'float',
-        'color_style': '<EPSS>'
+        'color_style': '<EPSS>',
+        'general_config': {
+            'width': 100,
+            'minWidth': 100,
+           #  "valueFormatter": {"function": "params.value.toFixed(4)"}
+        }
     },
     "vulns_epss_max": {  # rename vulns_epss
         'name': "EPSS (max)",
         'description': "Max value of EPSS",
         'type': 'float',
-        'color_style': '<EPSS>'
+        'color_style': '<EPSS>',
+        'general_config': {
+            'width': 125,
+            'minWidth': 125,
+            "valueFormatter": {"function": "params.value.toFixed(4)"}
+        }
     },
     "vulns_epss_avg": {
         'name': "EPSS (avg)",
         'description': "Avg of EPSS",
         'type': 'float',
-        'color_style': '<EPSS>'
+        'color_style': '<EPSS>',
+        'general_config': {
+            'width': 125,
+            'minWidth': 125,
+            "valueFormatter": {"function": "params.value.toFixed(4)"}
+        }
     },
     'vulns_epss_rank': {
         'name': 'EPSS rank',
@@ -157,13 +210,14 @@ header_mapping = {
         'name': 'EPSS (min)',
         "description": "EPSS vary from 0 (0%) to 1 (100%)",
         'type': 'string',
-        'color_style': '<EPSS>'
+        'color_style': '<EPSS>',
+        'general_config': {
+            'width': 125,
+            'minWidth': 125,
+            "valueFormatter": {"function": "params.value.toFixed(4)"}
+        }
     },
-    'vulns_cvss_version': {
-        'name': 'CVSS version',
-        'description': 'Version of CVSS',
-        'type': 'float'
-    },
+
     'vulns_cisa_description': {
         'name': "Cisa's information",
         'description': "Cisa's vulnerability description",
@@ -193,66 +247,117 @@ header_mapping = {
         'name': "EPSS (major)",
         'description': "EPSS vary from 0 (0%) to 1 (100%)",
         'type': 'float',
-        'color_style': '<EPSS>'
+        'color_style': '<EPSS>',
+        'general_config': {
+            'width': 125,
+            'minWidth': 125,
+            "valueFormatter": {"function": "params.value.toFixed(4)"}
+        }
     },
     "avg_cvss": {
         "name": 'Avg CVSS',
         "description": '',
         "type": 'float',
-        'color_style': '<CVSS>'
+        'color_style': '<CVSS>',
+        'general_config': {
+            'width': 125,
+            'minWidth': 125,
+            "valueFormatter": {"function": "params.value.toFixed(2)"}
+        }
     },
     "avg_epss": {
         "name": 'Avg EPSS',
         "description": '',
         "type": 'float',
-        'color_style': '<EPSS>'
+        'color_style': '<EPSS>',
+        'general_config': {
+            'width': 125,
+            'minWidth': 125,
+            "valueFormatter": {"function": "params.value.toFixed(4)"}
+        }
     },
 
     # Quantifications
     "n_as": {
         'name': "# AS",
         "description": "Number of Autonomous Systems",
-        "type": 'integer'
+        "type": 'integer',
+        'general_config': {
+            'width': 110,
+            'minWidth': 110
+        }
     },
     'n_cves': {
         'name': '# CVEs',
         "description": "Number of distinct vulnerabilities",
-        "type": 'integer'
+        "type": 'integer',
+        'general_config': {
+            'width': 110,
+            'minWidth': 110
+        }
     },
     'n_ips': {
         'name': '# IPs',
         "description": "Number of IP addresses",
-        "type": 'integer'
+        "type": 'integer',
+        'general_config': {
+            'width': 110,
+            'minWidth': 110
+        }
     },
     'n_orgs': {
         'name': '# Orgs',
         "description": "Number of organizations",
-        "type": 'integer'
+        "type": 'integer',
+        'general_config': {
+            'width': 110,
+            'minWidth': 110
+        }
     },
     "n_port": {
         'name': "# Ports",
         'description': "Number of ports",
-        "type": 'integer'
+        "type": 'integer',
+        'general_config': {
+            'width': 110,
+            'minWidth': 110
+        }
     },
     "n_products": {
         'name': "# Products",
         'description': "Number of products with different vulnerabilities",
-        "type": 'integer'
+        "type": 'integer',
+        'general_config': {
+            'width': 110,
+            'minWidth': 110
+        }
     },
     "n_vulns_in_cisa": {
         'name': "# CVEs in CISA",
         'description': "Number of vulnerabilities by CISA",
-        'type': 'integer'
+        'type': 'integer',
+        'general_config': {
+            'width': 110,
+            'minWidth': 110
+        }
     },
     "n_vulns": {
         'name': "# CVEs",
         'description': "Number of vulnerabilities",
-        'type': 'integer'
+        'type': 'integer',
+        'general_config': {
+            'width': 110,
+            'minWidth': 110
+        }
     },
     'n_vulns_cisa_knownRansomwareCampaignUse': {
         'name': '# Ransomware Use',
         'description': 'Number of known CVEs as being used in ransomware campaigns',
-        'type': 'integer'
+        'type': 'integer',
+        'general_config': {
+            'width': 120,
+            'minWidth': 120
+        }
     },
 
     'ip': {
@@ -268,7 +373,11 @@ header_mapping = {
     "port": {
         'name': "Port",
         'description': "Port identification",
-        'type': 'integer'
+        'type': 'integer',
+        'general_config': {
+            'width': 85,
+            'minWidth': 85
+        }
     },
     'asn': {
         "name": 'ASN',
@@ -306,9 +415,13 @@ header_mapping = {
 }
 
 
-def gen_columns_def(columns_names):
-    columns = []
+def gen_columns_def(columns_names, special_configs=None):
+    if special_configs is None:
+        special_configs = {}
+
+    columns = OrderedDict()
     raw_data = {}
+
     for i, c in enumerate(columns_names):
         new_column = {
             "field": c, "flex": 1,
@@ -317,9 +430,14 @@ def gen_columns_def(columns_names):
         }
         if header_mapping[c]['type'] in ['integer', 'float']:
             new_column["filter"] = "agNumberColumnFilter"
-            new_column['filterParams'] = {"filterOptions": ["equals", "notEqual", 'lessThan', 'greaterThan', 'inRange']}
+            new_column['filterParams'] = {
+                "filterOptions": ["equals", "notEqual", 'lessThan', 'greaterThan', 'inRange'],
+                'buttons': ["apply", "reset" ],
+            }
         else:
-            new_column['filterParams'] = {"filterOptions": ["equals", "notEqual", 'contains']}
+            new_column['filterParams'] = {"filterOptions": ["equals", "notEqual", 'contains'],
+                'buttons': ["apply", "reset" ],
+            }
 
         if "color_style" in header_mapping[c]:
             key = header_mapping[c]["color_style"]
@@ -328,6 +446,16 @@ def gen_columns_def(columns_names):
                 s['condition'] = s['condition'].replace(key, c)
 
             new_column["cellStyle"] = { "styleConditions": styles }
+
+        for key, value in header_mapping[c].get('general_config', {}).items():
+            new_column[key] = value
+
+        for key, value in special_configs.get(c, {}).items():
+            new_column[key] = value
+
+
+        columns[c] = new_column
+
 
         if i == 0:
             raw_data[c] = "Loading ..."
@@ -338,5 +466,5 @@ def gen_columns_def(columns_names):
         else:
             raw_data[c] = "-"
 
-        columns.append(new_column)
+
     return columns, [raw_data]

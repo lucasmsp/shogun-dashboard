@@ -16,20 +16,25 @@ from project.auxiliar import gen_subgraphs, gen_columns_def
 INPUT_DATA_V2 = '2'
 
 def register_layout_query(filter_modal={}):
+
     columns, raw_data = gen_columns_def(['org_clean', 'vulns_epss'])
 
-    columns[0]["maxNumConditions"] = 500
-    columns[1]['headerName'] += " (major)"
-    
+    columns['org_clean']["maxNumConditions"] = 500
+
     aggrid = dag.AgGrid(
                     id="query-2b-grid",
                     rowData=raw_data,
-                    columnDefs=columns,
+                    columnDefs=list(columns.values()),
                     filterModel=filter_modal,
                     defaultColDef={"flex": 1, "filter": True},
                     columnSize="sizeToFit",
                     columnSizeOptions={"skipHeader": False},
-                    dashGridOptions={"rowSelection": "single", "animateRows": False}
+                    dashGridOptions={
+                        "rowSelection": "single",
+                        'tooltipShowDelay': 0,
+                        'tooltipHideDelay': 50000,
+                        "animateRows": False
+                    }
                 )
 
     elements = [
@@ -37,7 +42,8 @@ def register_layout_query(filter_modal={}):
             html.Div([
                 html.H2(children="Highest EPSS for each org", className='wrapper'),
                 html.H2(
-                    children="This visualization allows for assessing the higher vulnerability of an Organization based on the EPSS score. Users can click on an organization to further information.",
+                    children="This visualization allows for assessing the higher vulnerability of an Organization"
+                             " based on the EPSS score. Users can click on an organization to further information.",
                     style={'fontSize': '20px', 'padding': 10, }
                 )
             ])

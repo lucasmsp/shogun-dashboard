@@ -15,7 +15,7 @@ def register_layout_query(filter_modal={}):
     columns, raw_data = gen_columns_def(['vulns_epss_rank', 'n_cves', 'n_ips', 'n_orgs', 'n_as'])
     aggrid = dag.AgGrid(
         id='query-1-table',
-        columnDefs=columns,
+        columnDefs=list(columns.values()),
         rowData=columns,
         defaultColDef={"flex": 1, "resizable": False},
         columnSize="responsiveSizeToFit",
@@ -28,10 +28,9 @@ def register_layout_query(filter_modal={}):
         html.H1(children="View 1 - EPSS summary", className='wrapper', style={'textAlign': 'center'}),
         dbc.Container(
             [
-                dbc.Row(aggrid),
-                dbc.Row(dbc.Col(html.Hr(style={"width": "100%", 'top-padding': '10px'}), width={'size': 10, 'offset': 1})),
-                dbc.Row([html.Div(id='query-1-graph', children=[])]
-                )
+             dbc.Row(aggrid),
+             dbc.Row(dbc.Col(html.Hr(style={"width": "100%", 'top-padding': '10px'}), width={'size': 10, 'offset': 1})),
+             dbc.Row([html.Div(id='query-1-graph', children=[])])
             ]
         )
     ]

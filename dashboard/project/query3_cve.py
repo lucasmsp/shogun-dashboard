@@ -1,12 +1,12 @@
 import itertools
 
 import dash_bootstrap_components as dbc
-from dash import Dash, dcc, html, Input, Output, no_update
+from dash import Dash, dcc, html, Input, Output, State, no_update
 import dash_ag_grid as dag
 import plotly.express as px
 import plotly.figure_factory as ff
 
-from project.auxiliar import gen_subgraphs, header_mapping, gen_columns_def #, gen_style_condition
+from project.auxiliar import gen_subgraphs, header_mapping, gen_columns_def
 
 import pandas as pd
 
@@ -16,56 +16,42 @@ INPUT_DATA = '3'
 # constructs the layout for View 3
 def register_layout_query(filter_modal={}):
 
+    special_configs = {
+        'vulns_cve_id': {
+            'maxNumConditions': 500,
+            'tooltipValueGetter': {"function": "'Click on the cell for more details'"},
+            'pinned': 'left',
+            'cellRenderer': 'GoToMitre'
+        },
+        'vulns_cvss_score': {
+            'tooltipValueGetter': {"function": "'CVSS Version: ' + params.data.vulns_cvss_version"},
+        },
+        'vulns_epss': {
+            'tooltipValueGetter': {"function": "'EPSS: ' + params.data.vulns_epss_rank"},
+        },
+        'vulns_cwe': {
+            'tooltipValueGetter': {"function": "'Click on the cell for more details'"},
+            'cellRenderer': "GoToCWE"
+        },
+
+        'vulns_cisa_knownRansomwareCampaignUse': {'minWidth': 160, 'cellStyle': {'textAlign': 'center'} },
+        'vulns_cisa_product_vendor': {
+            'minWidth': 500,
+            'tooltipValueGetter': {"function":
+                                       "params.data.vulns_cisa_description == '-' ? '' : params.data.vulns_cisa_description"}
+        },
+
+
+    }
+
+
     columns, raw_data = gen_columns_def(['vulns_cve_id', 'vulns_cvss_score', 'vulns_epss', 'vulns_cwe',
                                          'n_as', 'n_ips', 'n_orgs', 'n_port', 'vulns_cisa_date_added',
                                          'vulns_cisa_knownRansomwareCampaignUse', 'vulns_cisa_product_vendor',
                                          'vulns_cvss_version', 'vulns_epss_rank',
-                                         'vulns_cisa_description'])
+                                         'vulns_cisa_description'], special_configs=special_configs)
 
-    for column in columns:
-        column['resizable'] = False
-
-    columns[0]["maxNumConditions"] = 500
-
-    columns[0]['tooltipValueGetter'] = {"function": "'Click on the cell for more details'"}
-    columns[0]['minWidth'] = 150
-    columns[0]['pinned'] = 'left'
-    columns[0]['cellRenderer'] = "GoToMitre"
-
-    columns[1]['tooltipValueGetter'] = {"function": "'CVSS Version: ' + params.data.vulns_cvss_version"}
-    columns[1]['minWidth'] = 100
-    # columns[1]['cellStyle'] = {
-    #     "styleConditions": gen_style_condition("vulns_cvss_score")
-    # }
-
-    columns[2]['tooltipValueGetter'] = {"function": "'EPSS: ' + params.data.vulns_epss_rank"}
-    columns[2]['minWidth'] = 100
-    # columns[2]['cellStyle'] = {
-    #     "styleConditions": gen_style_condition("vulns_epss")
-    # }
-
-    columns[3]['tooltipValueGetter'] = {"function": "'Click on the cell for more details'"}
-    columns[3]['cellRenderer'] = "GoToCWE"
-    columns[3]['minWidth'] = 160
-
-    columns[4]['minWidth'] = 100
-
-    columns[5]['minWidth'] = 110
-
-    columns[6]['minWidth'] = 110
-
-    columns[7]['minWidth'] = 110
-
-    columns[8]['width'] = 140
-    columns[8]['minWidth'] = 130
-
-    columns[9]['minWidth'] = 160
-    columns[9]['cellStyle'] = {'textAlign': 'center'}
-
-    columns[10]['minWidth'] = 500
-    columns[10]['tooltipValueGetter'] = {"function":
-                                             "params.data.vulns_cisa_description == '-' ? '' : params.data.vulns_cisa_description"}
-
+    columns = list(columns.values())
     columns = columns[:8] + [{
         "headerName": header_mapping['cisa_info']['name'],
         "headerTooltip": header_mapping['cisa_info']['description'],
@@ -76,7 +62,7 @@ def register_layout_query(filter_modal={}):
         id="query-3-ag",
         rowData=raw_data,
         columnDefs=columns,
-        defaultColDef={"flex": 1, "filter": True},
+        defaultColDef={"flex": 1, "filter": True, 'resizable': False},
         columnSize="sizeToFit",
         filterModel=filter_modal,
         columnSizeOptions={"skipHeader": False},
@@ -94,7 +80,7 @@ def register_layout_query(filter_modal={}):
                         className='wrapper', style={'textAlign': 'center'}),
                 html.H2(
                     children="This visualization allows the analysis of the distribution of CVEs "
-                             "in relation to IPs and organizations accessible on the Internet",
+                             "in relation to IPs and organizations accessible on the Internet.",
                     style={'fontSize': '20px', 'top-padding': '40px', 'bottom-padding': '40px'}
                 )
             ])
@@ -102,13 +88,10 @@ def register_layout_query(filter_modal={}):
         dcc.Loading([aggrid]),
         dbc.Row(dbc.Col(html.Hr(style={"width": "100%", 'top-padding': '10px'}), width={'size': 10, 'offset': 1})),
         dbc.Row([html.Div(id='query-3-graph', children=[])])
-
     ]
 
     tab3_content = dbc.Card(
-        dbc.CardBody(
-            html.Div(children=[dbc.Row(children=elements)], className="wrapper"),
-        ),
+        dbc.CardBody(html.Div(children=[dbc.Row(children=elements)], className="wrapper")),
         className="mt-3",
         id="tab3_content"
     )
@@ -372,7 +355,7 @@ def register_callback_query(dm, app):
         Output('store-filters', 'data', allow_duplicate=True),
         Input("query-3-ag", "cellClicked"),
         Input("query-3-ag", "selectedRows"),
-        Input('date-picker-single', 'value'),
+        State('date-picker-single', 'value'),
         prevent_initial_call=True
     )
     def select_ips(cell, row, date_value):
@@ -385,7 +368,7 @@ def register_callback_query(dm, app):
                 cve = df.at[row_id, "vulns_cve_id"]
                 filter_opt = {
                     "query-2a-grid": {'vulns_cve_id': {'filterType': 'text', 'type': 'contains', 'filter': cve}}}
-                return "/dashboard/view2a", filter_opt
+                return "/dashboard/ips", filter_opt
 
         return no_update, no_update
 
@@ -393,7 +376,7 @@ def register_callback_query(dm, app):
         Output("url-redirect", "pathname", allow_duplicate=True),
         Output('store-filters', 'data', allow_duplicate=True),
         Input("query-3-ag", "cellClicked"),
-        Input('date-picker-single', 'value'),
+        State('date-picker-single', 'value'),
         prevent_initial_call=True,
     )
     def select_orgs(cell, date_value):
@@ -407,7 +390,7 @@ def register_callback_query(dm, app):
                 org_list = df_q2.loc[df_q2["vulns_cve_id"] == cve_value, "org_clean"].drop_duplicates()
 
                 filter_opt = {
-                    "query-2b-grid": {
+                    "query-2a-grid": {
                         'org_clean': {
                             "filterType": "text",
                             "operator": "OR",
@@ -416,10 +399,10 @@ def register_callback_query(dm, app):
                                     "filter": org,
                                     "filterType": "text",
                                     "type": "equals"
-                                } for org in org_list.tolist()
+                                } for org in org_list.tolist()[0:50]
                             ]
                         }
                     }
                 }
-                return "/dashboard/view2b", filter_opt
+                return "/dashboard/ips", filter_opt
         return no_update, no_update

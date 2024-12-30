@@ -14,26 +14,31 @@ from project.auxiliar import gen_subgraphs, gen_columns_def
 
 INPUT_DATA_V2 = '2'
 
-def register_layout_query(filter_modal={}):
-    columns, raw_data = gen_columns_def(['org_clean', 'ip', 'vulns_cve_id', 'vulns_cvss_score',
-                               'vulns_epss', "cpe_product"])
 
-    columns[1]["maxNumConditions"] = 500
-    columns[1]["tooltipValueGetter"]= {"function": "'Click on the cell for more details'"}
-    columns[4]["tooltipField"] = "vulns_epss_rank"
+def register_layout_query(filter_modal={}):
+    columns, raw_data = gen_columns_def(['org_clean', 'ip', 'vulns_cve_id',
+                                         'vulns_cvss_score', 'vulns_epss', "cpe_product"])
+
+    # columns['ip']["maxNumConditions"] = 500
+    columns['ip']["tooltipValueGetter"] = {"function": "'Click on the cell for more details'"}
+    columns['vulns_epss']["tooltipField"] = "vulns_epss_rank"
+
 
     aggrid = dag.AgGrid(
         id="query-2a-grid",
-        rowData=raw_data,
-        columnDefs=columns,
+        columnDefs=list(columns.values()),
         defaultColDef={"flex": 1, "filter": True},
         columnSize="sizeToFit",
         filterModel=filter_modal,
         columnSizeOptions={"skipHeader": False},
         dashGridOptions={
+            "rowSelection": "single",
+            "animateRows": False,
+
             'tooltipInteraction': True,
             'tooltipShowDelay': 10,
             'tooltipHideDelay': 10000,
+
             # The number of rows rendered outside the viewable area the grid renders.
             "rowBuffer": 0,
             # How many blocks to keep in the store. Default is no limit, so every requested block is kept.
@@ -116,8 +121,11 @@ def register_callback_query(dm, app):
                 lines = 1
 
             partial = df.iloc[request["startRow"]: request["endRow"]]
+            partial['vulns_epss'] = partial['vulns_epss'].round(4)
+            partial['vulns_cvss_score'] = partial['vulns_cvss_score'].round(1)
 
             return {"rowData": partial.to_dict("records"), "rowCount": lines}
+        return no_update
 
     @app.callback(
         Output('query-2a-graph', 'children'),

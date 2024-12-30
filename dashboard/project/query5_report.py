@@ -88,7 +88,8 @@ def register_callback_query(dm, app):
 
         df = dm.get_report_dataset(
             date_value,
-            columns=["data", "ip", "port", "city", "os", "org_clean", "hostnames", "domains", "meta_id", "vulns_epss", "asn"],
+            columns=["data", "ip", "port", "city", "os", "org_clean", "hostnames", "domains",
+                     "meta_id", "vulns_epss", "asn"],
             sort_by='score',
             ascending=False,
             compute_score=True,
