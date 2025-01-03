@@ -19,7 +19,7 @@ def register_layout_query(filter_modal={}):
     special_config = {
         'asn': {'pinned': 'left'},
         'as_announcing_addresses': {
-            'tooltipField': 'as_announcing_prefixes',
+            'tooltipValueGetter': {"function": "'# of Announcing Prefixes: ' + params.data.as_announcing_prefixes"},
             'tooltipComponent': 'CustomTooltipAddressesV6'
         },
         'as_country_name': {'tooltipField': 'n_cities', 'tooltipComponent': 'CustomTooltipCountryNameV6'}
@@ -39,21 +39,21 @@ def register_layout_query(filter_modal={}):
     ]
 
     special_config = {
-        "avg_cvss": {
-            'tooltipField':  'min_cvss',
+        "vulns_cvss_avg": {
+            'tooltipField':  'vulns_cvss_min',
             "tooltipComponent": "CustomTooltipCvssV6"
 
         },
-        "avg_epss": {
-            'tooltipField': 'min_epss',
+        "vulns_epss_avg": {
+            'tooltipField': 'vulns_epss_min',
             "tooltipComponent": "CustomTooltipEpssV6",
         },
-        'n_cves': { "headerTooltip":
+        'n_vulns': { "headerTooltip":
                         "Clicking a cell filters the data based on the selected value, "
                         "showing the top 100 most recent CVE codes associated with the chosen entry."}
     }
 
-    remaining_columns, raw_data3 = gen_columns_def(["vulns_cvss_avg", "vulns_epss_avg", "n_orgs", "n_ips", "n_cves"],
+    remaining_columns, raw_data3 = gen_columns_def(["vulns_cvss_avg", "vulns_epss_avg", "n_orgs", "n_ips", "n_vulns"],
                                             special_configs=special_config)
     columns += list(remaining_columns.values())
     raw_data = raw_data1 + raw_data2 + raw_data3 # is it really necessary?
@@ -116,16 +116,13 @@ def register_callback_query(dm, app):
         # Conversão de tipos
         df['as_announcing_prefixes'] = df['as_announcing_prefixes'].fillna(-1).astype(int)
         df['as_announcing_addresses'] = df['as_announcing_addresses'].fillna(-1).astype(int)
-        df["n_cities"] = df["city_list"].apply(lambda x: len(x))
-        df["n_cisa"] = df["vulns_cisa_list"].apply(lambda x: len(x))
-        df["n_cves"] = df["vulns_cve_list"].apply(lambda x: len(x))
 
         # Filtrar apenas as colunas relevantes
         df_filtered = df[['asn', 'as_org_name', 'as_country_name', 'as_announcing_prefixes',
                           'vulns_cvss_avg', 'vulns_cvss_min', 'vulns_cvss_max',
                           'vulns_epss_avg', 'vulns_epss_min', 'vulns_epss_max',
                           'as_rank', 'n_orgs', 'as_org_country_name', 'as_announcing_addresses',
-                          'as_seen', 'n_cities', 'n_ips', 'n_cisa', 'n_cves']]
+                          'as_seen', 'n_cities', 'n_ips', 'n_vulns_cisa', 'n_vulns']]
 
         return df_filtered.to_dict('records')
 
@@ -243,7 +240,7 @@ def register_callback_query(dm, app):
                     "query-5-ag": {'asn': {'filterType': 'text', 'type': 'equals', 'filter': cell.get("value", "")}}}
                 return "/dashboard/report", filter_opt
 
-            elif cell.get("colId", "") == "n_cves":
+            elif cell.get("colId", "") == "n_vulns":
                 row_id = int(cell.get("rowId", 0))
                 cve_list = df.at[row_id, "cve_list"]
                 top_100_cves = heapq.nlargest(100, cve_list)

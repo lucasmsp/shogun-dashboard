@@ -19,7 +19,7 @@ def register_layout_query(filter_modal={}):
                 persistence=True,
                 filterModel=filter_modal,
                 columnDefs=[
-                    {"field": 'data', "headerName": 'SERVICE', "cellRenderer": "markdown",
+                    {"field": 'servers', "headerName": 'SERVICE', "cellRenderer": "markdown",
                       'width': 300, 'maxWidth': 500, "resizable": True, },
                     {"field": 'ip', "headerName": 'IP', "cellRenderer": "IPLink", 
                      "tooltipValueGetter": {"function": "'Click on the cell for more details'"}, 
@@ -89,7 +89,7 @@ def register_callback_query(dm, app):
         df = dm.get_report_dataset(
             date_value,
             columns=["data", "ip", "port", "city", "os", "org_clean", "hostnames", "domains",
-                     "meta_id", "vulns_epss", "asn"],
+                     "meta_id", "vulns_epss", "asn", 'servers'],
             sort_by='score',
             ascending=False,
             compute_score=True,
@@ -99,34 +99,5 @@ def register_callback_query(dm, app):
 
         if df.empty:
             return [{}]
-        
-        def format_data(raw):
-
-            if not raw:
-                raw = ""
-
-            # TODO: apply all this changes in processing stage
-            space_index = raw.find(' ')
-            if space_index != -1:
-                truncate_data = raw[0:space_index]
-            else:
-                truncate_data = raw
-            
-            text = f"**{truncate_data}**"
-
-            match1 = re.search('Server: [^\r\n]+', raw)
-            if match1:
-                server = match1.group()
-                text += f"\n\n{server}"
-
-
-            match2 = re.search('Date: [^\r\n]+', raw)
-            if match2:
-                date_match = match2.group()
-                text += f"\n\n{date_match}"
-
-            return text
-
-        df['data'] = df.apply(lambda row: format_data(row['data']), axis=1)
 
         return df.to_dict('records')

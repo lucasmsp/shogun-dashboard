@@ -34,7 +34,7 @@ def register_layout_query(filter_modal={}):
             'cellRenderer': "GoToCWE"
         },
 
-        'vulns_cisa_knownRansomwareCampaignUse': {'minWidth': 160, 'cellStyle': {'textAlign': 'center'} },
+        'vulns_cisa_ransomware': {'minWidth': 160, 'cellStyle': {'textAlign': 'center'} },
         'vulns_cisa_product_vendor': {
             'minWidth': 500,
             'tooltipValueGetter': {"function":
@@ -47,7 +47,7 @@ def register_layout_query(filter_modal={}):
 
     columns, raw_data = gen_columns_def(['vulns_cve_id', 'vulns_cvss', 'vulns_epss', 'vulns_cwe',
                                          'n_as', 'n_ips', 'n_orgs', 'n_port', 'vulns_cisa_date_added',
-                                         'vulns_cisa_knownRansomwareCampaignUse', 'vulns_cisa_product_vendor',
+                                         'vulns_cisa_ransomware', 'vulns_cisa_product_vendor',
                                          'vulns_cvss_version', 'vulns_epss_rank',
                                          'vulns_cisa_description'], special_configs=special_configs)
 
@@ -108,20 +108,6 @@ def find_expression(string):
             return i
 
 
-def known_f(x):
-    if x == "Known":
-        return 1
-    else:
-        return 0
-
-
-def unknown_f(x):
-    if x == "Unknown":
-        return 1
-    else:
-        return 0
-
-
 # register all the callbacks in one place
 def register_callback_query(dm, app):
     @app.callback(
@@ -136,8 +122,8 @@ def register_callback_query(dm, app):
 
         df_exploded = df.explode('vulns_cwe')
 
-        df_exploded['vulns_cisa_knownRansomwareCampaignUse'] = df_exploded[
-            'vulns_cisa_knownRansomwareCampaignUse'].apply(
+        df_exploded['vulns_cisa_ransomware'] = df_exploded[
+            'vulns_cisa_ransomware'].apply(
             lambda x: (x == 'Known' and '✅') or
                       (x == 'Unknown' and '❌') or '➖')
 
@@ -297,9 +283,9 @@ def register_callback_query(dm, app):
         graphs.append(graph)
 
         # fig 8
-        tmp8 = df[["vulns_epss_rank", "vulns_cisa_knownRansomwareCampaignUse", "vulns_cvss"]].copy()
-        tmp8["Unknown"] = tmp8["vulns_cisa_knownRansomwareCampaignUse"].apply(unknown_f)
-        tmp8["Known"] = tmp8["vulns_cisa_knownRansomwareCampaignUse"].apply(known_f)
+        tmp8 = df[["vulns_epss_rank", "vulns_cisa_ransomware", "vulns_cvss"]].copy()
+        tmp8["Unknown"] = tmp8["vulns_cisa_ransomware"].apply(lambda x: 1 if x == "Known" else 0)
+        tmp8["Known"] = tmp8["vulns_cisa_ransomware"].apply(lambda x: 1 if x == "Unknown" else 0)
 
         tmp8_aux1 = tmp8.groupby('vulns_epss_rank', as_index=False)['vulns_cvss'].mean()
         tmp8_aux2 = tmp8.groupby("vulns_epss_rank").sum(["Known", "Unknown"]).reset_index()

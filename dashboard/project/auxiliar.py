@@ -93,7 +93,7 @@ header_mapping = {
             'minWidth': 140
         }
     },
-    "vulns_cisa_knownRansomwareCampaignUse": {
+    "vulns_cisa_ransomware": {
         'name': "Ransomware Use",
         "description": "Association with known ransomware campaigns",
         'type': "???"  # TODO
@@ -110,7 +110,8 @@ header_mapping = {
         'color_style': '<CVSS>',
         'general_config': {
             'width': 125,
-            'minWidth': 125
+            'minWidth': 125,
+            "valueFormatter": {"function": "params.value.toFixed(1)"}
         }
     },
     "vulns_cvss_max": {
@@ -120,7 +121,8 @@ header_mapping = {
         'color_style': '<CVSS>',
         'general_config': {
             'width': 125,
-            'minWidth': 125
+            'minWidth': 125,
+            "valueFormatter": {"function": "params.value.toFixed(1)"}
         }
     },
     "vulns_cvss_min": {
@@ -158,7 +160,7 @@ header_mapping = {
         'general_config': {
             'width': 100,
             'minWidth': 100,
-            # "valueFormatter": {"function": "params.value.toFixed(1)"}
+            "valueFormatter": {"function": "params.value.toFixed(1)"}
         }
     },
     "vulns_cwe": {
@@ -178,7 +180,7 @@ header_mapping = {
         'general_config': {
             'width': 100,
             'minWidth': 100,
-           #  "valueFormatter": {"function": "params.value.toFixed(4)"}
+            "valueFormatter": {"function": "params.value.toFixed(2)"}
         }
     },
     "vulns_epss_max": {  # rename vulns_epss
@@ -189,7 +191,7 @@ header_mapping = {
         'general_config': {
             'width': 125,
             'minWidth': 125,
-            "valueFormatter": {"function": "params.value.toFixed(4)"}
+            "valueFormatter": {"function": "params.value.toFixed(2)"}
         }
     },
     "vulns_epss_avg": {
@@ -200,7 +202,7 @@ header_mapping = {
         'general_config': {
             'width': 125,
             'minWidth': 125,
-            "valueFormatter": {"function": "params.value.toFixed(4)"}
+            "valueFormatter": {"function": "params.value.toFixed(2)"}
         }
     },
     'vulns_epss_rank': {
@@ -216,7 +218,7 @@ header_mapping = {
         'general_config': {
             'width': 125,
             'minWidth': 125,
-            "valueFormatter": {"function": "params.value.toFixed(4)"}
+            "valueFormatter": {"function": "params.value.toFixed(2)"}
         }
     },
 
@@ -253,18 +255,7 @@ header_mapping = {
         'general_config': {
             'width': 125,
             'minWidth': 125,
-            "valueFormatter": {"function": "params.value.toFixed(4)"}
-        }
-    },
-    "avg_epss": {
-        "name": 'Avg EPSS',
-        "description": '',
-        "type": 'float',
-        'color_style': '<EPSS>',
-        'general_config': {
-            'width': 125,
-            'minWidth': 125,
-            "valueFormatter": {"function": "params.value.toFixed(4)"}
+            "valueFormatter": {"function": "params.value.toFixed(2)"}
         }
     },
 
@@ -342,7 +333,7 @@ header_mapping = {
         }
     },
     'n_vulns_cisa_ransomware': {
-        'name': '# Ransomware Use',
+        'name': '# Ransomware Campaigns',
         'description': 'Number of known CVEs as being used in ransomware campaigns',
         'type': 'integer',
         'general_config': {
