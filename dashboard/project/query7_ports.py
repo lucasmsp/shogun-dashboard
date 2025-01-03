@@ -7,16 +7,16 @@ import dash_ag_grid as dag
 import plotly.graph_objects as go
 import pandas as pd
 
-from project.auxiliar import gen_subgraphs, gen_columns_def, header_mapping
+from project.auxiliar import gen_subgraphs, gen_columns_def, header_mapping, logging
 
-INPUT_DATA = '5'
+INPUT_DATA = 'ports'
 
 
 def register_layout_query(filter_modal={}):
     columns, raw_data = gen_columns_def(['port', 'n_vulns', 'n_products',
                                          'vulns_epss_min', 'vulns_epss_avg', 'vulns_epss_max',
-                                         'vulns_cvss_score_min', 'vulns_cvss_score_avg', 'vulns_cvss_score_max',
-                                         'n_vulns_in_cisa', 'n_vulns_cisa_knownRansomwareCampaignUse'
+                                         'vulns_cvss_min', 'vulns_cvss_avg', 'vulns_cvss_max',
+                                         'n_vulns_cisa', 'n_vulns_cisa_ransomware'
                                          ])
 
     columns['port']['pinned'] = 'left'
@@ -33,12 +33,12 @@ def register_layout_query(filter_modal={}):
         {
             "headerName": header_mapping['cvss_info']['name'],
             "headerTooltip": header_mapping['cvss_info']['description'],
-            "children": [columns['vulns_cvss_score_min'], columns['vulns_cvss_score_avg'], columns['vulns_cvss_score_max']],
+            "children": [columns['vulns_cvss_min'], columns['vulns_cvss_avg'], columns['vulns_cvss_max']],
         },
         {
             "headerName": header_mapping['cisa_info']['name'],
             "headerTooltip": header_mapping['cisa_info']['description'],
-            "children": [columns['n_vulns_in_cisa'], columns['n_vulns_cisa_knownRansomwareCampaignUse']],
+            "children": [columns['n_vulns_cisa'], columns['n_vulns_cisa_ransomware']],
         },
     ]
 
@@ -89,7 +89,7 @@ def register_callback_query(dm, app):
         Input('date-picker-single', 'value')
     )
     def update_table7(date_value):
-        print(f"[INFO][query7] update_table7: {date_value}")
+        logging.info("query7_ports - update_table7: " + date_value)
         df = dm.get_view_dataset(date_value, INPUT_DATA)
 
         if df.empty:
@@ -102,35 +102,36 @@ def register_callback_query(dm, app):
         Input('date-picker-single', 'value')
     )
     def update_vulnerability_charts(date_value):
-        print(f"[INFO][query_graph] update_vulnerability_charts: {date_value}")
+        logging.info("query7_ports - update_vulnerability_charts: " + date_value)
+
         df = dm.get_view_dataset(date_value, INPUT_DATA)
 
         if df.empty:
             return []
 
-        # Gráfico de barra: n_vulns_in_cisa por porta (Top 20)
-        df_cisa = df[['port', 'n_vulns_in_cisa']].copy()
+        # Gráfico de barra: n_vulns_cisa por porta (Top 20)
+        df_cisa = df[['port', 'n_vulns_cisa']].copy()
         df_cisa = df_cisa.groupby('port').sum().reset_index()
-        df_cisa = df_cisa.nlargest(20, 'n_vulns_in_cisa')
+        df_cisa = df_cisa.nlargest(20, 'n_vulns_cisa')
         df_cisa['port'] = df_cisa['port'].astype(str)
         fig_vulns_cisa = px.bar(
-            df_cisa.sort_values(by='n_vulns_in_cisa', ascending=False),
+            df_cisa.sort_values(by='n_vulns_cisa', ascending=False),
             x='port',
-            y='n_vulns_in_cisa',
-            labels={'n_vulns_in_cisa': '# Vulnerabilities', 'port': 'Port'},
+            y='n_vulns_cisa',
+            labels={'n_vulns_cisa': '# Vulnerabilities', 'port': 'Port'},
             title='Top 20 Ports by Number of Vulnerabilities (CISA)'
         )
 
-        # Gráfico de barra: n_vulns_cisa_knownRansomwareCampaignUse por porta (Top 20)
-        df_known = df[['port', 'n_vulns_cisa_knownRansomwareCampaignUse']].copy()
+        # Gráfico de barra: n_vulns_cisa_ransomware por porta (Top 20)
+        df_known = df[['port', 'n_vulns_cisa_ransomware']].copy()
         df_known = df_known.groupby('port').sum().reset_index()
-        df_known = df_known.nlargest(20, 'n_vulns_cisa_knownRansomwareCampaignUse')
+        df_known = df_known.nlargest(20, 'n_vulns_cisa_ransomware')
         df_known['port'] = df_known['port'].astype(str)
         fig_vulns_known = px.bar(
-            df_known.sort_values(by='n_vulns_cisa_knownRansomwareCampaignUse', ascending=False),
+            df_known.sort_values(by='n_vulns_cisa_ransomware', ascending=False),
             x='port',
-            y='n_vulns_cisa_knownRansomwareCampaignUse',
-            labels={'n_vulns_cisa_knownRansomwareCampaignUse': '# Vulnerabilities', 'port': 'Port'},
+            y='n_vulns_cisa_ransomware',
+            labels={'n_vulns_cisa_ransomware': '# Vulnerabilities', 'port': 'Port'},
             title='Top 20 Ports by Number of Vulnerabilities (Known Ransomware)'
         )
 
@@ -148,12 +149,12 @@ def register_callback_query(dm, app):
         )
 
         # Gráfico de CVSS (três linhas: avg, min, max)
-        df_cvss_std = df[['port', 'vulns_cvss_score_max', 'vulns_cvss_score_min']].copy()
-        df_cvss_std['cvss_std'] = (df_cvss_std['vulns_cvss_score_max'] - df_cvss_std['vulns_cvss_score_min']).abs()
+        df_cvss_std = df[['port', 'vulns_cvss_max', 'vulns_cvss_min']].copy()
+        df_cvss_std['cvss_std'] = (df_cvss_std['vulns_cvss_max'] - df_cvss_std['vulns_cvss_min']).abs()
         df_cvss_std = df_cvss_std.groupby('port').agg({
             'cvss_std': 'mean',
-            'vulns_cvss_score_max': 'max',
-            'vulns_cvss_score_min': 'min'
+            'vulns_cvss_max': 'max',
+            'vulns_cvss_min': 'min'
         }).reset_index()
         df_cvss_std = df_cvss_std.sort_values(by='cvss_std', ascending=False)
         df_cvss_std['port'] = df_cvss_std['port'].astype(str)
@@ -168,14 +169,14 @@ def register_callback_query(dm, app):
         ))
         fig_cvss_std.add_trace(go.Scatter(
             x=df_cvss_std['port'],
-            y=df_cvss_std['vulns_cvss_score_min'],
+            y=df_cvss_std['vulns_cvss_min'],
             mode='lines',
             name='CVSS Min',
             line=dict(color='red')
         ))
         fig_cvss_std.add_trace(go.Scatter(
             x=df_cvss_std['port'],
-            y=df_cvss_std['vulns_cvss_score_max'],
+            y=df_cvss_std['vulns_cvss_max'],
             mode='lines',
             name='CVSS Max',
             line=dict(color='green')

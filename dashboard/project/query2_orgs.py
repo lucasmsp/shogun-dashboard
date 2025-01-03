@@ -3,6 +3,7 @@ from dash.dependencies import Output, Input, State
 import dash_bootstrap_components as dbc
 import dash_ag_grid as dag
 
+
 import itertools
 import plotly.express as px
 import plotly.graph_objs as go
@@ -10,16 +11,19 @@ import pandas as pd
 import re
 from project.filters import *
 
-from project.auxiliar import gen_subgraphs, gen_columns_def
+from project.auxiliar import gen_subgraphs, gen_columns_def, logging
 
 
-INPUT_DATA_V2 = '2'
+INPUT_DATA_V2 = 'orgs'
 
 def register_layout_query(filter_modal={}):
 
-    columns, raw_data = gen_columns_def(['org_clean', 'vulns_epss'])
+    columns, raw_data = gen_columns_def(['org_clean', 'n_ips', 'n_vulns', 'n_products',
+                                         'vulns_cve_id', 'vulns_epss', 'vulns_cvss', 'cpe_product' ])  # Group Fields
 
+    columns['vulns_cvss']["tooltipField"] = "vulns_cvss_version"
     columns['org_clean']["maxNumConditions"] = 500
+    columns['org_clean']['pinned'] = 'left'
 
     aggrid = dag.AgGrid(
                     id="query-2b-grid",
@@ -69,27 +73,17 @@ def register_layout_query(filter_modal={}):
 def register_callback_query(dm, app):
     
     @app.callback(
-        
         Output("query-2b-grid", "rowData"),
-        [
-            Input('date-picker-single', 'value'),
-        ]
+        Input('date-picker-single', 'value')
     )
     def update_grid2b(date_value):
+        logging.info("query2_orgs - update_grid2b: "+ date_value)
 
-        print("[INFO] query 2 - update_table2b: ", date_value)
         df = dm.get_view_dataset(date_value, INPUT_DATA_V2)
         if df.empty:
             return [{}]
-        
-        aggregated_df = df.groupby('org_clean').agg({
-            'ip': lambda x: list(x),
-            'vulns_cve_id': lambda x: list(x),
-            'cpe_product': lambda x: list(x),
-            'vulns_epss': 'max',
-        }).reset_index()
 
-        return aggregated_df.to_dict('records')
+        return df.to_dict('records')
 
     @app.callback(
         Output('query-2b-graph', 'children'),
@@ -98,13 +92,12 @@ def register_callback_query(dm, app):
         Input('query-2b-grid', 'filterModel')
     )
     def update_graph2b(date_value, filter_modal):
-        print("[INFO] query 2 - update_graph2b.")
+        logging.info("query2_orgs - update_graph2b: " + date_value)
 
         df = dm.get_view_dataset(date_value, INPUT_DATA_V2)
         if df.empty:
             return {}
 
-        df["n_ips"] = df["ip"].apply(len)
         df = df.sort_values("n_ips")
 
         if filter_modal:
@@ -133,7 +126,7 @@ def register_callback_query(dm, app):
         fig.add_trace(go.Scatter(x=stats_df['vulns_epss'], y=stats_df['pdf'], mode='lines', name='PDF'))
         fig.add_trace(go.Scatter(x=stats_df['vulns_epss'], y=stats_df['cdf'], mode='lines', name='CDF'))
         fig.update_layout(title='PDF/CDF plot - EPSS Distribution by Organization',
-                        xaxis_title='EPSS score (by organization)',
+                        xaxis_title='EPSS score (%)',
                         yaxis_title='Probability',
                         showlegend=True)
 
@@ -142,14 +135,13 @@ def register_callback_query(dm, app):
 
         # fig2
         fig = go.Figure()
-        df["n_cves"] = df["vulns_cve_id"].apply(len)
 
         stats_df = df \
-            .groupby('n_cves') \
-            ['n_cves'] \
+            .groupby('n_vulns') \
+            ['n_vulns'] \
             .agg('count') \
             .pipe(pd.DataFrame) \
-            .rename(columns = {'n_cves': 'frequency'})
+            .rename(columns = {'n_vulns': 'frequency'})
 
         stats_df['pdf'] = stats_df['frequency'] / sum(stats_df['frequency'])
         stats_df['cdf'] = stats_df['pdf'].cumsum()
@@ -160,8 +152,8 @@ def register_callback_query(dm, app):
             stats_df.at[1000, "cdf"] = stats_df[1000:]['cdf'].sum()
             stats_df = stats_df[:1001]
 
-        fig.add_trace(go.Scatter(x=stats_df['n_cves'], y=stats_df['pdf'], mode='lines', name='PDF'))
-        fig.add_trace(go.Scatter(x=stats_df['n_cves'], y=stats_df['cdf'], mode='lines', name='CDF'))
+        fig.add_trace(go.Scatter(x=stats_df['n_vulns'], y=stats_df['pdf'], mode='lines', name='PDF'))
+        fig.add_trace(go.Scatter(x=stats_df['n_vulns'], y=stats_df['cdf'], mode='lines', name='CDF'))
 
         fig.update_layout(title='PDF/CDF - Distribution of the number of CVE by Organization',
                         xaxis_title='# Distinct CVEs',
@@ -173,7 +165,6 @@ def register_callback_query(dm, app):
 
         # fig2
         fig = go.Figure()
-        df["n_products"] = df["cpe_product"].apply(len)
 
         stats_df = df.groupby('n_products')['n_products'] \
             .agg('count') \

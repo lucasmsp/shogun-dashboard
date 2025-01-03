@@ -2,7 +2,7 @@ from dash import html, dcc, dash_table, callback_context, ctx, no_update
 from dash.dependencies import Output, Input, State
 import dash_bootstrap_components as dbc
 import dash_ag_grid as dag
-from project.auxiliar import gen_subgraphs, header_mapping, gen_columns_def
+from project.auxiliar import gen_subgraphs, header_mapping, gen_columns_def, logging
 
 import itertools
 import plotly.express as px
@@ -12,7 +12,7 @@ import re
 import heapq
 
 
-INPUT_DATA_V6 = '4'
+INPUT_DATA_V6 = 'as'
 
 def register_layout_query(filter_modal={}):
 
@@ -53,7 +53,7 @@ def register_layout_query(filter_modal={}):
                         "showing the top 100 most recent CVE codes associated with the chosen entry."}
     }
 
-    remaining_columns, raw_data3 = gen_columns_def(["avg_cvss", "avg_epss", "n_orgs", "n_ips", "n_cves"],
+    remaining_columns, raw_data3 = gen_columns_def(["vulns_cvss_avg", "vulns_epss_avg", "n_orgs", "n_ips", "n_cves"],
                                             special_configs=special_config)
     columns += list(remaining_columns.values())
     raw_data = raw_data1 + raw_data2 + raw_data3 # is it really necessary?
@@ -106,23 +106,26 @@ def register_callback_query(dm, app):
         Input('date-picker-single', 'value')
     )
     def update_grid6(date_value):
-        print("[INFO] query 6 - update_table6: ", date_value)
+        logging.info("query6_as - update_grid6: " + date_value)
+
         df = dm.get_view_dataset(date_value, INPUT_DATA_V6)
 
         if df.empty:
             return [{}]
 
         # Conversão de tipos
-        df['as_announcing_prefixes'] = df['as_announcing_prefixes'].astype(int)
-        df['as_announcing_addresses'] = df['as_announcing_addresses'].astype(int)
-        df["n_cities"] = df["cities"].apply(lambda x: len(x))
-        df["n_cisa"] = df["cisa_vulns"].apply(lambda x: len(x))
-        df["n_cves"] = df["cve_list"].apply(lambda x: len(x))
+        df['as_announcing_prefixes'] = df['as_announcing_prefixes'].fillna(-1).astype(int)
+        df['as_announcing_addresses'] = df['as_announcing_addresses'].fillna(-1).astype(int)
+        df["n_cities"] = df["city_list"].apply(lambda x: len(x))
+        df["n_cisa"] = df["vulns_cisa_list"].apply(lambda x: len(x))
+        df["n_cves"] = df["vulns_cve_list"].apply(lambda x: len(x))
 
         # Filtrar apenas as colunas relevantes
-        df_filtered = df[['asn', 'as_org_name', 'as_country_name', 'as_announcing_prefixes', 'avg_cvss', 'avg_epss',
-                        'as_rank', 'n_orgs', 'as_org_country_name', 'as_announcing_addresses', 'min_cvss', 'max_cvss',
-                        'min_epss', 'max_epss', 'as_seen', 'n_cities', 'n_ips', 'n_cisa', 'n_cves']]
+        df_filtered = df[['asn', 'as_org_name', 'as_country_name', 'as_announcing_prefixes',
+                          'vulns_cvss_avg', 'vulns_cvss_min', 'vulns_cvss_max',
+                          'vulns_epss_avg', 'vulns_epss_min', 'vulns_epss_max',
+                          'as_rank', 'n_orgs', 'as_org_country_name', 'as_announcing_addresses',
+                          'as_seen', 'n_cities', 'n_ips', 'n_cisa', 'n_cves']]
 
         return df_filtered.to_dict('records')
 
@@ -131,7 +134,8 @@ def register_callback_query(dm, app):
         Input('date-picker-single', 'value')
     )
     def update_asn_chart(date_value):
-        print(f"[INFO][query_asn] update_asn_chart: {date_value}")
+        logging.info("query6_as - update_asn_chart: " + date_value)
+
         df = dm.get_view_dataset(date_value, INPUT_DATA_V6)
 
         if df.empty:
@@ -150,7 +154,7 @@ def register_callback_query(dm, app):
                 return None
 
         all_states = []
-        for cities_list in df['cities']:
+        for cities_list in df['city_list']:
             for city in cities_list:
                 state = extract_state(city)
                 if state:
@@ -188,11 +192,11 @@ def register_callback_query(dm, app):
                 'x_column': 'asn', 'x_label': "ASN", 'df': df_top_orgs
             },
             "Bar plot - Average CVSS by ASN (Top 10 IPs)": {
-                "y_column": "avg_cvss", "graph_type": "bar plot", "y_label": "Average CVSS",
+                "y_column": "vulns_cvss_avg", "graph_type": "bar plot", "y_label": "Average CVSS",
                 'x_column': 'asn', 'x_label': "ASN", 'df': df_top_ips
             },
             "Bar plot - Average EPSS by ASN (Top 10 IPs)": {
-                "y_column": "avg_epss", "graph_type": "bar plot", "y_label": "Average EPSS",
+                "y_column": "vulns_epss_avg", "graph_type": "bar plot", "y_label": "Average EPSS",
                 'x_column': 'asn', 'x_label': "ASN", 'df': df_top_ips
             }
         }

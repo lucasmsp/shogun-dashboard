@@ -10,18 +10,20 @@ import pandas as pd
 import re
 from project.filters import *
 
-from project.auxiliar import gen_subgraphs, gen_columns_def
+from project.auxiliar import gen_subgraphs, gen_columns_def, logging
 
-INPUT_DATA_V2 = '2'
+INPUT_DATA = 'ips'
 
 
 def register_layout_query(filter_modal={}):
-    columns, raw_data = gen_columns_def(['org_clean', 'ip', 'vulns_cve_id',
-                                         'vulns_cvss_score', 'vulns_epss', "cpe_product"])
+    columns, raw_data = gen_columns_def(['ip', 'org_clean', 'vulns_cve_id',
+                                         'vulns_cvss', 'vulns_epss', "cpe_product"])
 
     # columns['ip']["maxNumConditions"] = 500
     columns['ip']["tooltipValueGetter"] = {"function": "'Click on the cell for more details'"}
+    columns['ip']['pinned'] = 'left'
     columns['vulns_epss']["tooltipField"] = "vulns_epss_rank"
+    columns['vulns_cvss']["tooltipField"] = "vulns_cvss_version"
 
 
     aggrid = dag.AgGrid(
@@ -91,10 +93,10 @@ def register_callback_query(dm, app):
         ]
     )
     def update_grid2a(date_value, request):
+        logging.info("query2_ips - update_grid2a: " + date_value)
 
-        print("[INFO] query 2 - update_table2a: ", date_value)
-        df = dm.get_view_dataset(date_value, INPUT_DATA_V2)
-        print(f"[INFO] query 2 - original dataset has {len(df)} lines")
+        df = dm.get_view_dataset(date_value, INPUT_DATA)
+        logging.info(f"query2_ips - update_grid2a - original dataset has {len(df)} lines")
 
         if request:
             if request["filterModel"]:
@@ -103,7 +105,7 @@ def register_callback_query(dm, app):
                     try:
                         df = filter_by_model(filter_conf, df, col)
                     except:
-                        print("[ERROR] query 2 - error filter grid2a")
+                        logging.error("query2_ips - update_grid2a - error filter grid2a")
 
             if request["sortModel"]:
                 sorting = []
@@ -121,8 +123,6 @@ def register_callback_query(dm, app):
                 lines = 1
 
             partial = df.iloc[request["startRow"]: request["endRow"]]
-            partial['vulns_epss'] = partial['vulns_epss'].round(4)
-            partial['vulns_cvss_score'] = partial['vulns_cvss_score'].round(1)
 
             return {"rowData": partial.to_dict("records"), "rowCount": lines}
         return no_update
@@ -135,10 +135,9 @@ def register_callback_query(dm, app):
         ]
     )
     def update_graph2a(date_value, filter_modal):
+        logging.info("query2_ips - update_graph2a: " + date_value)
 
-        print("[INFO] query 2 - update_graph2a.")
-
-        df = dm.get_view_dataset(date_value, INPUT_DATA_V2)
+        df = dm.get_view_dataset(date_value, INPUT_DATA)
         if df.empty:
             return {}
 
@@ -167,7 +166,7 @@ def register_callback_query(dm, app):
         fig.add_trace(go.Scatter(x=stats_df['vulns_epss'], y=stats_df['pdf'], mode='lines', name='PDF'))
         fig.add_trace(go.Scatter(x=stats_df['vulns_epss'], y=stats_df['cdf'], mode='lines', name='CDF'))
         fig.update_layout(title='Line plot - PDF and CDF of EPSS Score Distribution',
-                          xaxis_title='EPSS',
+                          xaxis_title='EPSS score (%)',
                           yaxis_title='Probability',
                           showlegend=True)
         graph = dcc.Graph(figure=fig, config={'displayModeBar': False, 'scrollZoom': False})
@@ -195,14 +194,14 @@ def register_callback_query(dm, app):
 
         # fig3
         fig = px.scatter(df,
-                         x=df["vulns_cvss_score"],
+                         x=df["vulns_cvss"],
                          y=df['vulns_epss'],
                          title="Scatter plot - EPSS by CVSS score",
                          color='vulns_epss_rank')
         fig.update_layout(
             title="Scatter plot - EPSS by CVSS score",
-            xaxis_title="CVSS Score",
-            yaxis_title="EPSS Score",
+            xaxis_title="CVSS score",
+            yaxis_title="EPSS score (%)",
             xaxis=dict(
                 tickmode='array',
                 tickvals=[0, 2, 4, 6, 8, 10],
@@ -254,6 +253,6 @@ def register_callback_query(dm, app):
             if cell.get("colId", "") == "ip":
                 value = cell.get('value', "")
                 filter_opt = {'ip': {'filterType': 'text', 'type': 'equals', 'filter': value}}
-                print("[INFO][select_ip] - ", filter_opt)
+                logging.info(f"query2_ips - select_ip: {filter_opt}")
                 return "/dashboard/report", filter_opt
         return no_update, no_update

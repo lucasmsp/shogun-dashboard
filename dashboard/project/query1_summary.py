@@ -6,9 +6,9 @@ import plotly.express as px
 import plotly.graph_objs as go
 import dash_ag_grid as dag
 
-from project.auxiliar import gen_subgraphs, gen_columns_def
+from project.auxiliar import gen_subgraphs, gen_columns_def, logging
 
-INPUT_DATA = '1'
+INPUT_DATA = 'summary'
 
 def register_layout_query(filter_modal={}):
 
@@ -51,7 +51,7 @@ def register_callback_query(dm, app):
         Input('date-picker-single', 'value')
     )
     def update_table1(date_value):
-        print(f"[INFO][query1] update_table1: {date_value}")
+        logging.info("query1_summary - update_table1: " + date_value)
         df = dm.get_view_dataset(date_value, INPUT_DATA)
         return df.to_dict('records')
 
@@ -61,10 +61,9 @@ def register_callback_query(dm, app):
         Input('date-picker-single', 'value')
     )
     def update_chart1(date_value):
-
-        print(f"[INFO][query1] update_chart1: {date_value}")
-
+        logging.info("query1_summary - update_chart1: " + date_value)
         df = dm.get_view_dataset(date_value, INPUT_DATA)
+
         if df.empty:
             return []
 

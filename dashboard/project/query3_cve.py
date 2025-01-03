@@ -6,11 +6,11 @@ import dash_ag_grid as dag
 import plotly.express as px
 import plotly.figure_factory as ff
 
-from project.auxiliar import gen_subgraphs, header_mapping, gen_columns_def
+from project.auxiliar import gen_subgraphs, header_mapping, gen_columns_def, logging
 
 import pandas as pd
 
-INPUT_DATA = '3'
+INPUT_DATA = 'vulns'
 
 
 # constructs the layout for View 3
@@ -23,7 +23,7 @@ def register_layout_query(filter_modal={}):
             'pinned': 'left',
             'cellRenderer': 'GoToMitre'
         },
-        'vulns_cvss_score': {
+        'vulns_cvss': {
             'tooltipValueGetter': {"function": "'CVSS Version: ' + params.data.vulns_cvss_version"},
         },
         'vulns_epss': {
@@ -45,7 +45,7 @@ def register_layout_query(filter_modal={}):
     }
 
 
-    columns, raw_data = gen_columns_def(['vulns_cve_id', 'vulns_cvss_score', 'vulns_epss', 'vulns_cwe',
+    columns, raw_data = gen_columns_def(['vulns_cve_id', 'vulns_cvss', 'vulns_epss', 'vulns_cwe',
                                          'n_as', 'n_ips', 'n_orgs', 'n_port', 'vulns_cisa_date_added',
                                          'vulns_cisa_knownRansomwareCampaignUse', 'vulns_cisa_product_vendor',
                                          'vulns_cvss_version', 'vulns_epss_rank',
@@ -129,7 +129,7 @@ def register_callback_query(dm, app):
         Input('date-picker-single', 'value')
     )
     def update_table3(date_value):
-        print("[INFO][query3] - update_table3: ", date_value)
+        logging.info(f"query3_cve - update_table3: {date_value}")
         df = dm.get_view_dataset(date_value, INPUT_DATA)
         if df.empty:
             return [{}]
@@ -158,9 +158,7 @@ def register_callback_query(dm, app):
         Input('date-picker-single', 'value')
     )
     def update_graphs(date_value):
-
-        print("[INFO][query3] update_graphs: ")
-
+        logging.info(f"query3_cve - update_graphs: {date_value}")
         df = dm.get_view_dataset(date_value, INPUT_DATA)
 
         if df.empty:
@@ -169,7 +167,7 @@ def register_callback_query(dm, app):
         graphs = []
 
         # fig 1
-        fig = px.scatter(df, x=df["vulns_cvss_score"], y=df['vulns_epss'],
+        fig = px.scatter(df, x=df["vulns_cvss"], y=df['vulns_epss'],
                          title="Scatter plot - EPSS by CVSS score",
                          color='vulns_epss_rank')
         fig.update_layout(
@@ -219,8 +217,8 @@ def register_callback_query(dm, app):
         graphs.append(graph)
 
         # fig 3
-        tmp2 = df.groupby("vulns_cvss_score").sum("n_ips").reset_index()
-        fig = px.line(tmp2, x=tmp2['vulns_cvss_score'], y=tmp2['n_ips'], title="Line plot - # IPs by CVSS")
+        tmp2 = df.groupby("vulns_cvss").sum("n_ips").reset_index()
+        fig = px.line(tmp2, x=tmp2['vulns_cvss'], y=tmp2['n_ips'], title="Line plot - # IPs by CVSS")
         fig.update_layout(
             xaxis_title="CVSS Score",
             yaxis_title="# IPs",
@@ -234,8 +232,8 @@ def register_callback_query(dm, app):
         graphs.append(graph)
 
         # fig 4
-        tmp3 = df.groupby("vulns_cvss_score").sum("n_orgs").reset_index()
-        fig = px.line(tmp3, x=tmp3['vulns_cvss_score'], y=tmp3['n_orgs'], title="Line plot - # Organizations by CVSS")
+        tmp3 = df.groupby("vulns_cvss").sum("n_orgs").reset_index()
+        fig = px.line(tmp3, x=tmp3['vulns_cvss'], y=tmp3['n_orgs'], title="Line plot - # Organizations by CVSS")
         fig.update_layout(
             xaxis_title="CVSS Score",
             yaxis_title="# Organizations",
@@ -252,7 +250,7 @@ def register_callback_query(dm, app):
         tmp4 = df.groupby("vulns_epss").sum("n_orgs").reset_index()
         fig = px.line(tmp4, x=tmp4['vulns_epss'], y=tmp4['n_orgs'], title="Line plot - # Organizations by EPSS")
         fig.update_layout(
-            xaxis_title="EPSS Score",
+            xaxis_title="EPSS score (%)",
             yaxis_title="# Organizations",
             xaxis=dict(
                 tickmode='array',
@@ -267,7 +265,7 @@ def register_callback_query(dm, app):
         tmp5 = df.groupby("vulns_epss").sum("n_ips").reset_index()
         fig = px.line(tmp5, x=tmp5['vulns_epss'], y=tmp5['n_ips'], title="Line plot - # IPs by EPSS")
         fig.update_layout(
-            xaxis_title="EPSS Score",
+            xaxis_title="EPSS score (%)",
             yaxis_title="# IPs",
             xaxis=dict(
                 tickmode='array',
@@ -299,20 +297,20 @@ def register_callback_query(dm, app):
         graphs.append(graph)
 
         # fig 8
-        tmp8 = df[["vulns_epss_rank", "vulns_cisa_knownRansomwareCampaignUse", "vulns_cvss_score"]].copy()
+        tmp8 = df[["vulns_epss_rank", "vulns_cisa_knownRansomwareCampaignUse", "vulns_cvss"]].copy()
         tmp8["Unknown"] = tmp8["vulns_cisa_knownRansomwareCampaignUse"].apply(unknown_f)
         tmp8["Known"] = tmp8["vulns_cisa_knownRansomwareCampaignUse"].apply(known_f)
 
-        tmp8_aux1 = tmp8.groupby('vulns_epss_rank', as_index=False)['vulns_cvss_score'].mean()
+        tmp8_aux1 = tmp8.groupby('vulns_epss_rank', as_index=False)['vulns_cvss'].mean()
         tmp8_aux2 = tmp8.groupby("vulns_epss_rank").sum(["Known", "Unknown"]).reset_index()
 
-        tmp8_aux1['vulns_cvss_score'] = tmp8_aux1['vulns_cvss_score'].apply(lambda x: '{:,.2f}'.format(x))
+        tmp8_aux1['vulns_cvss'] = tmp8_aux1['vulns_cvss'].apply(lambda x: '{:,.2f}'.format(x))
         tmp8_final = pd.merge(tmp8_aux1, tmp8_aux2, how='left', on="vulns_epss_rank")
 
         fig = px.bar(tmp8_final, x="vulns_epss_rank", y=["Known", "Unknown"],
                      title="Bar char - # Ransowares by EPSS rank",
-                     hover_data={"vulns_cvss_score_x": True},
-                     labels={'vulns_cvss_score_x': 'CVSS Avg'},
+                     hover_data={"vulns_cvss_x": True},
+                     labels={'vulns_cvss_x': 'CVSS Avg'},
                      )
         fig.update_layout(
             xaxis_title="EPSS Rank",
@@ -331,7 +329,6 @@ def register_callback_query(dm, app):
 
         fig = px.bar(tmp9, x="vulns_cwe", y="vulns_cve_id",
                      title="Bar char - Number of CVEs by CWE",
-                     # hover_data={"vulns_cvss_score_x": True},
                      labels={'vulns_cve_id': 'Number of CVEs'},
                      color="vulns_cve_id",
                      color_continuous_scale=px.colors.sequential.Viridis
@@ -361,7 +358,6 @@ def register_callback_query(dm, app):
     def select_ips(cell, row, date_value):
 
         df = dm.get_view_dataset(date_value, INPUT_DATA)
-        # print(f"[INFO] select_orgs_ips: Cell {cell} and row {row}")
         if cell:
             if cell.get("colId", "") == "n_ips":
                 row_id = int(cell.get("rowId", 0))

@@ -73,30 +73,30 @@ def register_layout(dm):
                             dbc.Nav(
                                 children=[
                                     dbc.NavLink(
-                                        "ORG - Highest vulnerability per Organization",
+                                        [html.B("ORG - "), html.Span("Highest vulnerability per Organization")],
                                         href="/dashboard/orgs",
                                         active="exact",
                                         style={"margin-top": "0px", "padding-top": "0px"}
 
                                     ),
                                     dbc.NavLink(
-                                        "IP - Highest vulnerability per IP",
+                                        [html.B("IP - "), html.Span("Highest vulnerability per IP")],
                                         href="/dashboard/ips",
                                         active="exact",
                                         style={"margin-top": "0px", "padding-top": "0px"}
                                     ),
                                     dbc.NavLink(
-                                        "CVE - Report of Common Vulnerabilities and Exposures",
+                                        [html.B("CVE - "), html.Span("Report of Common Vulnerabilities and Exposures")],
                                         href="/dashboard/cve",
                                         active="exact",
                                     ),
                                     dbc.NavLink(
-                                        "AS - AS Summary",
+                                        [html.B("AS - "), html.Span("AS Summary")],
                                         href="/dashboard/as",
                                         active="exact",
                                     ),
                                     dbc.NavLink(
-                                        "PORT - Vulnerable Ports Summary",
+                                        [html.B("PORT - "), html.Span("Vulnerable Ports Summary")],
                                         href="/dashboard/ports",
                                         active="exact",
                                     ),

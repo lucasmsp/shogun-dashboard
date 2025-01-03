@@ -1,7 +1,11 @@
 from dash import html, dcc
 import dash_bootstrap_components as dbc
-
 from collections import OrderedDict
+
+import logging
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
 
 def gen_subgraphs(n_cols, graphs):
     children = []
@@ -99,31 +103,29 @@ header_mapping = {
         'description': "Cisa Vendor-Product Info",
         'type': 'string'
     },
-    "vulns_cvss_score_max": {
+    "vulns_cvss_avg": {
+        'name': "CVSS (avg)",
+        'description': "Avg of CVSS",
+        'type': 'float',
+        'color_style': '<CVSS>',
+        'general_config': {
+            'width': 125,
+            'minWidth': 125
+        }
+    },
+    "vulns_cvss_max": {
         'name': "CVSS (max)",
         'description': "Max value of CVSS",
         'type': 'float',
         'color_style': '<CVSS>',
         'general_config': {
             'width': 125,
-            'minWidth': 125,
-            "valueFormatter": {"function": "params.value.toFixed(1)"}
+            'minWidth': 125
         }
     },
-    "vulns_cvss_score_min": {
+    "vulns_cvss_min": {
         'name': "CVSS (min)",
         'description': "Min value of CVSS",
-        'type': 'float',
-        'color_style': '<CVSS>',
-        'general_config': {
-            'width': 125,
-            'minWidth': 125,
-            "valueFormatter": {"function": "params.value.toFixed(1)"}
-        }
-    },
-    "vulns_cvss_score_avg": {
-        'name': "CVSS (avg)",
-        'description': "Avg of CVSS",
         'type': 'float',
         'color_style': '<CVSS>',
         'general_config': {
@@ -146,7 +148,7 @@ header_mapping = {
         'description': 'Version of CVSS',
         'type': 'float'
     },
-    'vulns_cvss_score': {
+    'vulns_cvss': {
         "name": 'CVSS',
         "description": "CVSS stands for Common Vulnerability Scoring System, a standardized framework "
                        "for measuring the severity of security flaws in information systems. "
@@ -254,17 +256,6 @@ header_mapping = {
             "valueFormatter": {"function": "params.value.toFixed(4)"}
         }
     },
-    "avg_cvss": {
-        "name": 'Avg CVSS',
-        "description": '',
-        "type": 'float',
-        'color_style': '<CVSS>',
-        'general_config': {
-            'width': 125,
-            'minWidth': 125,
-            "valueFormatter": {"function": "params.value.toFixed(2)"}
-        }
-    },
     "avg_epss": {
         "name": 'Avg EPSS',
         "description": '',
@@ -332,15 +323,6 @@ header_mapping = {
             'minWidth': 110
         }
     },
-    "n_vulns_in_cisa": {
-        'name': "# CVEs in CISA",
-        'description': "Number of vulnerabilities by CISA",
-        'type': 'integer',
-        'general_config': {
-            'width': 110,
-            'minWidth': 110
-        }
-    },
     "n_vulns": {
         'name': "# CVEs",
         'description': "Number of vulnerabilities",
@@ -350,7 +332,16 @@ header_mapping = {
             'minWidth': 110
         }
     },
-    'n_vulns_cisa_knownRansomwareCampaignUse': {
+    "n_vulns_cisa": {
+        'name': "# CVEs in CISA",
+        'description': "Number of vulnerabilities by CISA",
+        'type': 'integer',
+        'general_config': {
+            'width': 110,
+            'minWidth': 110
+        }
+    },
+    'n_vulns_cisa_ransomware': {
         'name': '# Ransomware Use',
         'description': 'Number of known CVEs as being used in ransomware campaigns',
         'type': 'integer',
@@ -360,6 +351,7 @@ header_mapping = {
         }
     },
 
+    # informations
     'ip': {
         "name": 'IP',
         'description': "",

@@ -16,8 +16,8 @@ class DatasetManager(object):
     def __init__(self):
         self.available_datasets = {}
         self.tlhop_epss_report_path = RESULT_FOLDER + "/tlhop-epss-dashboard.delta"
-        self.tlhop_epss_views_path = RESULT_FOLDER + "/tlhop-epss-dashboard-view{}.delta"
-        self.n_views = 4
+        self.tlhop_epss_views_path = RESULT_FOLDER + "/tlhop-epss-dashboard-{}.delta"
+        self.views = ['summary', 'ips', 'orgs', 'vulns', 'as', 'ports']
         self.sampled_data = None
 
     def check_available_datasets(self):
@@ -185,7 +185,7 @@ class DatasetManager(object):
             retention_hours = int(divmod(diff_seconds, 3600)[0]) + 1
 
             filepaths = [self.tlhop_epss_report_path] + \
-                        [self.tlhop_epss_views_path.format(code + 1) for code in range(self.n_views)]
+                        [self.tlhop_epss_views_path.format(code) for code in self.views]
 
             for filepath in filepaths:
                 filepath = filepath.replace("//", "/")
