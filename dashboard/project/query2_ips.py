@@ -93,10 +93,9 @@ def register_callback_query(dm, app):
         ]
     )
     def update_grid2a(date_value, request):
-        logging.info("query2_ips - update_grid2a: " + date_value)
 
         df = dm.get_view_dataset(date_value, INPUT_DATA)
-        logging.info(f"query2_ips - update_grid2a - original dataset has {len(df)} lines")
+        logging.info(f"original dataset ({date_value} has {len(df)} lines")
 
         if request:
             if request["filterModel"]:
@@ -105,7 +104,7 @@ def register_callback_query(dm, app):
                     try:
                         df = filter_by_model(filter_conf, df, col)
                     except:
-                        logging.error("query2_ips - update_grid2a - error filter grid2a")
+                        logging.error("error filter grid2a")
 
             if request["sortModel"]:
                 sorting = []
@@ -135,7 +134,7 @@ def register_callback_query(dm, app):
         ]
     )
     def update_graph2a(date_value, filter_modal):
-        logging.info("query2_ips - update_graph2a: " + date_value)
+        logging.info(date_value)
 
         df = dm.get_view_dataset(date_value, INPUT_DATA)
         if df.empty:
@@ -253,6 +252,6 @@ def register_callback_query(dm, app):
             if cell.get("colId", "") == "ip":
                 value = cell.get('value', "")
                 filter_opt = {'ip': {'filterType': 'text', 'type': 'equals', 'filter': value}}
-                logging.info(f"query2_ips - select_ip: {filter_opt}")
+                logging.info(f"{filter_opt}")
                 return "/dashboard/report", filter_opt
         return no_update, no_update

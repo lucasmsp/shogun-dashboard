@@ -106,7 +106,7 @@ def register_callback_query(dm, app):
         Input('date-picker-single', 'value')
     )
     def update_grid6(date_value):
-        logging.info("query6_as - update_grid6: " + date_value)
+        logging.info(date_value)
 
         df = dm.get_view_dataset(date_value, INPUT_DATA_V6)
 
@@ -131,7 +131,7 @@ def register_callback_query(dm, app):
         Input('date-picker-single', 'value')
     )
     def update_asn_chart(date_value):
-        logging.info("query6_as - update_asn_chart: " + date_value)
+        logging.info(date_value)
 
         df = dm.get_view_dataset(date_value, INPUT_DATA_V6)
 

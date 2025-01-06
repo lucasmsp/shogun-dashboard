@@ -1,13 +1,10 @@
 from dash import html, dcc, html, Input, Output
 import dash_ag_grid as dag
-
 import dash_bootstrap_components as dbc
-
-import re
-
 from flask_login import current_user
 
-TAB_VIEW = "tab-4"
+from project.auxiliar import logging
+
 
 def register_layout_query(filter_modal={}):
 
@@ -83,8 +80,8 @@ def register_callback_query(dm, app):
         ]
     )
     def update_table5(date_value):
+        logging.info(date_value)
 
-        print("[INFO][query5] - update_table5: ", date_value)
 
         df = dm.get_report_dataset(
             date_value,

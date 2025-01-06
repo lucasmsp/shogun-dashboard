@@ -1,6 +1,9 @@
 from deltalake import DeltaTable
 from croniter import croniter
 from datetime import datetime, timedelta
+
+from project.auxiliar import logging
+
 import pandas as pd
 import glob
 import os
@@ -42,10 +45,10 @@ class DatasetManager(object):
                                                        "processing_timestamp": timestamp_commit}
 
         else:
-            print(f"[ERROR][DatasetManager] File '{self.tlhop_epss_report_path}' not found")
+            logging.error(f"File '{self.tlhop_epss_report_path}' not found")
 
         self.available_datasets = available_datasets
-        print(f"[INFO][DatasetManager] Commits found: {self.available_datasets}")
+        logging.info(f"Commits found: {self.available_datasets}")
 
     def last_commit(self):
         """
@@ -82,7 +85,7 @@ class DatasetManager(object):
         if commit >= 0:
             filepath = self.tlhop_epss_views_path.format(code)
 
-            print(f"[INFO][DatasetManager] Reading {code} of day {day}")
+            logging.info(f"Reading {code} of day {day}")
             dt = DeltaTable(filepath, version=commit)
             df = dt.to_pandas()
         else:
@@ -90,7 +93,8 @@ class DatasetManager(object):
         return df
     
     def get_report_dataset(self, day, columns=None, condition=None, single_output=False,
-                        start=0, finish=-1, sort_by='score', ascending=False, compute_score=False, for_each=False, user_id=None):
+                           start=0, finish=-1, sort_by='score', ascending=False, compute_score=False,
+                           for_each=False, user_id=None):
         
         commit = self.retrive_commit(day)
         df = None
@@ -98,7 +102,7 @@ class DatasetManager(object):
         if commit >= 0:
             filepath = self.tlhop_epss_report_path
 
-            print(f"Reading report of day {day}")
+            logging.info(f"Reading report of day {day}")
             dt = DeltaTable(filepath, version=commit).to_pyarrow_dataset()
 
             if for_each:
@@ -106,7 +110,7 @@ class DatasetManager(object):
                     self.sample_data(day, random_state=777, entries=600)
 
                 if self.sampled_data is not None:
-                    print(f"Using pre-sampled data for day {day} for user {user_id}")
+                    logging.info(f"Using pre-sampled data for day {day} for user {user_id}")
                     df = self.sampled_data.copy()
 
                     if condition:
@@ -150,7 +154,7 @@ class DatasetManager(object):
         if commit >= 0:
             filepath = self.tlhop_epss_report_path
 
-            print(f"[### SAMPLE_DATA ###] Sampling data for each user: {day} - Random state: {random_state}")
+            logging.info(f"Sampling data for each user: {day} - Random state: {random_state}")
             dt = DeltaTable(filepath, version=commit).to_pyarrow_dataset()
 
             table = dt.to_table(columns=None)
@@ -189,16 +193,16 @@ class DatasetManager(object):
 
             for filepath in filepaths:
                 filepath = filepath.replace("//", "/")
-                print(f"[INFO][DatasetManager][remove_old_data] - checking file {filepath}", flush=True)
+                logging.info(f"checking file {filepath}")
+
                 try:
                     stats1 = self.check_folder_stats(filepath)
                     dt = DeltaTable(filepath)
                     dt.vacuum(retention_hours=retention_hours, dry_run=False,  enforce_retention_duration=False)
                     stats2 = self.check_folder_stats(filepath)
-                    print(f"[INFO][DatasetManager][remove_old_data] - Folder changed from {stats1} to {stats2}")
+                    logging.info(f"Folder changed from {stats1} to {stats2}")
                 except Exception as e:
-                    print(f"[ERROR][DatasetManager][remove_old_data] - Error to vacuum file '{filepath}'", flush=True)
-                    print(e, flush=True)
+                    logging.error(f"Error to vacuum file '{filepath}\n{e}")
 
     @staticmethod
     def check_folder_stats(path):
@@ -217,15 +221,15 @@ class DatasetManager(object):
         found_files = [d for d in found_files if next_date < d]
         if len(found_files) > 0:
             if mode == "all":
-                print("[INFO][waiting_next_file][all] Found a new Shodan dump for day: ", found_files, flush=True)
+                logging.info(f"all - Found a new Shodan dump for day : {found_files}")
                 return found_files
             elif mode == "latest":
-                print("[INFO][waiting_next_file][latest] Found a new Shodan dump for day: ", found_files[-1], flush=True)
+                logging.info(f"latest - Found a new Shodan dump for day : {found_files[-1]}")
                 return [found_files[-1]]
             elif len(mode) == 8:
                 mode_adj = mode[0:4]+"-"+mode[4:6]+"-"+mode[6:8]
                 if mode_adj in found_files:
-                    print("[INFO][waiting_next_file][yyyy-mm-dd] Found a new Shodan dump for day: ", mode_adj, flush=True)
+                    logging.info(f"yyyy-mm-dd - Found a new Shodan dump for day : {mode_adj}")
                     return [mode_adj]
 
         return None

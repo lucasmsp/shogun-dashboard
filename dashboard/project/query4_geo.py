@@ -7,6 +7,7 @@ from dash import Dash, dcc, html, Input, Output, callback, no_update
 import pandas as pd
 import os
 
+from project.auxiliar import gen_subgraphs, gen_columns_def, logging
 
 def register_layout_query(filter_modal={}):
     elements = [
@@ -120,7 +121,7 @@ def register_callback_query(dm, app):
         height = 900
         zoom = 4
 
-        print("[INFO][query4][update_choropleth_map] ", date_value, flush=True)
+        logging.info(date_value)
         
         if value == 'ip':
 
@@ -159,7 +160,6 @@ def register_callback_query(dm, app):
             df = dm.get_report_dataset(date_value, columns=["ip", "city", "vulns_cvss_score"])
             df['region_code'] = df['city'].str.split(', ').str[1]
 
-            print(df['vulns_cvss_score'])
             if df.empty:
                 return fig
 
@@ -278,7 +278,8 @@ def register_callback_query(dm, app):
             )
 
         elif value == 'ip_cvss':
-            print("[INFO][query4][update_choropleth_map] ip_cvss: ", cvss_range_query)
+            logging.debug(f"ip_cvss: {cvss_range_query}")
+
             df = dm.get_report_dataset(date_value, columns=['ip', "city", "vulns_cvss_score"])
             df['region_code'] = df['city'].str.split(', ').str[1]
             if df.empty:
@@ -286,7 +287,6 @@ def register_callback_query(dm, app):
             df['name'] = df['region_code'].map(state_id_map)
             df['cvss_new'] = df['vulns_cvss_score']
 
-            # df = df.explode('cvss_new')
             df = df.drop('vulns_cvss_score', axis=1) \
                 .explode('cvss_new')
 
@@ -349,7 +349,7 @@ def register_callback_query(dm, app):
     )
     def select_region_view4_to_report(data):
 
-        print("[INFO] - select_region_view4_to_report: ", data, flush=True)
+        logging.info(data)
 
         if not data:
             return no_update

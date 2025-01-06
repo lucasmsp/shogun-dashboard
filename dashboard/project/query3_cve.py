@@ -115,7 +115,7 @@ def register_callback_query(dm, app):
         Input('date-picker-single', 'value')
     )
     def update_table3(date_value):
-        logging.info(f"query3_cve - update_table3: {date_value}")
+        logging.info(date_value)
         df = dm.get_view_dataset(date_value, INPUT_DATA)
         if df.empty:
             return [{}]
@@ -144,7 +144,7 @@ def register_callback_query(dm, app):
         Input('date-picker-single', 'value')
     )
     def update_graphs(date_value):
-        logging.info(f"query3_cve - update_graphs: {date_value}")
+        logging.info(date_value)
         df = dm.get_view_dataset(date_value, INPUT_DATA)
 
         if df.empty:

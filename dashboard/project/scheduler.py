@@ -1,4 +1,5 @@
 from project.storage import DatasetManager
+from project.auxiliar import logging
 from project.computation import start_processing
 from datetime import datetime
 import multiprocessing
@@ -16,7 +17,7 @@ def external_scheduler(mode="latest"):
         next_run = dm.compute_next_dump(last_commit) # Timestamp, based on env CRON_EXPRESSION, where a new processing attempt will be initiated
         diff = (next_run - now).total_seconds()
         if diff > 0:
-            print(f"[INFO][external_scheduler] - New attempt for new files will be pending for {diff} seconds (at {next_run})")
+            logging.info(f"New attempt for new files will be pending for {diff} seconds (at {next_run})")
             time.sleep(diff)
         
         new_files_exists = False
@@ -25,13 +26,13 @@ def external_scheduler(mode="latest"):
             if new_files:
                 for day_fmt1 in new_files:
                     new_files_exists = True
-                    print(f"[INFO][external_scheduler] - Processing file {day_fmt1}")
+                    logging.info(f"Processing file {day_fmt1}")
                     proc = multiprocessing.Process(target=start_processing, args=(dm, day_fmt1))
                     proc.start()
                     proc.join()
 
             if not new_files_exists:
-                print(f"[INFO][external_scheduler] - New files not found. Retrying in 60 seconds.")
+                logging.info(f"New files not found. Retrying in 60 seconds.")
                 time.sleep(60)
 
 if __name__ == '__main__':

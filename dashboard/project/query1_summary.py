@@ -1,6 +1,6 @@
-from dash import html, dcc
+from dash import html, dcc, no_update
 import dash_bootstrap_components as dbc
-from dash.dependencies import Output, Input
+from dash.dependencies import Output, Input, State
 
 import plotly.express as px
 import plotly.graph_objs as go
@@ -13,14 +13,16 @@ INPUT_DATA = 'summary'
 def register_layout_query(filter_modal={}):
 
     columns, raw_data = gen_columns_def(['vulns_epss_rank', 'n_cves', 'n_ips', 'n_orgs', 'n_as'])
+    columns['n_cves']["tooltipValueGetter"] = {"function": "'Click on the cell for more details'"}
+
     aggrid = dag.AgGrid(
         id='query-1-table',
         columnDefs=list(columns.values()),
-        rowData=columns,
+        rowData=raw_data,
         defaultColDef={"flex": 1, "resizable": False},
         columnSize="responsiveSizeToFit",
         columnSizeOptions={"skipHeader": False},
-        dashGridOptions={"animateRows": False},
+        dashGridOptions={"rowSelection": "single", "animateRows": False},
         style={"height": 260}
     )
 
@@ -51,7 +53,7 @@ def register_callback_query(dm, app):
         Input('date-picker-single', 'value')
     )
     def update_table1(date_value):
-        logging.info("query1_summary - update_table1: " + date_value)
+        logging.info("update_table1: " + date_value)
         df = dm.get_view_dataset(date_value, INPUT_DATA)
         return df.to_dict('records')
 
@@ -61,7 +63,7 @@ def register_callback_query(dm, app):
         Input('date-picker-single', 'value')
     )
     def update_chart1(date_value):
-        logging.info("query1_summary - update_chart1: " + date_value)
+        logging.info("update_chart1: " + date_value)
         df = dm.get_view_dataset(date_value, INPUT_DATA)
 
         if df.empty:
@@ -155,4 +157,52 @@ def register_callback_query(dm, app):
 
 
 
+    @app.callback(
+        Output("url-redirect", "pathname", allow_duplicate=True),
+        Output('store-filters', 'data', allow_duplicate=True),
+        Input("query-1-table", "cellClicked"),
+        Input("query-1-table", "selectedRows"),
+        prevent_initial_call=True,
+    )
+    def go_to_queries(cell, row):
+        if cell:
+            if cell.get("colId", "") == "n_cves":
+                logging.info(f"Cicked cell {cell} and row {row}")
+                epss_rank = row[0]['vulns_epss_rank']
+                if epss_rank == "< 20":
+                    filter_opt = {
+                        "query-3-ag": {'vulns_epss': {'filterType': 'number', 'type': 'lessThan', 'filter': 20}}}
 
+                elif epss_rank == "< 40":
+                    filter_opt = {
+                        "query-3-ag": {'vulns_epss': {'filterType': 'number', "operator": "AND",
+                                                      "conditions": [
+                                                          {"filter": 20, "filterType": "number",
+                                                           "type": "greaterThanOrEqual"},
+                                                          {"filter": 40, "filterType": "text", "type": "lessThan"}
+                                                      ]}}}
+                elif epss_rank == "< 60":
+                    filter_opt = {
+                        "query-3-ag": {'vulns_epss': {'filterType': 'number', "operator": "AND",
+                                                      "conditions": [
+                                                          {"filter": 40, "filterType": "number",
+                                                           "type": "greaterThanOrEqual"},
+                                                          {"filter": 60, "filterType": "number", "type": "lessThan"}
+                                                      ]}}}
+                elif epss_rank == "< 80":
+                    filter_opt = {
+                        "query-3-ag": {'vulns_epss': {'filterType': 'number', "operator": "AND",
+                                                      "conditions": [
+                                                          {"filter": 60, "filterType": "number",
+                                                           "type": "greaterThanOrEqual"},
+                                                          {"filter": 80, "filterType": "number", "type": "lessThan"}
+                                                      ]}}}
+                else:
+                    filter_opt = {
+                        "query-3-ag": {
+                            'vulns_epss': {'filterType': 'number', 'type': 'greaterThanOrEqual', 'filter': 80}}}
+
+
+
+                return "/dashboard/cve", filter_opt
+        return no_update, no_update

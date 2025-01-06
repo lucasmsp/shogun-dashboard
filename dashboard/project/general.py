@@ -10,6 +10,7 @@ import project.query4_geo as query4_geo
 import project.query5_report as query5_report
 import project.query6_as as query6_as
 import project.query7_ports as query7_ports
+from project.auxiliar import logging
 
 def register_callback_query(dm, app):
 
@@ -36,7 +37,7 @@ def register_callback_query(dm, app):
         Input(component_id='date-picker-single', component_property='options'),
     )
     def update_dump_message(n_intervals, value, old_opts):
-        print("[INFO][update_dump_message] Checking for new any changes.")
+        logging.info("Checking for new any changes.")
 
         dm.check_available_datasets()
         last_date_commit = dm.last_commit()
@@ -69,8 +70,7 @@ def register_callback_query(dm, app):
 
     )
     def render_page_content(filters, pathname):
-        print("render_page_content:", pathname)
-        print(filters)
+        logging.info(f"Pathname: {pathname} - filters: {filters}")
 
         if pathname == "/dashboard/ips":
             aggrid_key = 'query-2a-grid'

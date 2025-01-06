@@ -77,7 +77,7 @@ def register_callback_query(dm, app):
         Input('date-picker-single', 'value')
     )
     def update_grid2b(date_value):
-        logging.info("query2_orgs - update_grid2b: "+ date_value)
+        logging.info(date_value)
 
         df = dm.get_view_dataset(date_value, INPUT_DATA_V2)
         if df.empty:
@@ -92,7 +92,7 @@ def register_callback_query(dm, app):
         Input('query-2b-grid', 'filterModel')
     )
     def update_graph2b(date_value, filter_modal):
-        logging.info("query2_orgs - update_graph2b: " + date_value)
+        logging.info(date_value)
 
         df = dm.get_view_dataset(date_value, INPUT_DATA_V2)
         if df.empty:

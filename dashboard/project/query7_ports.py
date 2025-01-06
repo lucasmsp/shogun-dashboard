@@ -89,7 +89,7 @@ def register_callback_query(dm, app):
         Input('date-picker-single', 'value')
     )
     def update_table7(date_value):
-        logging.info("query7_ports - update_table7: " + date_value)
+        logging.info(date_value)
         df = dm.get_view_dataset(date_value, INPUT_DATA)
 
         if df.empty:
@@ -102,7 +102,7 @@ def register_callback_query(dm, app):
         Input('date-picker-single', 'value')
     )
     def update_vulnerability_charts(date_value):
-        logging.info("query7_ports - update_vulnerability_charts: " + date_value)
+        logging.info(date_value)
 
         df = dm.get_view_dataset(date_value, INPUT_DATA)
 
@@ -298,9 +298,6 @@ def register_callback_query(dm, app):
     )
     def filter_by_graph_point(click_data, date_value):
         print(f"[INFO] Point clicked: {click_data}, Date: {date_value}")
-
-        # Obter o dataset com base na data selecionada
-        df = dm.get_view_dataset(date_value, INPUT_DATA)
 
         if click_data:
             # Obter a porta clicada (eixo x)

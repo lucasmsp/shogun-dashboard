@@ -4,7 +4,7 @@ from collections import OrderedDict
 
 import logging
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - [%(filename)s:%(lineno)s - %(funcName)s ] - %(message)s')
 
 
 def gen_subgraphs(n_cols, graphs):
@@ -414,7 +414,8 @@ def gen_columns_def(columns_names, special_configs=None):
         if header_mapping[c]['type'] in ['integer', 'float']:
             new_column["filter"] = "agNumberColumnFilter"
             new_column['filterParams'] = {
-                "filterOptions": ["equals", "notEqual", 'lessThan', 'greaterThan', 'inRange'],
+                "filterOptions": ["equals", "notEqual", 'lessThan', 'lessThanOrEqual', 'greaterThan',
+                                  'greaterThanOrEqual', 'inRange'],
                 'buttons': ["apply", "reset" ],
             }
         else:

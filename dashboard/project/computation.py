@@ -1,6 +1,7 @@
 import os
 import time
 from project.storage import DatasetManager
+from project.auxiliar import logging
 
 SPARK_PORT = os.environ.get("SPARK_UI_PORT", "4040")
 SPARK_VCORES = os.environ.get("SPARK_VCORES", "8")
@@ -20,13 +21,13 @@ def run_dummy(timestamp):
 def start_processing(dm, day_fmt1):
     
     try:
-        print(f"[INFO][start_processing] - Starting computation - day_fmt1: {day_fmt1}...", flush=True)
+        logging.info(f"Starting computation - day_fmt1: {day_fmt1}...")
 
         run(day_str=day_fmt1)
         dm.remove_old_data()
         dm.check_available_datasets()
 
-        print("[INFO][start_processing] - Finished", flush=True)
+        logging.info("Finished")
     except:
         return False
     return True
@@ -66,4 +67,4 @@ def run(day_str, first_execution=False):
 
     spark.stop()
     t2 = time.time()
-    print("[Computation] Process completed in {0:.1f}s".format(t2-t1), flush=True)
+    logging.info("Process completed in {0:.1f}s".format(t2-t1))
