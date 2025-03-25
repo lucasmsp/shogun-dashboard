@@ -1,24 +1,29 @@
 from dash import html, dcc, html, Input, Output
 import dash_ag_grid as dag
+from dash.exceptions import PreventUpdate
+
 import dash_bootstrap_components as dbc
+
+import re
+
 from flask_login import current_user
 
-from project.auxiliar import logging
+from project.filters import *
 
 
 def register_layout_query(filter_modal={}):
 
     aggrid = dag.AgGrid(
                 id="query-5-ag",
-                rowData = [{"data": "Processing...", "ip": "0", "port": 0, "city": "", "os": "",
+                rowData = [{"data": "Processing...", "ip": "0", "port": 0, "city": "", "os": "", "asn": "",
                             "org_clean": "", "hostnames": "", "domains": "", "score": 0, "meta_id": ""
                             }],
-                persistence=True,
+                # persistence=True,
                 filterModel=filter_modal,
                 columnDefs=[
                     {"field": 'servers', "headerName": 'SERVICE', "cellRenderer": "markdown",
                       'width': 300, 'maxWidth': 500, "resizable": True, },
-                    {"field": 'ip', "headerName": 'IP', "cellRenderer": "IPLink", 
+                    {"field": 'ip', "headerName": 'IP', # "cellRenderer": "IPLink", --> mudar o meta ID para IP
                      "tooltipValueGetter": {"function": "'Click on the cell for more details'"}, 
                      'width': 150, 'maxWidth': 150, "resizable": False
                      },
@@ -29,22 +34,34 @@ def register_layout_query(filter_modal={}):
                     {"field": 'org_clean', "headerName": "ORGANIZATION", "wrapText": True},
                     {"field": 'hostnames', "headerName": "HOSTNAMES", "wrapText": True, "cellRenderer": "markdown"},
                     {"field": 'domains', "headerName": "DOMAINS", "wrapText": True, "cellRenderer": "markdown"},
-                    {"field": 'score', "headerName": "SCORE", "resizable": False, 'width': 100, 'maxWidth': 100, "valueFormatter": {"function": """d3.format(",.4f")(params.value)"""}},
-                    {"field": 'meta_id',"headerName": 'VOTE',  "cellRenderer": "launchBtn", "resizable": False,  'width': 170, 'maxWidth': 170, "filter": False, 'sortable': False},
+                    {"field": 'score', "headerName": "SCORE", "resizable": False, 'width': 100, 'maxWidth': 100,
+                     "valueFormatter": {"function": """d3.format(",.4f")(params.value)"""}},
+                    {"field": 'meta_id', "headerName": 'VOTE', "resizable": False, # "cellRenderer": "launchBtn",
+                     'width': 170, 'maxWidth': 170, "filter": False, 'sortable': False},
+
                 ],
                 defaultColDef={"flex": 1, "filter": True},
                 columnSize="sizeToFit",
                 columnSizeOptions={"skipHeader": False},
                 dashGridOptions={
-                    "pagination": True,
                     'tooltipInteraction': True,
                     'tooltipShowDelay': 10,
                     'tooltipHideDelay': 1000,
                     "rowHeight": 120,
                     'animateRows': False,
                     "suppressColumnMoveAnimation": True,
-                    "paginationPageSize": 20
+
+                    # The number of rows rendered outside the viewable area the grid renders.
+                    "rowBuffer": 0,
+                    # How many blocks to keep in the store. Default is no limit, so every requested block is kept.
+                    "maxBlocksInCache": 2,
+                    "cacheBlockSize": 5000, # complete data has +- 35k records
+                    "cacheOverflowSize": 2,
+                    "maxConcurrentDatasourceRequests": 2,
+                    "infiniteInitialRowCount": 1,
                 },
+                rowModelType="infinite",
+                getRowId="params.data.index",
                 style={"height": "1000px"},
                 className="ag-theme-alpine compact"
             )
@@ -74,14 +91,15 @@ def register_layout_query(filter_modal={}):
 def register_callback_query(dm, app):
 
     @app.callback(
-        Output('query-5-ag', "rowData"),
+        Output('query-5-ag', "getRowsResponse"),
         [
-            Input('date-picker-single', 'value')
+            Input('date-picker-single', 'value'),
+            Input("query-5-ag", "getRowsRequest"),
         ]
     )
-    def update_table5(date_value):
-        logging.info(date_value)
+    def update_table5(date_value, request):
 
+        print("[INFO][query5] - update_table5: ", date_value)
 
         df = dm.get_report_dataset(
             date_value,
@@ -94,7 +112,42 @@ def register_callback_query(dm, app):
             for_each=False
         )
 
-        if df.empty:
-            return [{}]
+        
+        lines = len(df.index)
+        if lines == 0:
+            lines = 1
+        print(f"[INFO] query 5 - original dataset has {lines} lines")
 
-        return df.to_dict('records')
+        if request:
+            if request["filterModel"]:
+                filters = request["filterModel"]
+                for col, filter_conf in filters.items():
+                    try:
+                        df = filter_by_model(filter_conf, df, col)
+                    except:
+                        print("[ERROR] query 5 - error filter grid5")
+
+            if request["sortModel"]:
+                sorting = []
+                asc = []
+                for sort in request["sortModel"]:
+                    sorting.append(sort["colId"])
+                    if sort["sort"] == "asc":
+                        asc.append(True)
+                    else:
+                        asc.append(False)
+                df = df.sort_values(by=sorting, ascending=asc)
+
+            start_row = request["startRow"]
+            end_row = request["endRow"]
+
+            partial = df.iloc[start_row:end_row]
+            print("[INFO] query 5 - finishing output")
+
+            # fazer aqui a coleta dos votos
+
+
+            return {"rowData": partial.to_dict("records"), "rowCount": lines}
+
+        raise PreventUpdate
+
