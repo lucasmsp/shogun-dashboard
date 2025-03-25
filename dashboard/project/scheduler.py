@@ -6,6 +6,7 @@ import multiprocessing
 import argparse
 import time
 
+
 def external_scheduler(mode="latest"):
 
     dm = DatasetManager()
@@ -27,11 +28,18 @@ def external_scheduler(mode="latest"):
                 for day_fmt1 in new_files:
                     new_files_exists = True
                     logging.info(f"Processing file {day_fmt1}")
-                    proc = multiprocessing.Process(target=start_processing, args=(dm, day_fmt1))
+                    proc = multiprocessing.Process(target=start_processing, args=(dm, day_fmt1), daemon=False)
                     proc.start()
-                    proc.join()
-
-            if not new_files_exists:
+                    
+                    if proc.is_alive():
+                        proc.join(timeout=10*60)
+                    
+                    if not proc.is_alive():
+                        print("Processo encerrado com sucesso")
+                    else:
+                        print("Falha ao encerrar o processo")
+        
+            elif not new_files_exists:
                 logging.info(f"New files not found. Retrying in 60 seconds.")
                 time.sleep(60)
 

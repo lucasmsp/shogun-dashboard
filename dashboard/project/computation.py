@@ -1,12 +1,15 @@
 import os
+import sys
 import time
+import signal
+import psutil
 from project.storage import DatasetManager
 from project.auxiliar import logging
 
 SPARK_PORT = os.environ.get("SPARK_UI_PORT", "4040")
 SPARK_VCORES = os.environ.get("SPARK_VCORES", "8")
 SPARK_MEMORY = os.environ.get("SPARK_MEMORY", "10g")
-DELTA_VERSION = os.environ.get("DELTA_VERSION", "3.0.0")
+DELTA_VERSION = os.environ.get("DELTA_VERSION", "3.3.0")
 
 SHODAN_FOLDER = os.environ.get("SHODAN_FOLDER", "/opt/input_data/")
 RESULT_FOLDER = os.environ.get("RESULT_FOLDER", "/opt/output_data/")
@@ -21,7 +24,7 @@ def run_dummy(timestamp):
 def start_processing(dm, day_fmt1):
     
     try:
-        logging.info(f"Starting computation - day_fmt1: {day_fmt1}...")
+        logging.info(f"Starting pyspark computation - day_fmt1: {day_fmt1}...")
 
         run(day_str=day_fmt1)
         dm.remove_old_data()
@@ -29,15 +32,14 @@ def start_processing(dm, day_fmt1):
 
         logging.info("Finished")
     except:
-        return False
-    return True
+        sys.exit(1)
+    sys.exit(0)
     
 
 def run(day_str, first_execution=False):
     from pyspark.sql import SparkSession
     from tlhop.algorithms import ShodanVulnerabilitiesBanners
     from tlhop.crawlers import NISTNVD
-
     t1 = time.time()
     spark = SparkSession.builder\
                 .master(f"local[{SPARK_VCORES}]")\
@@ -48,7 +50,6 @@ def run(day_str, first_execution=False):
                 .config("spark.sql.extensions", " io.delta.sql.DeltaSparkSessionExtension")\
                 .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")\
                 .getOrCreate()
-
     if first_execution:
         crawler = NISTNVD()
         crawler.download()
@@ -59,12 +60,27 @@ def run(day_str, first_execution=False):
     algorithm = ShodanVulnerabilitiesBanners(input_filepath, output_filepath, epss_day=day_str,
                                              org_refinement=True, fix_brazilian_cities=True)
     algorithm.compute_general_report()
-    algorithm.gen_extra_query1()
-    algorithm.gen_extra_query2()
-    algorithm.gen_extra_query3()
-    algorithm.gen_extra_query4()
-    algorithm.gen_extra_query5()
+    algorithm.gen_query_summary()
+    algorithm.gen_query_orgs()
+    algorithm.gen_query_ips()
+    algorithm.gen_query_vulns()
+    algorithm.gen_query_as()
+    algorithm.gen_query_ports()
 
     spark.stop()
     t2 = time.time()
     logging.info("Process completed in {0:.1f}s".format(t2-t1))
+    kill_spark_java()
+    
+    return 'Ok' 
+
+def kill_spark_java():
+    """Making sure that pyspark java process is killed"""
+    parent = psutil.Process()
+    children = parent.children(recursive=False)
+
+    for child in children:
+        if child.name() == "java":
+            os.kill(child.pid, signal.SIGTERM)
+            logging.info("Spark java process is killed.")
+

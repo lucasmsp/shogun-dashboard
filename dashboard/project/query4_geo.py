@@ -91,7 +91,7 @@ def register_layout_query(filter_modal={}):
 
 def register_callback_query(dm, app):
     
-    brazil_states_geojson = os.environ.get("TLHOP_DATASETS_PATH","") + "/brazil-states.geojson"
+    brazil_states_geojson =  "./assets/brazil-states.geojson"
     with open(brazil_states_geojson) as f:
         brazil = json.load(f)
 
