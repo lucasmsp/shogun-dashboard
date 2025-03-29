@@ -111,7 +111,7 @@ header_mapping = {
         'general_config': {
             'width': 125,
             'minWidth': 125,
-            "valueFormatter": {"function": "params.value.toFixed(1)"}
+            #"valueFormatter": {"function": "params.value.toFixed(1)"}
         }
     },
     "vulns_cvss_max": {
@@ -122,7 +122,7 @@ header_mapping = {
         'general_config': {
             'width': 125,
             'minWidth': 125,
-            "valueFormatter": {"function": "params.value.toFixed(1)"}
+            #"valueFormatter": {"function": "params.value.toFixed(1)"}
         }
     },
     "vulns_cvss_min": {
@@ -133,7 +133,7 @@ header_mapping = {
         'general_config': {
             'width': 125,
             'minWidth': 125,
-            "valueFormatter": {"function": "params.value.toFixed(1)"}
+            #"valueFormatter": {"function": "params.value.toFixed(1)"}
         }
     },
     'vulns_cve_id': {
@@ -160,7 +160,7 @@ header_mapping = {
         'general_config': {
             'width': 100,
             'minWidth': 100,
-            "valueFormatter": {"function": "params.value.toFixed(1)"}
+           # "valueFormatter": {"function": "params.value.toFixed(1)"}
         }
     },
     "vulns_cwe": {
@@ -180,7 +180,7 @@ header_mapping = {
         'general_config': {
             'width': 100,
             'minWidth': 100,
-            "valueFormatter": {"function": "params.value.toFixed(2)"}
+           # "valueFormatter": {"function": "params.value.toFixed(2)"}
         }
     },
     "vulns_epss_max": {  # rename vulns_epss
@@ -191,7 +191,7 @@ header_mapping = {
         'general_config': {
             'width': 125,
             'minWidth': 125,
-            "valueFormatter": {"function": "params.value.toFixed(2)"}
+           # "valueFormatter": {"function": "params.value.toFixed(2)"}
         }
     },
     "vulns_epss_avg": {
@@ -202,7 +202,7 @@ header_mapping = {
         'general_config': {
             'width': 125,
             'minWidth': 125,
-            "valueFormatter": {"function": "params.value.toFixed(2)"}
+            #"valueFormatter": {"function": "params.value.toFixed(2)"}
         }
     },
     'vulns_epss_rank': {
@@ -218,7 +218,7 @@ header_mapping = {
         'general_config': {
             'width': 125,
             'minWidth': 125,
-            "valueFormatter": {"function": "params.value.toFixed(2)"}
+            #"valueFormatter": {"function": "params.value.toFixed(2)"}
         }
     },
 
@@ -255,7 +255,7 @@ header_mapping = {
         'general_config': {
             'width': 125,
             'minWidth': 125,
-            "valueFormatter": {"function": "params.value.toFixed(2)"}
+            #"valueFormatter": {"function": "params.value.toFixed(2)"}
         }
     },
 

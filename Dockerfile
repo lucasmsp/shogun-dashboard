@@ -1,7 +1,7 @@
-FROM apache/spark:3.5.1-python3
+FROM spark:3.5.5-java17-python3
 LABEL maintainer="Lucas Miguel Ponce <lucasmsp@dcc.ufmg.br>"
 USER 0
-ENV DELTA_VERSION=3.0.0
+ENV DELTA_VERSION=3.3.0
 
 # Installing Spark and Delta Lake
 RUN pip install --default-timeout=1000 --user delta-spark==$DELTA_VERSION \

@@ -85,7 +85,7 @@ class DatasetManager(object):
         if commit >= 0:
             filepath = self.tlhop_epss_views_path.format(code)
 
-            logging.info(f"Reading {code} of day {day}")
+            logging.info(f"Reading {filepath} of day {day}")
             dt = DeltaTable(filepath, version=commit)
             df = dt.to_pandas()
         else:
