@@ -60,6 +60,11 @@ dagcomponentfuncs.Button = function (props) {
 };
 
 dagcomponentfuncs.launchBtn = function (props) {
+    // Check if props contains no data while using infinite row model loading
+    if (!props || !props.data) {
+        return React.createElement('div', {}, 'Loading...');
+    }
+
     const { meta_id } = props.data;
 
     // Hold vote state
