@@ -95,7 +95,8 @@ def register_callback_query(dm, app):
     def update_grid2a(date_value, request):
 
         df = dm.get_view_dataset(date_value, INPUT_DATA)
-        logging.info(f"original dataset ({date_value} has {len(df)} lines")
+        lines = len(df.index)
+        logging.info(f"original dataset ({date_value} has {lines} lines")
 
         if request:
             if request["filterModel"]:
@@ -103,6 +104,7 @@ def register_callback_query(dm, app):
                 for col, filter_conf in filters.items():
                     try:
                         df = filter_by_model(filter_conf, df, col)
+                        lines = len(df.index)
                     except:
                         logging.error("error filter grid2a")
 
@@ -117,11 +119,13 @@ def register_callback_query(dm, app):
                         asc.append(False)
                 df = df.sort_values(by=sorting, ascending=asc)
 
-            lines = len(df.index)
+            start_row = request["startRow"]
+            end_row = request["endRow"]
+
+            partial = df.iloc[start_row:end_row]
+
             if lines == 0:
                 lines = 1
-
-            partial = df.iloc[request["startRow"]: request["endRow"]]
 
             return {"rowData": partial.to_dict("records"), "rowCount": lines}
         return no_update
