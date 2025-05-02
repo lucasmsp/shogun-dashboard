@@ -24,7 +24,7 @@ def register_layout_query(filter_modal={}):
                       'width': 300, 'maxWidth': 500, "resizable": True, },
                     {"field": 'ip', "headerName": 'IP',  "cellRenderer": "IPLink", 
                      "tooltipValueGetter": {"function": "'Click on the cell for more details'"}, 
-                     'width': 150, 'maxWidth': 150, "resizable": False
+                     'width': 150, 'maxWidth': 200, "resizable": True
                      },
                     {"field": 'port', "headerName": 'PORT', "resizable": False, 'width': 100, 'maxWidth': 100},
                     {"field": 'city', "headerName": "CITY", 'width': 150, "wrapText": True},
@@ -33,13 +33,13 @@ def register_layout_query(filter_modal={}):
                     {"field": 'org_clean', "headerName": "ORGANIZATION", "wrapText": True},
                     {"field": 'hostnames', "headerName": "HOSTNAMES", "wrapText": True, "cellRenderer": "markdown"},
                     {"field": 'domains', "headerName": "DOMAINS", "wrapText": True, "cellRenderer": "markdown"},
-                    {"field": 'score', "headerName": "SCORE", "resizable": False, 'width': 100, 'maxWidth': 100,
-                     "valueFormatter": {"function": """d3.format(",.4f")(params.value)"""}},
+                    {"field": 'score', "headerName": "SCORE", "resizable": False, 'width': 100, 'maxWidth': 100},
                     {"field": 'meta_id', "headerName": 'VOTE', "resizable": False, "cellRenderer": "launchBtn",
                      'width': 170, 'maxWidth': 170, "filter": False, 'sortable': False},
-
                 ],
-                defaultColDef={"flex": 1, "filter": True},
+                defaultColDef={"flex": 1, "filter": True,
+                               "valueFormatter": {"function": "typeof params.value === 'number' ? d3.format('.2f')(params.value) : params.value"}
+                               },
                 columnSize="sizeToFit",
                 columnSizeOptions={"skipHeader": False},
                 dashGridOptions={
@@ -142,9 +142,6 @@ def register_callback_query(dm, app):
 
             partial = df.iloc[start_row:end_row]
             print("[INFO] query 5 - finishing output")
-
-            # fazer aqui a coleta dos votos
-
 
             return {"rowData": partial.to_dict("records"), "rowCount": lines}
 
