@@ -18,12 +18,11 @@ def register_layout_query(filter_modal={}):
                 rowData = [{"data": "Processing...", "ip": "0", "port": 0, "city": "", "os": "", "asn": "",
                             "org_clean": "", "hostnames": "", "domains": "", "score": 0, "meta_id": ""
                             }],
-                # persistence=True,
                 filterModel=filter_modal,
                 columnDefs=[
                     {"field": 'servers', "headerName": 'SERVICE', "cellRenderer": "markdown",
                       'width': 300, 'maxWidth': 500, "resizable": True, },
-                    {"field": 'ip', "headerName": 'IP', # "cellRenderer": "IPLink", --> mudar o meta ID para IP
+                    {"field": 'ip', "headerName": 'IP',  "cellRenderer": "IPLink", 
                      "tooltipValueGetter": {"function": "'Click on the cell for more details'"}, 
                      'width': 150, 'maxWidth': 150, "resizable": False
                      },

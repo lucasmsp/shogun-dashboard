@@ -32,6 +32,10 @@ dagcomponentfuncs.GoToCWE = function (props) {
 
 dagcomponentfuncs.IPLink = function (props) {
 
+    if (!props || !props.data) {
+        return React.createElement('a', {}, '#');
+    }
+
     // console.log('launchBtn', props.data)
     return React.createElement(
         'a',
