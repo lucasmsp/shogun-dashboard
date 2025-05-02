@@ -7,11 +7,13 @@ import dash_bootstrap_components as dbc
 import re
 
 from flask_login import current_user
-
+from project.auxiliar import logging
 from project.filters import *
 
 
 def register_layout_query(filter_modal={}):
+
+    
 
     aggrid = dag.AgGrid(
                 id="query-5-ag",
@@ -21,19 +23,69 @@ def register_layout_query(filter_modal={}):
                 filterModel=filter_modal,
                 columnDefs=[
                     {"field": 'servers', "headerName": 'SERVICE', "cellRenderer": "markdown",
-                      'width': 300, 'maxWidth': 500, "resizable": True, },
+                      'width': 300, 'maxWidth': 500, "resizable": True,  "filter": "agTextColumnFilter",
+                        "filterParams": {
+                            "buttons": ["reset", "apply"],
+                            "closeOnApply": True
+                        }},
                     {"field": 'ip', "headerName": 'IP',  "cellRenderer": "IPLink", 
                      "tooltipValueGetter": {"function": "'Click on the cell for more details'"}, 
-                     'width': 150, 'maxWidth': 200, "resizable": True
+                     'width': 150, 'maxWidth': 200, "resizable": True, "filter": "agTextColumnFilter",
+                        "filterParams": {
+                            "buttons": ["reset", "apply"],
+                            "closeOnApply": True
+                        }
                      },
-                    {"field": 'port', "headerName": 'PORT', "resizable": False, 'width': 100, 'maxWidth': 100},
-                    {"field": 'city', "headerName": "CITY", 'width': 150, "wrapText": True},
-                    {"field": 'os', "headerName": "OS", 'width': 80, "wrapText": True},
-                    {"field": 'asn', "headerName": "ASN",  'maxWidth': 120, "wrapText": True},
-                    {"field": 'org_clean', "headerName": "ORGANIZATION", "wrapText": True},
-                    {"field": 'hostnames', "headerName": "HOSTNAMES", "wrapText": True, "cellRenderer": "markdown"},
-                    {"field": 'domains', "headerName": "DOMAINS", "wrapText": True, "cellRenderer": "markdown"},
-                    {"field": 'score', "headerName": "SCORE", "resizable": False, 'width': 100, 'maxWidth': 100},
+                    {"field": 'port', "headerName": 'PORT', "resizable": False, 'width': 100, 'maxWidth': 100,
+                        "filter": "agNumberColumnFilter",
+                        "filterParams": {
+                            "buttons": ["apply", "reset"],
+                            "closeOnApply": True
+                        },
+                    },
+                    {"field": 'city', "headerName": "CITY", 'width': 150, "wrapText": True, 
+                     "filter": "agTextColumnFilter",
+                        "filterParams": {
+                            "buttons": ["reset", "apply"],
+                            "closeOnApply": True
+                        }
+                    },
+                    {"field": 'os', "headerName": "OS", 'width': 80, "wrapText": True, 
+                     "filter": "agTextColumnFilter",
+                        "filterParams": {
+                            "buttons": ["reset", "apply"],
+                            "closeOnApply": True
+                        }},
+                    {"field": 'asn', "headerName": "ASN",  'maxWidth': 120, "wrapText": True, 
+                     "filter": "agTextColumnFilter",
+                        "filterParams": {
+                            "buttons": ["reset", "apply"],
+                            "closeOnApply": True
+                        }},
+                    {"field": 'org_clean', "headerName": "ORGANIZATION", "wrapText": True, 
+                     "filter": "agTextColumnFilter",
+                        "filterParams": {
+                            "buttons": ["reset", "apply"],
+                            "closeOnApply": True
+                        }},
+                    {"field": 'hostnames', "headerName": "HOSTNAMES", "wrapText": True, 
+                     "filter": "agTextColumnFilter",
+                        "filterParams": {
+                            "buttons": ["reset", "apply"],
+                            "closeOnApply": True
+                        }, "cellRenderer": "markdown"},
+                    {"field": 'domains', "headerName": "DOMAINS", "wrapText": True, "cellRenderer": "markdown", 
+                     "filter": "agTextColumnFilter",
+                        "filterParams": {
+                            "buttons": ["reset", "apply"],
+                            "closeOnApply": True
+                        }},
+                    {"field": 'score', "headerName": "SCORE", "resizable": False, 'width': 100, 'maxWidth': 100,
+                        "filter": "agNumberColumnFilter",
+                        "filterParams": {
+                            "buttons": ["apply", "reset"],
+                            "closeOnApply": True
+                        },},
                     {"field": 'meta_id', "headerName": 'VOTE', "resizable": False, "cellRenderer": "launchBtn",
                      'width': 170, 'maxWidth': 170, "filter": False, 'sortable': False},
                 ],
@@ -98,7 +150,7 @@ def register_callback_query(dm, app):
     )
     def update_table5(date_value, request):
 
-        print("[INFO][query5] - update_table5: ", date_value)
+        logging.info(f"[INFO][query5] - update_table5: {date_value}")
 
         df = dm.get_report_dataset(
             date_value,
@@ -111,11 +163,8 @@ def register_callback_query(dm, app):
             for_each=False
         )
 
-        
         lines = len(df.index)
-        if lines == 0:
-            lines = 1
-        print(f"[INFO] query 5 - original dataset has {lines} lines")
+        logging.info(f"[INFO] query 5 - original dataset has {lines} lines")
 
         if request:
             if request["filterModel"]:
@@ -123,8 +172,9 @@ def register_callback_query(dm, app):
                 for col, filter_conf in filters.items():
                     try:
                         df = filter_by_model(filter_conf, df, col)
+                        lines = len(df.index)
                     except:
-                        print("[ERROR] query 5 - error filter grid5")
+                        logging.error("[ERROR] query 5 - error filter grid5")
 
             if request["sortModel"]:
                 sorting = []
@@ -141,7 +191,10 @@ def register_callback_query(dm, app):
             end_row = request["endRow"]
 
             partial = df.iloc[start_row:end_row]
-            print("[INFO] query 5 - finishing output")
+            logging.info("[INFO] query 5 - finishing output")
+
+            if lines == 0:
+                lines = 1
 
             return {"rowData": partial.to_dict("records"), "rowCount": lines}
 

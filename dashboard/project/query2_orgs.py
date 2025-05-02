@@ -206,5 +206,5 @@ def register_callback_query(dm, app):
             if cell.get("colId", "") == "org_clean":
                 value = cell.get('value', "")
                 filter_opt = {"query-2a-grid": {'org_clean': {'filterType': 'text', 'type': 'equals', 'filter': value}}}
-                return "/dashboard/view2a", filter_opt
+                return "/dashboard/ips", filter_opt
         return no_update, no_update

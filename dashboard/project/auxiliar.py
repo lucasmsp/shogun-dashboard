@@ -417,10 +417,12 @@ def gen_columns_def(columns_names, special_configs=None):
                 "filterOptions": ["equals", "notEqual", 'lessThan', 'lessThanOrEqual', 'greaterThan',
                                   'greaterThanOrEqual', 'inRange'],
                 'buttons': ["apply", "reset" ],
+                "closeOnApply": True
             }
         else:
             new_column['filterParams'] = {"filterOptions": ["equals", "notEqual", 'contains'],
                 'buttons': ["apply", "reset" ],
+                "closeOnApply": True
             }
 
         if "color_style" in header_mapping[c]:
