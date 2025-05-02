@@ -1,4 +1,4 @@
-from dash import html, dcc, html, Input, Output
+from dash import html, dcc, Input, Output
 import dash_ag_grid as dag
 from dash.exceptions import PreventUpdate
 
@@ -36,7 +36,7 @@ def register_layout_query(filter_modal={}):
                     {"field": 'domains', "headerName": "DOMAINS", "wrapText": True, "cellRenderer": "markdown"},
                     {"field": 'score', "headerName": "SCORE", "resizable": False, 'width': 100, 'maxWidth': 100,
                      "valueFormatter": {"function": """d3.format(",.4f")(params.value)"""}},
-                    {"field": 'meta_id', "headerName": 'VOTE', "resizable": False, # "cellRenderer": "launchBtn",
+                    {"field": 'meta_id', "headerName": 'VOTE', "resizable": False, "cellRenderer": "launchBtn",
                      'width': 170, 'maxWidth': 170, "filter": False, 'sortable': False},
 
                 ],
