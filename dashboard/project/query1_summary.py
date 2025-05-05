@@ -1,6 +1,6 @@
-from dash import html, dcc, no_update
+from dash import html, dcc, Output, Input, State
+from dash.exceptions import PreventUpdate
 import dash_bootstrap_components as dbc
-from dash.dependencies import Output, Input, State
 
 import plotly.express as px
 import plotly.graph_objs as go
@@ -160,12 +160,14 @@ def register_callback_query(dm, app):
     @app.callback(
         Output("url-redirect", "pathname", allow_duplicate=True),
         Output('store-filters', 'data', allow_duplicate=True),
+        
+        Input("url-redirect", "pathname"),
         Input("query-1-table", "cellClicked"),
         Input("query-1-table", "selectedRows"),
         prevent_initial_call=True,
     )
-    def go_to_queries(cell, row):
-        if cell:
+    def go_to_queries(pathname, cell, row):
+        if cell and pathname == "/dashboard/summary":
             if cell.get("colId", "") == "n_cves":
                 logging.info(f"Cicked cell {cell} and row {row}")
                 epss_rank = row[0]['vulns_epss_rank']
@@ -205,4 +207,4 @@ def register_callback_query(dm, app):
 
 
                 return "/dashboard/cve", filter_opt
-        return no_update, no_update
+        raise PreventUpdate

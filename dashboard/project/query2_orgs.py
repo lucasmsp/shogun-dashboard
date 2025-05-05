@@ -1,16 +1,13 @@
-from dash import html, dcc, dash_table, callback_context, ctx, no_update
-from dash.dependencies import Output, Input, State
+from dash import html, dcc, Output, Input, State, no_update
+from dash.exceptions import PreventUpdate
 import dash_bootstrap_components as dbc
 import dash_ag_grid as dag
 
-
-import itertools
 import plotly.express as px
 import plotly.graph_objs as go
 import pandas as pd
-import re
-from project.filters import *
 
+from project.filters import *
 from project.auxiliar import gen_subgraphs, gen_columns_def, logging
 
 
@@ -81,7 +78,7 @@ def register_callback_query(dm, app):
 
         df = dm.get_view_dataset(date_value, INPUT_DATA_V2)
         if df.empty:
-            return [{}]
+            raise PreventUpdate
 
         return df.to_dict('records')
 
@@ -96,7 +93,7 @@ def register_callback_query(dm, app):
 
         df = dm.get_view_dataset(date_value, INPUT_DATA_V2)
         if df.empty:
-            return {}
+            raise PreventUpdate
 
         df = df.sort_values("n_ips")
 
@@ -194,17 +191,20 @@ def register_callback_query(dm, app):
     @app.callback(
         Output("url-redirect", "pathname", allow_duplicate=True),
         Output('store-filters', 'data', allow_duplicate=True),
+        Output("query-2b-grid", "cellClicked"),
+
+        Input("url-redirect", "pathname"),
         Input("query-2b-grid", "cellClicked"),
         prevent_initial_call=True
     )
-    def select_org_records(cell):
+    def select_org_records(pathname, cell):
         """
         When clicked, go to view2b (Orgs), filtering only IP records in view2a (IPs)
         that belongs to the selected organization.
         """
-        if cell:
+        if cell and pathname == "/dashboard/orgs":
             if cell.get("colId", "") == "org_clean":
                 value = cell.get('value', "")
                 filter_opt = {"query-2a-grid": {'org_clean': {'filterType': 'text', 'type': 'equals', 'filter': value}}}
-                return "/dashboard/ips", filter_opt
-        return no_update, no_update
+                return "/dashboard/ips", filter_opt, {}
+        raise PreventUpdate

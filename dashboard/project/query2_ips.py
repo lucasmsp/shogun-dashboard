@@ -1,15 +1,13 @@
-from dash import html, dcc, dash_table, callback_context, ctx, no_update
-from dash.dependencies import Output, Input, State
+from dash import html, dcc, Output, Input, State
+from dash.exceptions import PreventUpdate
 import dash_bootstrap_components as dbc
 import dash_ag_grid as dag
 
-import itertools
 import plotly.express as px
 import plotly.graph_objs as go
 import pandas as pd
-import re
-from project.filters import *
 
+from project.filters import *
 from project.auxiliar import gen_subgraphs, gen_columns_def, logging
 
 INPUT_DATA = 'ips'
@@ -28,6 +26,7 @@ def register_layout_query(filter_modal={}):
 
     aggrid = dag.AgGrid(
         id="query-2a-grid",
+        rowData=raw_data,
         columnDefs=list(columns.values()),
         defaultColDef={"flex": 1, "filter": True},
         columnSize="sizeToFit",
@@ -35,7 +34,8 @@ def register_layout_query(filter_modal={}):
         columnSizeOptions={"skipHeader": False},
         dashGridOptions={
             "rowSelection": "single",
-            "animateRows": False,
+            'animateRows': False,
+            "suppressColumnMoveAnimation": True,
 
             'tooltipInteraction': True,
             'tooltipShowDelay': 10,
@@ -128,7 +128,7 @@ def register_callback_query(dm, app):
                 lines = 1
 
             return {"rowData": partial.to_dict("records"), "rowCount": lines}
-        return no_update
+        raise PreventUpdate
 
     @app.callback(
         Output('query-2a-graph', 'children'),
@@ -258,4 +258,4 @@ def register_callback_query(dm, app):
                 filter_opt = {'ip': {'filterType': 'text', 'type': 'equals', 'filter': value}}
                 logging.info(f"{filter_opt}")
                 return "/dashboard/report", filter_opt
-        return no_update, no_update
+        raise PreventUpdate
