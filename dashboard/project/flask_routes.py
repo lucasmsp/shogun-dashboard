@@ -1,8 +1,11 @@
 from flask import Flask, redirect, url_for, request, render_template, jsonify
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from werkzeug.security import check_password_hash, generate_password_hash
+
 from project.models import db, User, Vote
 from project.layout import register_layout
+from project.auxiliar import logging
+
 import pyarrow.dataset as ds
 import pandas as pd
 import os
@@ -47,7 +50,7 @@ def start_flask(dm):
             admin_user = User(username='admin', password=admin_password)
             db.session.add(admin_user)
             db.session.commit()
-            print("Admin user created with username 'admin'")
+            logging.info("Admin user created with username 'admin'")
 
     login_manager = LoginManager()
     login_manager.init_app(server)
@@ -55,6 +58,7 @@ def start_flask(dm):
     @server.route('/')
     def root():
         if current_user.is_authenticated:
+            logging.info("logged, redirecting to /dashboard/summary")
             return redirect('/dashboard/summary')
         else:
             return redirect('/login')
@@ -68,6 +72,7 @@ def start_flask(dm):
                 user = User.query.filter_by(username=username).first()
                 if user and user.check_password(password):
                     login_user(user)
+                    logging.info("logged")
                     return redirect('/dashboard/summary')
             except:
                 pass
@@ -96,6 +101,7 @@ def set_routes(server, db, login_manager, app):
     @server.route('/dashboard/summary')
     @login_required
     def dashboard():
+        logging.info("login_required")
         app.layout = register_layout(dm)
         return app.index()
     

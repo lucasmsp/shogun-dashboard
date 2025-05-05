@@ -23,10 +23,8 @@ def register_layout_query(filter_modal={}):
     columns['vulns_epss']["tooltipField"] = "vulns_epss_rank"
     columns['vulns_cvss']["tooltipField"] = "vulns_cvss_version"
 
-
     aggrid = dag.AgGrid(
         id="query-2a-grid",
-        rowData=raw_data,
         columnDefs=list(columns.values()),
         defaultColDef={"flex": 1, "filter": True},
         columnSize="sizeToFit",
@@ -95,40 +93,42 @@ def register_callback_query(dm, app):
     def update_grid2a(date_value, request):
 
         df = dm.get_view_dataset(date_value, INPUT_DATA)
+        df = df[['ip', 'org_clean', 'vulns_cve_id', 'vulns_cvss', 'vulns_epss',
+                 "cpe_product", "vulns_epss_rank", "vulns_cvss_version"]]
         lines = len(df.index)
-        logging.info(f"original dataset ({date_value} has {lines} lines")
+        logging.info(f"original dataset ({date_value}) has {lines} lines")
+        if request is None:
+            raise PreventUpdate
+       
+        if request["filterModel"]:
+            filters = request["filterModel"]
+            for col, filter_conf in filters.items():
+                try:
+                    df = filter_by_model(filter_conf, df, col)
+                    lines = len(df.index)
+                except:
+                    logging.error("error filter grid2a")
 
-        if request:
-            if request["filterModel"]:
-                filters = request["filterModel"]
-                for col, filter_conf in filters.items():
-                    try:
-                        df = filter_by_model(filter_conf, df, col)
-                        lines = len(df.index)
-                    except:
-                        logging.error("error filter grid2a")
+        if request["sortModel"]:
+            sorting = []
+            asc = []
+            for sort in request["sortModel"]:
+                sorting.append(sort["colId"])
+                if sort["sort"] == "asc":
+                    asc.append(True)
+                else:
+                    asc.append(False)
+            df = df.sort_values(by=sorting, ascending=asc)
 
-            if request["sortModel"]:
-                sorting = []
-                asc = []
-                for sort in request["sortModel"]:
-                    sorting.append(sort["colId"])
-                    if sort["sort"] == "asc":
-                        asc.append(True)
-                    else:
-                        asc.append(False)
-                df = df.sort_values(by=sorting, ascending=asc)
+        start_row = request["startRow"]
+        end_row = request["endRow"]
 
-            start_row = request["startRow"]
-            end_row = request["endRow"]
+        partial = df.iloc[start_row:end_row]
 
-            partial = df.iloc[start_row:end_row]
+        if lines == 0:
+            lines = 1
 
-            if lines == 0:
-                lines = 1
-
-            return {"rowData": partial.to_dict("records"), "rowCount": lines}
-        raise PreventUpdate
+        return {"rowData": partial.to_dict("records"), "rowCount": lines}
 
     @app.callback(
         Output('query-2a-graph', 'children'),

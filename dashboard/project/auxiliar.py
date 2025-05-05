@@ -23,49 +23,48 @@ def gen_subgraphs(n_cols, graphs):
 
     return children
 
-
 color_style = {
     '<CVSS>': [
         {
-            "condition": "params.data.<CVSS> >= 0 && params.data.<CVSS> <= 2",
+            "condition": "params.data != null && params.data.<CVSS> >= 0 && params.data.<CVSS> <= 2",
             "style": {"backgroundColor": "#FFD700"},
         },
         {
-            "condition": "params.data.<CVSS> > 2 && params.data.<CVSS> <= 4",
+            "condition": "params.data != null && params.data.<CVSS> > 2 && params.data.<CVSS> <= 4",
             "style": {"backgroundColor": "#FFA500"},
         },
         {
-            "condition": "params.data.<CVSS> > 4 && params.data.<CVSS> <= 6",
+            "condition": "params.data != null && params.data.<CVSS> > 4 && params.data.<CVSS> <= 6",
             "style": {"backgroundColor": "#FF8C00"},
         },
         {
-            "condition": "params.data.<CVSS> > 6 && params.data.<CVSS> <= 8",
+            "condition": "params.data != null && params.data.<CVSS> > 6 && params.data.<CVSS> <= 8",
             "style": {"backgroundColor": "#FF6347"},
         },
         {
-            "condition": "params.data.<CVSS> > 8 && params.data.<CVSS> <= 10",
+            "condition": "params.data != null && params.data.<CVSS> > 8 && params.data.<CVSS> <= 10",
             "style": {"backgroundColor": "#FF4500"},
         },
     ],
     '<EPSS>': [
         {
-            "condition": "params.data.<EPSS> >= 0 && params.data.<EPSS> <= 20",
+            "condition": "params.data != null && params.data.<EPSS> >= 0 && params.data.<EPSS> <= 20",
             "style": {"backgroundColor": "#FFD700"},
         },
         {
-            "condition": "params.data.<EPSS> > 20 && params.data.<EPSS> <= 40",
+            "condition": "params.data != null && params.data.<EPSS> > 20 && params.data.<EPSS> <= 40",
             "style": {"backgroundColor": "#FFA500"},
         },
         {
-            "condition": "params.data.<EPSS> > 40 && params.data.<EPSS> <= 60",
+            "condition": "params.data != null && params.data.<EPSS> > 40 && params.data.<EPSS> <= 60",
             "style": {"backgroundColor": "#FF8C00"},
         },
         {
-            "condition": "params.data.<EPSS> > 60 && params.data.<EPSS> <= 80",
+            "condition": "params.data != null && params.data.<EPSS> > 60 && params.data.<EPSS> <= 80",
             "style": {"backgroundColor": "#FF6347"},
         },
         {
-            "condition": "params.data.<EPSS> > 80 && params.data.<EPSS> <= 100",
+            "condition": "params.data != null && params.data.<EPSS> > 80 && params.data.<EPSS> <= 100",
             "style": {"backgroundColor": "#FF4500"},
         },
     ],

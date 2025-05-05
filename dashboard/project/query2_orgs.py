@@ -193,7 +193,7 @@ def register_callback_query(dm, app):
         Output('store-filters', 'data', allow_duplicate=True),
         Output("query-2b-grid", "cellClicked"),
 
-        Input("url-redirect", "pathname"),
+        State("url-redirect", "pathname"),
         Input("query-2b-grid", "cellClicked"),
         prevent_initial_call=True
     )
