@@ -1,50 +1,118 @@
-from dash import html, dcc, html, Input, Output
+from dash import html, dcc, Input, Output
 import dash_ag_grid as dag
-import dash_bootstrap_components as dbc
-from flask_login import current_user
+from dash.exceptions import PreventUpdate
 
+import dash_bootstrap_components as dbc
+
+import re
+
+from flask_login import current_user
 from project.auxiliar import logging
+from project.filters import *
 
 
 def register_layout_query(filter_modal={}):
 
+    
+
     aggrid = dag.AgGrid(
                 id="query-5-ag",
-                rowData = [{"data": "Processing...", "ip": "0", "port": 0, "city": "", "os": "",
+                rowData = [{"data": "Processing...", "ip": "0", "port": 0, "city": "", "os": "", "asn": "",
                             "org_clean": "", "hostnames": "", "domains": "", "score": 0, "meta_id": ""
                             }],
-                persistence=True,
                 filterModel=filter_modal,
                 columnDefs=[
                     {"field": 'servers', "headerName": 'SERVICE', "cellRenderer": "markdown",
-                      'width': 300, 'maxWidth': 500, "resizable": True, },
-                    {"field": 'ip', "headerName": 'IP', "cellRenderer": "IPLink", 
+                      'width': 300, 'maxWidth': 500, "resizable": True,  "filter": "agTextColumnFilter",
+                        "filterParams": {
+                            "buttons": ["reset", "apply"],
+                            "closeOnApply": True
+                        }},
+                    {"field": 'ip', "headerName": 'IP',  "cellRenderer": "IPLink", 
                      "tooltipValueGetter": {"function": "'Click on the cell for more details'"}, 
-                     'width': 150, 'maxWidth': 150, "resizable": False
+                     'width': 150, 'maxWidth': 200, "resizable": True, "filter": "agTextColumnFilter",
+                        "filterParams": {
+                            "buttons": ["reset", "apply"],
+                            "closeOnApply": True
+                        }
                      },
-                    {"field": 'port', "headerName": 'PORT', "resizable": False, 'width': 100, 'maxWidth': 100},
-                    {"field": 'city', "headerName": "CITY", 'width': 150, "wrapText": True},
-                    {"field": 'os', "headerName": "OS", 'width': 80, "wrapText": True},
-                    {"field": 'asn', "headerName": "ASN",  'maxWidth': 120, "wrapText": True},
-                    {"field": 'org_clean', "headerName": "ORGANIZATION", "wrapText": True},
-                    {"field": 'hostnames', "headerName": "HOSTNAMES", "wrapText": True, "cellRenderer": "markdown"},
-                    {"field": 'domains', "headerName": "DOMAINS", "wrapText": True, "cellRenderer": "markdown"},
-                    {"field": 'score', "headerName": "SCORE", "resizable": False, 'width': 100, 'maxWidth': 100, "valueFormatter": {"function": """d3.format(",.4f")(params.value)"""}},
-                    {"field": 'meta_id',"headerName": 'VOTE',  "cellRenderer": "launchBtn", "resizable": False,  'width': 170, 'maxWidth': 170, "filter": False, 'sortable': False},
+                    {"field": 'port', "headerName": 'PORT', "resizable": False, 'width': 100, 'maxWidth': 100,
+                        "filter": "agNumberColumnFilter",
+                        "filterParams": {
+                            "buttons": ["apply", "reset"],
+                            "closeOnApply": True
+                        },
+                    },
+                    {"field": 'city', "headerName": "CITY", 'width': 150, "wrapText": True, 
+                     "filter": "agTextColumnFilter",
+                        "filterParams": {
+                            "buttons": ["reset", "apply"],
+                            "closeOnApply": True
+                        }
+                    },
+                    {"field": 'os', "headerName": "OS", 'width': 80, "wrapText": True, 
+                     "filter": "agTextColumnFilter",
+                        "filterParams": {
+                            "buttons": ["reset", "apply"],
+                            "closeOnApply": True
+                        }},
+                    {"field": 'asn', "headerName": "ASN",  'maxWidth': 120, "wrapText": True, 
+                     "filter": "agTextColumnFilter",
+                        "filterParams": {
+                            "buttons": ["reset", "apply"],
+                            "closeOnApply": True
+                        }},
+                    {"field": 'org_clean', "headerName": "ORGANIZATION", "wrapText": True, 
+                     "filter": "agTextColumnFilter",
+                        "filterParams": {
+                            "buttons": ["reset", "apply"],
+                            "closeOnApply": True
+                        }},
+                    {"field": 'hostnames', "headerName": "HOSTNAMES", "wrapText": True, 
+                     "filter": "agTextColumnFilter",
+                        "filterParams": {
+                            "buttons": ["reset", "apply"],
+                            "closeOnApply": True
+                        }, "cellRenderer": "markdown"},
+                    {"field": 'domains', "headerName": "DOMAINS", "wrapText": True, "cellRenderer": "markdown", 
+                     "filter": "agTextColumnFilter",
+                        "filterParams": {
+                            "buttons": ["reset", "apply"],
+                            "closeOnApply": True
+                        }},
+                    {"field": 'score', "headerName": "SCORE", "resizable": False, 'width': 100, 'maxWidth': 100,
+                        "filter": "agNumberColumnFilter",
+                        "filterParams": {
+                            "buttons": ["apply", "reset"],
+                            "closeOnApply": True
+                        },},
+                    {"field": 'meta_id', "headerName": 'VOTE', "resizable": False, "cellRenderer": "launchBtn",
+                     'width': 170, 'maxWidth': 170, "filter": False, 'sortable': False},
                 ],
-                defaultColDef={"flex": 1, "filter": True},
+                defaultColDef={"flex": 1, "filter": True,
+                               "valueFormatter": {"function": "typeof params.value === 'number' ? d3.format('.2f')(params.value) : params.value"}
+                               },
                 columnSize="sizeToFit",
                 columnSizeOptions={"skipHeader": False},
                 dashGridOptions={
-                    "pagination": True,
                     'tooltipInteraction': True,
                     'tooltipShowDelay': 10,
                     'tooltipHideDelay': 1000,
                     "rowHeight": 120,
                     'animateRows': False,
                     "suppressColumnMoveAnimation": True,
-                    "paginationPageSize": 20
+
+                    # The number of rows rendered outside the viewable area the grid renders.
+                    "rowBuffer": 0,
+                    # How many blocks to keep in the store. Default is no limit, so every requested block is kept.
+                    "maxBlocksInCache": 2,
+                    "cacheBlockSize": 5000, # complete data has +- 35k records
+                    "cacheOverflowSize": 2,
+                    "maxConcurrentDatasourceRequests": 2,
+                    "infiniteInitialRowCount": 1,
                 },
+                rowModelType="infinite",
+                getRowId="params.data.index",
                 style={"height": "1000px"},
                 className="ag-theme-alpine compact"
             )
@@ -74,14 +142,15 @@ def register_layout_query(filter_modal={}):
 def register_callback_query(dm, app):
 
     @app.callback(
-        Output('query-5-ag', "rowData"),
+        Output('query-5-ag', "getRowsResponse"),
         [
-            Input('date-picker-single', 'value')
+            Input('date-picker-single', 'value'),
+            Input("query-5-ag", "getRowsRequest"),
         ]
     )
-    def update_table5(date_value):
-        logging.info(date_value)
+    def update_table5(date_value, request):
 
+        logging.info(f"[INFO][query5] - update_table5: {date_value}")
 
         df = dm.get_report_dataset(
             date_value,
@@ -94,7 +163,40 @@ def register_callback_query(dm, app):
             for_each=False
         )
 
-        if df.empty:
-            return [{}]
+        lines = len(df.index)
+        logging.info(f"[INFO] query 5 - original dataset has {lines} lines")
 
-        return df.to_dict('records')
+        if request:
+            if request["filterModel"]:
+                filters = request["filterModel"]
+                for col, filter_conf in filters.items():
+                    try:
+                        df = filter_by_model(filter_conf, df, col)
+                        lines = len(df.index)
+                    except:
+                        logging.error("[ERROR] query 5 - error filter grid5")
+
+            if request["sortModel"]:
+                sorting = []
+                asc = []
+                for sort in request["sortModel"]:
+                    sorting.append(sort["colId"])
+                    if sort["sort"] == "asc":
+                        asc.append(True)
+                    else:
+                        asc.append(False)
+                df = df.sort_values(by=sorting, ascending=asc)
+
+            start_row = request["startRow"]
+            end_row = request["endRow"]
+
+            partial = df.iloc[start_row:end_row]
+            logging.info("[INFO] query 5 - finishing output")
+
+            if lines == 0:
+                lines = 1
+
+            return {"rowData": partial.to_dict("records"), "rowCount": lines}
+
+        raise PreventUpdate
+

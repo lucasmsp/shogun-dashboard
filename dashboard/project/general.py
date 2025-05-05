@@ -64,6 +64,7 @@ def register_callback_query(dm, app):
 
     @app.callback(
         Output("page-content", "children"),
+        Output('store-filters', 'data'),
 
         State('store-filters', 'data'),
         Input("url-redirect", "pathname")
@@ -108,7 +109,7 @@ def register_callback_query(dm, app):
         else:
             content = query1_summary.register_layout_query(filter_modal={})
 
-        return content
+        return content, {}
 
     @app.callback(
         Output("sidebar", "className"),

@@ -23,49 +23,48 @@ def gen_subgraphs(n_cols, graphs):
 
     return children
 
-
 color_style = {
     '<CVSS>': [
         {
-            "condition": "params.data.<CVSS> >= 0 && params.data.<CVSS> <= 2",
+            "condition": "params.data != null && params.data.<CVSS> >= 0 && params.data.<CVSS> <= 2",
             "style": {"backgroundColor": "#FFD700"},
         },
         {
-            "condition": "params.data.<CVSS> > 2 && params.data.<CVSS> <= 4",
+            "condition": "params.data != null && params.data.<CVSS> > 2 && params.data.<CVSS> <= 4",
             "style": {"backgroundColor": "#FFA500"},
         },
         {
-            "condition": "params.data.<CVSS> > 4 && params.data.<CVSS> <= 6",
+            "condition": "params.data != null && params.data.<CVSS> > 4 && params.data.<CVSS> <= 6",
             "style": {"backgroundColor": "#FF8C00"},
         },
         {
-            "condition": "params.data.<CVSS> > 6 && params.data.<CVSS> <= 8",
+            "condition": "params.data != null && params.data.<CVSS> > 6 && params.data.<CVSS> <= 8",
             "style": {"backgroundColor": "#FF6347"},
         },
         {
-            "condition": "params.data.<CVSS> > 8 && params.data.<CVSS> <= 10",
+            "condition": "params.data != null && params.data.<CVSS> > 8 && params.data.<CVSS> <= 10",
             "style": {"backgroundColor": "#FF4500"},
         },
     ],
     '<EPSS>': [
         {
-            "condition": "params.data.<EPSS> >= 0 && params.data.<EPSS> <= 20",
+            "condition": "params.data != null && params.data.<EPSS> >= 0 && params.data.<EPSS> <= 20",
             "style": {"backgroundColor": "#FFD700"},
         },
         {
-            "condition": "params.data.<EPSS> > 20 && params.data.<EPSS> <= 40",
+            "condition": "params.data != null && params.data.<EPSS> > 20 && params.data.<EPSS> <= 40",
             "style": {"backgroundColor": "#FFA500"},
         },
         {
-            "condition": "params.data.<EPSS> > 40 && params.data.<EPSS> <= 60",
+            "condition": "params.data != null && params.data.<EPSS> > 40 && params.data.<EPSS> <= 60",
             "style": {"backgroundColor": "#FF8C00"},
         },
         {
-            "condition": "params.data.<EPSS> > 60 && params.data.<EPSS> <= 80",
+            "condition": "params.data != null && params.data.<EPSS> > 60 && params.data.<EPSS> <= 80",
             "style": {"backgroundColor": "#FF6347"},
         },
         {
-            "condition": "params.data.<EPSS> > 80 && params.data.<EPSS> <= 100",
+            "condition": "params.data != null && params.data.<EPSS> > 80 && params.data.<EPSS> <= 100",
             "style": {"backgroundColor": "#FF4500"},
         },
     ],
@@ -111,7 +110,7 @@ header_mapping = {
         'general_config': {
             'width': 125,
             'minWidth': 125,
-            "valueFormatter": {"function": "params.value.toFixed(1)"}
+            #"valueFormatter": {"function": "params.value.toFixed(1)"}
         }
     },
     "vulns_cvss_max": {
@@ -122,7 +121,7 @@ header_mapping = {
         'general_config': {
             'width': 125,
             'minWidth': 125,
-            "valueFormatter": {"function": "params.value.toFixed(1)"}
+            #"valueFormatter": {"function": "params.value.toFixed(1)"}
         }
     },
     "vulns_cvss_min": {
@@ -133,7 +132,7 @@ header_mapping = {
         'general_config': {
             'width': 125,
             'minWidth': 125,
-            "valueFormatter": {"function": "params.value.toFixed(1)"}
+            #"valueFormatter": {"function": "params.value.toFixed(1)"}
         }
     },
     'vulns_cve_id': {
@@ -160,7 +159,7 @@ header_mapping = {
         'general_config': {
             'width': 100,
             'minWidth': 100,
-            "valueFormatter": {"function": "params.value.toFixed(1)"}
+           # "valueFormatter": {"function": "params.value.toFixed(1)"}
         }
     },
     "vulns_cwe": {
@@ -180,7 +179,7 @@ header_mapping = {
         'general_config': {
             'width': 100,
             'minWidth': 100,
-            "valueFormatter": {"function": "params.value.toFixed(2)"}
+           # "valueFormatter": {"function": "params.value.toFixed(2)"}
         }
     },
     "vulns_epss_max": {  # rename vulns_epss
@@ -191,7 +190,7 @@ header_mapping = {
         'general_config': {
             'width': 125,
             'minWidth': 125,
-            "valueFormatter": {"function": "params.value.toFixed(2)"}
+           # "valueFormatter": {"function": "params.value.toFixed(2)"}
         }
     },
     "vulns_epss_avg": {
@@ -202,7 +201,7 @@ header_mapping = {
         'general_config': {
             'width': 125,
             'minWidth': 125,
-            "valueFormatter": {"function": "params.value.toFixed(2)"}
+            #"valueFormatter": {"function": "params.value.toFixed(2)"}
         }
     },
     'vulns_epss_rank': {
@@ -218,7 +217,7 @@ header_mapping = {
         'general_config': {
             'width': 125,
             'minWidth': 125,
-            "valueFormatter": {"function": "params.value.toFixed(2)"}
+            #"valueFormatter": {"function": "params.value.toFixed(2)"}
         }
     },
 
@@ -255,7 +254,7 @@ header_mapping = {
         'general_config': {
             'width': 125,
             'minWidth': 125,
-            "valueFormatter": {"function": "params.value.toFixed(2)"}
+            #"valueFormatter": {"function": "params.value.toFixed(2)"}
         }
     },
 
@@ -417,10 +416,12 @@ def gen_columns_def(columns_names, special_configs=None):
                 "filterOptions": ["equals", "notEqual", 'lessThan', 'lessThanOrEqual', 'greaterThan',
                                   'greaterThanOrEqual', 'inRange'],
                 'buttons': ["apply", "reset" ],
+                "closeOnApply": True
             }
         else:
             new_column['filterParams'] = {"filterOptions": ["equals", "notEqual", 'contains'],
                 'buttons': ["apply", "reset" ],
+                "closeOnApply": True
             }
 
         if "color_style" in header_mapping[c]:

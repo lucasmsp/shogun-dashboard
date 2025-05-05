@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 from project.auxiliar import logging
 
 import pandas as pd
+import numpy as np
 import glob
 import os
 import re
@@ -85,7 +86,7 @@ class DatasetManager(object):
         if commit >= 0:
             filepath = self.tlhop_epss_views_path.format(code)
 
-            logging.info(f"Reading {code} of day {day}")
+            logging.info(f"Reading {filepath} of day {day}")
             dt = DeltaTable(filepath, version=commit)
             df = dt.to_pandas()
         else:
@@ -136,7 +137,13 @@ class DatasetManager(object):
                     df = table.to_pandas()
 
                     if compute_score:
-                        df['score'] = df['vulns_epss'].apply(lambda x: max(x) if isinstance(x, list) else 0)
+                        def compute_score_method(x):
+                            if isinstance(x, np.ndarray):
+                                if len(x) > 0:
+                                    return max(x)
+                            return 0
+                        
+                        df['score'] = df.apply(lambda x: compute_score_method(x['vulns_epss']), axis=1)
                         df = df.drop(columns=['vulns_epss'])
                         df = df.sort_values(by=sort_by, ascending=ascending)
 

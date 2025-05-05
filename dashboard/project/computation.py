@@ -31,7 +31,8 @@ def start_processing(dm, day_fmt1):
         dm.check_available_datasets()
 
         logging.info("Finished")
-    except:
+    except Exception as e:
+        logging.error(e)
         sys.exit(1)
     sys.exit(0)
     

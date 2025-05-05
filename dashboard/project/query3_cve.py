@@ -363,7 +363,7 @@ def register_callback_query(dm, app):
     )
     def select_orgs(cell, date_value):
 
-        df_q2 = dm.get_view_dataset(date_value, '2')
+        df_q2 = dm.get_view_dataset(date_value, 'orgs')
         # TODO: Não esta filtrando todos os elementos da lista, no maximo 2, e existem
         if cell:
             if cell.get("colId", "") == "n_orgs":
