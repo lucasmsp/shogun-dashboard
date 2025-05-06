@@ -237,7 +237,7 @@ th, td {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     text-align: center;
     font-size: 1.7rem;
-    width: 280px;
+    /* width: 280px; commented to better fit ipv6 */ 
     margin-top: 65px;
 }
 #score {
