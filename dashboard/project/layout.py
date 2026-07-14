@@ -1,4 +1,4 @@
-from dash import html, dcc, callback_context
+from dash import Input, html, dcc, callback_context, Output, Input, Output, State, callback
 import dash_bootstrap_components as dbc
 
 import project.query1_summary as query1_summary
@@ -77,6 +77,7 @@ def register_layout(dm):
                                     dbc.NavLink(
                                         [html.B("ORG - "), html.Span("Highest vulnerability per Organization")],
                                         href="/dashboard/orgs",
+                                        id='link-orgs',
                                         active="exact",
                                         style={"margin-top": "0px", "padding-top": "0px"}
 
@@ -84,22 +85,26 @@ def register_layout(dm):
                                     dbc.NavLink(
                                         [html.B("IP - "), html.Span("Highest vulnerability per IP")],
                                         href="/dashboard/ips",
+                                        id='link-ips',
                                         active="exact",
                                         style={"margin-top": "0px", "padding-top": "0px"}
                                     ),
                                     dbc.NavLink(
                                         [html.B("CVE - "), html.Span("Report of Common Vulnerabilities and Exposures")],
                                         href="/dashboard/cve",
+                                        id='link-cve',
                                         active="exact",
                                     ),
                                     dbc.NavLink(
                                         [html.B("AS - "), html.Span("AS Summary")],
                                         href="/dashboard/as",
+                                        id='link-as',
                                         active="exact",
                                     ),
                                     dbc.NavLink(
                                         [html.B("PORT - "), html.Span("Vulnerable Ports Summary")],
                                         href="/dashboard/ports",
+                                        id='link-ports',
                                         active="exact",
                                     ),
                                 ],
@@ -113,16 +118,19 @@ def register_layout(dm):
                         dbc.NavLink(
                             "Geoanalysis",
                             href="/dashboard/geo",
+                            id='link-geo',
                             active="exact",
                         ),
                         dbc.NavLink(
                             "General analysis per record",
                             href="/dashboard/report",
+                            id='link-report',
                             active="exact",
                         ),
                         dbc.NavLink(
                             "Analysis Guide",
                             href="/dashboard/guide",
+                            id='link-guide',
                             active="exact",
                         ),
 
@@ -222,3 +230,26 @@ def register_layout(dm):
     return layout
 
 
+@callback(
+    [Output("link-orgs", "active"),
+     Output("link-ips", "active"),
+     Output("link-cve", "active"),
+     Output("link-as", "active"),
+     Output("link-ports", "active"),
+     Output("link-geo", "active"),
+     Output("link-report", "active"),
+     Output("link-guide", "active")],
+    [Input("url-redirect", "pathname")]
+)
+def update_navlink(pathname):
+
+    is_orgs = (pathname == "/dashboard/orgs")
+    is_ips = (pathname == "/dashboard/ips")
+    is_cve = (pathname == "/dashboard/cve")
+    is_as = (pathname == "/dashboard/as")
+    is_ports = (pathname == "/dashboard/ports")
+    is_geo = (pathname == "/dashboard/geo")
+    is_report = (pathname == "/dashboard/report")
+    is_guide = (pathname == "/dashboard/guide")
+
+    return is_orgs, is_ips, is_cve, is_as, is_ports, is_geo, is_report, is_guide

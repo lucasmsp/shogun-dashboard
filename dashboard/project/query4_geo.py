@@ -328,7 +328,7 @@ def register_callback_query(dm, app):
             #, no_update
 
         region = ", " + data['points'][0]['hovertext']
-        filter_opt = {"query-5-ag": {"city": {"filterType": "text", "type": "'contains", 'filter': region}}}
-
+        filter_opt = {"query-5-ag": {"city": {"filterType": "text", "type": "contains", 'filter': region}}}
+        
         return "/dashboard/report", filter_opt
 
