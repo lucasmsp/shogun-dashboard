@@ -115,10 +115,13 @@ def register_callback_query(dm, app):
         Input('date-picker-single', 'value')
     )
     def update_table3(date_value):
+        if not date_value:
+            return []
+
         logging.info(date_value)
         df = dm.get_view_dataset(date_value, INPUT_DATA)
         if df.empty:
-            return [{}]
+            return []
 
         df_exploded = df.explode('vulns_cwe')
 
@@ -144,11 +147,14 @@ def register_callback_query(dm, app):
         Input('date-picker-single', 'value')
     )
     def update_graphs(date_value):
+        if not date_value:
+            return []
+
         logging.info(date_value)
         df = dm.get_view_dataset(date_value, INPUT_DATA)
 
         if df.empty:
-            return {}
+            return []
 
         graphs = []
 
@@ -203,7 +209,7 @@ def register_callback_query(dm, app):
         graphs.append(graph)
 
         # fig 3
-        tmp2 = df.groupby("vulns_cvss").sum("n_ips").reset_index()
+        tmp2 = df.groupby("vulns_cvss", as_index=False)["n_ips"].sum()
         fig = px.line(tmp2, x=tmp2['vulns_cvss'], y=tmp2['n_ips'], title="Line plot - # IPs by CVSS")
         fig.update_layout(
             xaxis_title="CVSS Score",
@@ -218,7 +224,7 @@ def register_callback_query(dm, app):
         graphs.append(graph)
 
         # fig 4
-        tmp3 = df.groupby("vulns_cvss").sum("n_orgs").reset_index()
+        tmp3 = df.groupby("vulns_cvss", as_index=False)["n_orgs"].sum()
         fig = px.line(tmp3, x=tmp3['vulns_cvss'], y=tmp3['n_orgs'], title="Line plot - # Organizations by CVSS")
         fig.update_layout(
             xaxis_title="CVSS Score",
@@ -233,7 +239,7 @@ def register_callback_query(dm, app):
         graphs.append(graph)
 
         # fig 5
-        tmp4 = df.groupby("vulns_epss").sum("n_orgs").reset_index()
+        tmp4 = df.groupby("vulns_epss", as_index=False)["n_orgs"].sum()
         fig = px.line(tmp4, x=tmp4['vulns_epss'], y=tmp4['n_orgs'], title="Line plot - # Organizations by EPSS")
         fig.update_layout(
             xaxis_title="EPSS score (%)",
@@ -248,7 +254,7 @@ def register_callback_query(dm, app):
         graphs.append(graph)
 
         # fig 6
-        tmp5 = df.groupby("vulns_epss").sum("n_ips").reset_index()
+        tmp5 = df.groupby("vulns_epss", as_index=False)["n_ips"].sum()
         fig = px.line(tmp5, x=tmp5['vulns_epss'], y=tmp5['n_ips'], title="Line plot - # IPs by EPSS")
         fig.update_layout(
             xaxis_title="EPSS score (%)",
@@ -265,7 +271,7 @@ def register_callback_query(dm, app):
         # fig 7
         tmp6 = df.assign(names=df.vulns_cwe.str.split(",")).explode('vulns_cwe')
         tmp6 = tmp6.loc[~tmp6['vulns_cwe'].isin(["NVD-CWE-noinfo", "NVD-CWE-Other"])]
-        tmp6 = tmp6.groupby('vulns_cwe').sum('n_ips').reset_index()
+        tmp6 = tmp6.groupby('vulns_cwe', as_index=False)['n_ips'].sum()
         final_df = tmp6.sort_values(by=['n_ips'], ascending=False)
         final_df = final_df[0:25]
 
@@ -288,15 +294,15 @@ def register_callback_query(dm, app):
         tmp8["Known"] = tmp8["vulns_cisa_ransomware"].apply(lambda x: 1 if x == "Unknown" else 0)
 
         tmp8_aux1 = tmp8.groupby('vulns_epss_rank', as_index=False)['vulns_cvss'].mean()
-        tmp8_aux2 = tmp8.groupby("vulns_epss_rank").sum(["Known", "Unknown"]).reset_index()
+        tmp8_aux2 = tmp8.groupby("vulns_epss_rank", as_index=False)[["Known", "Unknown"]].sum()
 
         tmp8_aux1['vulns_cvss'] = tmp8_aux1['vulns_cvss'].apply(lambda x: '{:,.2f}'.format(x))
         tmp8_final = pd.merge(tmp8_aux1, tmp8_aux2, how='left', on="vulns_epss_rank")
 
         fig = px.bar(tmp8_final, x="vulns_epss_rank", y=["Known", "Unknown"],
                      title="Bar char - # Ransowares by EPSS rank",
-                     hover_data={"vulns_cvss_x": True},
-                     labels={'vulns_cvss_x': 'CVSS Avg'},
+                     hover_data={"vulns_cvss": True},
+                     labels={'vulns_cvss': 'CVSS Avg'},
                      )
         fig.update_layout(
             xaxis_title="EPSS Rank",

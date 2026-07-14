@@ -53,7 +53,10 @@ def register_callback_query(dm, app):
         Input('date-picker-single', 'value')
     )
     def update_table1(date_value):
-        logging.info("update_table1: " + date_value)
+        if not date_value:
+            return []
+
+        logging.info(f"update_table1: {date_value}")
         df = dm.get_view_dataset(date_value, INPUT_DATA)
         return df.to_dict('records')
 
@@ -63,7 +66,10 @@ def register_callback_query(dm, app):
         Input('date-picker-single', 'value')
     )
     def update_chart1(date_value):
-        logging.info("update_chart1: " + date_value)
+        if not date_value:
+            return []
+
+        logging.info(f"update_chart1: {date_value}")
         df = dm.get_view_dataset(date_value, INPUT_DATA)
 
         if df.empty:

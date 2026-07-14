@@ -74,11 +74,14 @@ def register_callback_query(dm, app):
         Input('date-picker-single', 'value')
     )
     def update_grid2b(date_value):
+        if not date_value:
+            return []
+
         logging.info(date_value)
 
         df = dm.get_view_dataset(date_value, INPUT_DATA_V2)
         if df.empty:
-            raise PreventUpdate
+            return []
 
         return df.to_dict('records')
 
@@ -89,11 +92,14 @@ def register_callback_query(dm, app):
         Input('query-2b-grid', 'filterModel')
     )
     def update_graph2b(date_value, filter_modal):
+        if not date_value:
+            return []
+
         logging.info(date_value)
 
         df = dm.get_view_dataset(date_value, INPUT_DATA_V2)
         if df.empty:
-            raise PreventUpdate
+            return []
 
         df = df.sort_values("n_ips")
 

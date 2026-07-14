@@ -196,20 +196,33 @@ def register_callback_query(dm, app):
         graphs.append(graph)
 
         # fig3
-        fig = px.scatter(df,
-                         x=df["vulns_cvss"],
-                         y=df['vulns_epss'],
-                         title="Scatter plot - EPSS by CVSS score",
-                         color='vulns_epss_rank')
+        scatter_df = df[['vulns_cvss', 'vulns_epss', 'vulns_epss_rank']].copy()
+        scatter_df = scatter_df.dropna()
+        scatter_df['vulns_cvss_bin'] = pd.cut(
+            pd.to_numeric(scatter_df['vulns_cvss'], errors='coerce').clip(0, 10),
+            bins=[i / 2 for i in range(0, 21)],
+            labels=[f"{i / 2:.1f}-{(i + 1) / 2:.1f}" for i in range(0, 20)],
+            include_lowest=True
+        )
+        scatter_df = scatter_df.dropna(subset=['vulns_cvss_bin'])
+        scatter_df = scatter_df.groupby(['vulns_cvss_bin', 'vulns_epss_rank']).size().reset_index(name='count')
+
+        fig = go.Figure()
+        for vulns_cvss_bin in sorted(scatter_df['vulns_cvss_bin'].dropna().unique()):
+            subset = scatter_df[scatter_df['vulns_cvss_bin'] == vulns_cvss_bin]
+            fig.add_trace(go.Bar(
+                x=subset['vulns_cvss_bin'],
+                y=subset['count'],
+                name=str(vulns_cvss_bin),
+                marker=dict(opacity=0.9),
+                width=0.35
+            ))
+
         fig.update_layout(
-            title="Scatter plot - EPSS by CVSS score",
+            title="Bar plot - CVSS distribution by EPSS rank",
             xaxis_title="CVSS score",
-            yaxis_title="EPSS score (%)",
-            xaxis=dict(
-                tickmode='array',
-                tickvals=[0, 2, 4, 6, 8, 10],
-                range=[0, 10]
-            )
+            yaxis_title="Number of records",
+            barmode='group'
         )
         graph = dcc.Graph(figure=fig, config={'displayModeBar': False, 'scrollZoom': False})
         graphs.append(graph)

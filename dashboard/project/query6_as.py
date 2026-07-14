@@ -106,12 +106,15 @@ def register_callback_query(dm, app):
         Input('date-picker-single', 'value')
     )
     def update_grid6(date_value):
+        if not date_value:
+            return []
+
         logging.info(date_value)
 
         df = dm.get_view_dataset(date_value, INPUT_DATA_V6)
 
         if df.empty:
-            return [{}]
+            return []
 
         # Conversão de tipos
         df['as_announcing_prefixes'] = df['as_announcing_prefixes'].fillna(-1).astype(int)
@@ -131,6 +134,9 @@ def register_callback_query(dm, app):
         Input('date-picker-single', 'value')
     )
     def update_asn_chart(date_value):
+        if not date_value:
+            return []
+
         logging.info(date_value)
 
         df = dm.get_view_dataset(date_value, INPUT_DATA_V6)

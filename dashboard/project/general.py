@@ -12,6 +12,13 @@ import project.query6_as as query6_as
 import project.query7_ports as query7_ports
 from project.auxiliar import logging
 
+
+def _normalize_filters(filters):
+    if not isinstance(filters, dict):
+        return {}
+    return filters
+
+
 def register_callback_query(dm, app):
 
     @app.callback(
@@ -71,24 +78,23 @@ def register_callback_query(dm, app):
 
     )
     def render_page_content(filters, pathname):
+        pathname = pathname or "/dashboard/summary"
+        filters = _normalize_filters(filters)
         logging.info(f"Pathname: {pathname} - filters: {filters}")
 
         if pathname == "/dashboard/ips":
             aggrid_key = 'query-2a-grid'
-            if aggrid_key in filters:
-                filters = filters[aggrid_key]
+            filters = filters.get(aggrid_key, {})
             content = query2_ips.register_layout_query(filter_modal=filters)
 
         elif pathname == "/dashboard/orgs":
             aggrid_key = 'query-2b-grid'
-            if aggrid_key in filters:
-                filters = filters[aggrid_key]
+            filters = filters.get(aggrid_key, {})
             content = query2_orgs.register_layout_query(filter_modal=filters)
 
         elif pathname == "/dashboard/cve":
             aggrid_key = 'query-3-ag'
-            if aggrid_key in filters:
-                filters = filters[aggrid_key]
+            filters = filters.get(aggrid_key, {})
             content = query3_cve.register_layout_query(filter_modal=filters)
 
         elif pathname == "/dashboard/geo":
@@ -96,8 +102,7 @@ def register_callback_query(dm, app):
 
         elif pathname == "/dashboard/report":
             aggrid_key = 'query-5-ag'
-            if aggrid_key in filters:
-                filters = filters[aggrid_key]
+            filters = filters.get(aggrid_key, {})
             content = query5_report.register_layout_query(filter_modal=filters)
 
         elif pathname == "/dashboard/as":

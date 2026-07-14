@@ -149,6 +149,8 @@ def register_callback_query(dm, app):
         ]
     )
     def update_table5(date_value, request):
+        if not date_value:
+            return {"rowData": [], "rowCount": 0}
 
         logging.info(f"[INFO][query5] - update_table5: {date_value}")
 

@@ -9,6 +9,48 @@ import os
 
 from project.auxiliar import gen_subgraphs, gen_columns_def, logging
 
+
+def build_state_choropleth(df, color_column, title, hover_label, color_label, geojson):
+    if df.empty or color_column not in df.columns:
+        fig = px.choropleth()
+        fig.add_annotation(
+            text="No data available for the selected filters",
+            x=0.5,
+            y=0.5,
+            xref="paper",
+            yref="paper",
+            showarrow=False,
+        )
+        fig.update_layout(
+            title=title,
+            margin={'r': 1, 'l': 1, 'b': 1, 't': 40},
+            font=dict(size=12),
+            height=900,
+        )
+        return fig
+
+    fig = px.choropleth(
+        df,
+        geojson=geojson,
+        locations="name",
+        color=color_column,
+        color_continuous_scale="Rainbow",
+        hover_name=hover_label,
+        hover_data=[color_column],
+        labels={color_column: color_label},
+        locationmode="geojson-id",
+    )
+    fig.update_traces(marker_line_color="white", marker_line_width=0.5)
+    fig.update_geos(fitbounds="locations", visible=False)
+    fig.update_layout(
+        title=title,
+        margin={'r': 1, 'l': 1, 'b': 1, 't': 40},
+        font=dict(size=12),
+        height=900,
+    )
+    return fig
+
+
 def register_layout_query(filter_modal={}):
     elements = [
         dbc.Row(
@@ -121,6 +163,9 @@ def register_callback_query(dm, app):
         height = 900
         zoom = 4
 
+        if not date_value:
+            return fig
+
         logging.info(date_value)
         
         if value == 'ip':
@@ -134,25 +179,13 @@ def register_callback_query(dm, app):
             df['n_ips'] = df.groupby('region_code')['ip'].transform(lambda x: x.nunique(dropna=True))
             df = df[['n_ips', 'region_code', 'name']].drop_duplicates()
 
-            fig = px.choropleth_mapbox(
+            fig = build_state_choropleth(
                 df,
-                locations="name",
-                geojson=brazil,
-                color="n_ips",
-                color_continuous_scale="Rainbow",
-                hover_name="region_code",
-                hover_data=["n_ips"],
-                mapbox_style="carto-positron",
-                labels={'n_ips': '# IPs'},
-                center={"lat": -14, "lon": -55},
-                zoom=zoom,
-                opacity=0.5,
-            )
-            fig.update_layout(
+                color_column="n_ips",
                 title="# IPs per vulnerability",
-                margin={'r': 1, 'l': 1, 'b': 1, 't': 40},
-                font=dict(size=12),
-                height=height
+                hover_label="region_code",
+                color_label="# IPs",
+                geojson=brazil,
             )
 
         elif value == 'cvss_score':
@@ -172,31 +205,19 @@ def register_callback_query(dm, app):
             # Transformando cada item em float
             df['cvss_new'] = pd.to_numeric(df['cvss_new'], downcast='float', errors='coerce')
             # filtrando apenas o maior CVSS_NEW de cada IP
-            df = df.groupby(['region_code', "name", 'ip']).max('cvss_new').reset_index()
+            df = df.groupby(['region_code', "name", 'ip'], as_index=False)['cvss_new'].max()
             # Criando uma coluna 'cvss_mean' que armazena a média dos cvss por estado
             df['cvss_mean'] = df.groupby('region_code')['cvss_new'].transform('mean')
             #Criando um df somente com as 3 colunas necessárias para criar o mapa
             df = df[['cvss_mean', 'region_code', 'name']].drop_duplicates()
 
-            fig = px.choropleth_mapbox(
+            fig = build_state_choropleth(
                 df,
-                locations="name",
-                geojson=brazil,
-                color="cvss_mean",
-                color_continuous_scale="Rainbow",
-                hover_name="region_code",
-                hover_data=["cvss_mean"],
-                mapbox_style="carto-positron",
-                labels={'cvss_mean': 'Avg CVSS'},
-                center={"lat": -14, "lon": -55},
-                zoom=zoom,
-                opacity=0.5,
-            )
-            fig.update_layout(
+                color_column="cvss_mean",
                 title="Average CVSS by state (only the major CVE per IP)",
-                margin={'r': 1, 'l': 1, 'b': 1, 't': 40},
-                font=dict(size=12),
-                height=height
+                hover_label="region_code",
+                color_label="Avg CVSS",
+                geojson=brazil,
             )
 
         elif value == 'epss_score':
@@ -213,32 +234,20 @@ def register_callback_query(dm, app):
             # Transformando cada item em float
             df['epss_new'] = pd.to_numeric(df['epss_new'], downcast='float', errors='coerce')
             # filtrando apenas o maior epss_new de cada IP
-            df = df.groupby(['region_code', "name", 'ip']).max('epss_new').reset_index()
+            df = df.groupby(['region_code', "name", 'ip'], as_index=False)['epss_new'].max()
             # Criando uma coluna 'epss_sum' que armazena a média dos epss por estado
             df['epss_mean'] = df.groupby('region_code')['epss_new'].transform('mean')
 
             # Criando um df somente com as 3 colunas necessárias para criar o mapa
             df = df[['epss_mean', 'region_code', 'name']].drop_duplicates()
 
-            fig = px.choropleth_mapbox(
+            fig = build_state_choropleth(
                 df,
-                locations="name",
-                geojson=brazil,
-                color="epss_mean",
-                color_continuous_scale="Rainbow",
-                hover_name="region_code",
-                hover_data=["epss_mean"],
-                mapbox_style="carto-positron",
-                labels={'epss_mean': 'Avg EPSS'},
-                center={"lat": -14, "lon": -55},
-                zoom=zoom,
-                opacity=0.5,
-            )
-            fig.update_layout(
+                color_column="epss_mean",
                 title="Average EPSS by state (only the major CVE per IP)",
-                margin={'r': 1, 'l': 1, 'b': 1, 't': 40},
-                font=dict(size=12),
-                height=height
+                hover_label="region_code",
+                color_label="Avg EPSS",
+                geojson=brazil,
             )
 
         elif value == 'cve_id':
@@ -256,25 +265,13 @@ def register_callback_query(dm, app):
             df = df[['region_code', 'name', 'cve_new']].drop_duplicates()
             df['n_cves'] = df.groupby(['region_code', 'name'])['cve_new'].transform(lambda x: x.nunique(dropna=True))
             
-            fig = px.choropleth_mapbox(
+            fig = build_state_choropleth(
                 df,
-                locations="name",
-                geojson=brazil,
-                color="n_cves",
-                color_continuous_scale="Rainbow",
-                hover_name="region_code",
-                hover_data=["n_cves"],
-                mapbox_style="carto-positron",
-                labels={'n_cves': '# CVEs'},
-                center={"lat": -14, "lon": -55},
-                zoom=zoom,
-                opacity=0.5,
-            )
-            fig.update_layout(
+                color_column="n_cves",
                 title="Number of different CVEs per state",
-                margin={'r': 1, 'l': 1, 'b': 1, 't': 40},
-                font=dict(size=12),
-                height=height
+                hover_label="region_code",
+                color_label="# CVEs",
+                geojson=brazil,
             )
 
         elif value == 'ip_cvss':
@@ -291,54 +288,19 @@ def register_callback_query(dm, app):
                 .explode('cvss_new')
 
             df['cvss_new'] = df['cvss_new'].apply(lambda x: float(x))
-            df = df.groupby(['region_code', "name", 'ip']).max('cvss_new').reset_index()
+            df = df.groupby(['region_code', "name", 'ip'], as_index=False)['cvss_new'].max()
             df = df[(df['cvss_new'] >= cvss_range_query[0]) & (df['cvss_new'] <= cvss_range_query[1])]
             df = df.groupby(by=['region_code', "name"]).agg(n_ips=('ip', pd.Series.nunique)).reset_index()
 
-            value = df['n_ips'].empty
+            fig = build_state_choropleth(
+                df,
+                color_column="n_ips",
+                title="Number of IPs with CVEs within CVSS range by states",
+                hover_label="region_code",
+                color_label="Number of IPs",
+                geojson=brazil,
+            )
 
-            if value:
-
-                fig = px.choropleth_mapbox(
-                    df,
-                    locations="name",
-                    geojson=brazil,
-                    color=None,
-                    mapbox_style="carto-positron",
-                    labels={'cvss_new': 'CVSS range'},
-                    center={"lat": -14, "lon": -55},
-                    zoom=zoom,
-                    opacity=0.5,
-                )
-                fig.update_layout(
-                    title="Number of IPs with CVEs within CVSS range by states",
-                    margin={'r': 1, 'l': 1, 'b': 1, 't': 40},
-                    font=dict(size=12),
-                    height=height
-                )
-
-            else:
-
-                fig = px.choropleth_mapbox(
-                    df,
-                    locations="name",
-                    geojson=brazil,
-                    color="n_ips",
-                    color_continuous_scale="Rainbow",
-                    hover_name="region_code",
-                    hover_data=["n_ips"],
-                    mapbox_style="carto-positron",
-                    labels={'cvss_new': 'CVSS range'},
-                    center={"lat": -14, "lon": -55},
-                    zoom=zoom,
-                    opacity=0.5,
-                )
-                fig.update_layout(
-                    title="Number of IPs with CVEs within CVSS range by states",
-                    margin={'r': 1, 'l': 1, 'b': 1, 't': 40},
-                    font=dict(size=12),
-                    height=height
-                )
         return fig
 
     @app.callback(
