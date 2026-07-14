@@ -86,6 +86,20 @@ def register_layout_query(filter_modal={}):
             ])
         ),
         dcc.Loading([aggrid]),
+        dbc.Row(
+            html.Small(
+                [
+                    html.I(className="fas fa-info-circle me-1", style={"color": "#17a2b8"}),
+                    " Tip: Click on any cell under the ",
+                    html.Strong("# IPs"),
+                    " or ",
+                    html.Strong("# Orgs"),
+                    " columns to redirect to the IPs view, filtered by that CVE or its exposing organizations."
+                ],
+                className="text-muted mt-2",
+                style={"textAlign": "left", "paddingLeft": "15px"}
+            )
+        ),
         dbc.Row(dbc.Col(html.Hr(style={"width": "100%", 'top-padding': '10px'}), width={'size': 10, 'offset': 1})),
         dbc.Row([html.Div(id='query-3-graph', children=[])])
     ]

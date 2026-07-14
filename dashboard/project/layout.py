@@ -9,6 +9,7 @@ import project.query4_geo as query4_geo
 import project.query5_report as query5_report
 import project.query6_as as query6_as
 import project.query7_ports as query7_ports
+import project.guide as guide
 
 tab1_content = query1_summary.register_layout_query(filter_modal={})
 tab2_content_orgs =  query2_orgs.register_layout_query(filter_modal={})
@@ -18,6 +19,7 @@ tab4_content = query4_geo.register_layout_query(filter_modal={})
 tab5_content = query5_report.register_layout_query(filter_modal={})
 tab6_content = query6_as.register_layout_query(filter_modal={})
 tab7_content = query7_ports.register_layout_query(filter_modal={})
+tab_guide_content = guide.register_layout_query(filter_modal={})
 
 def register_layout(dm):
 
@@ -116,6 +118,11 @@ def register_layout(dm):
                         dbc.NavLink(
                             "General analysis per record",
                             href="/dashboard/report",
+                            active="exact",
+                        ),
+                        dbc.NavLink(
+                            "Analysis Guide",
+                            href="/dashboard/guide",
                             active="exact",
                         ),
 

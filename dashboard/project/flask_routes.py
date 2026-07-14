@@ -102,7 +102,6 @@ def set_routes(server, db, login_manager, app):
     @login_required
     def dashboard():
         logging.info("login_required")
-        app.layout = register_layout(dm)
         return app.index()
     
     ### FEATURE FLAG

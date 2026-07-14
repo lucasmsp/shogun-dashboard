@@ -42,3 +42,4 @@ multiprocess>=0.70.16
 psutil>=5.9.8
 psycopg2-binary>=2.9.9
 gunicorn
+flask-compress>=1.15.0

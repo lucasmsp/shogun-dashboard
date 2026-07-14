@@ -1,9 +1,11 @@
 from dash import Dash, html
 import dash_bootstrap_components as dbc
+from flask_compress import Compress
 
 from project.callbacks import register_callbacks
 from project.storage import DatasetManager
 from project.flask_routes import start_flask, set_routes
+from project.layout import register_layout
 
 external_stylesheets = [
     {
@@ -23,9 +25,11 @@ dm.check_available_datasets()
 
 server, db, login_manager = start_flask(dm)
 app = Dash("TLHOP/SAM Cybersecurity Dashboards", server=server, external_stylesheets=external_stylesheets, suppress_callback_exceptions=True)
+Compress(server)
 app.title = "TLHOP/SAM Cybersecurity Dashboards"
 app.dm = dm
-app.layout = html.Div()
+app.layout = register_layout(dm)
 app = set_routes(server, db, login_manager, app)
 register_callbacks(dm, app)
+
 

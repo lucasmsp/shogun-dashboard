@@ -30,9 +30,21 @@ def register_layout_query(filter_modal={}):
         html.H1(children="View 1 - EPSS summary", className='wrapper', style={'textAlign': 'center'}),
         dbc.Container(
             [
-             dbc.Row(aggrid),
-             dbc.Row(dbc.Col(html.Hr(style={"width": "100%", 'top-padding': '10px'}), width={'size': 10, 'offset': 1})),
-             dbc.Row([html.Div(id='query-1-graph', children=[])])
+              dbc.Row(aggrid),
+              dbc.Row(
+                  html.Small(
+                      [
+                          html.I(className="fas fa-info-circle me-1", style={"color": "#17a2b8"}),
+                          " Tip: Click on any cell under the ",
+                          html.Strong("# CVEs"),
+                          " column to redirect and view detailed CVE information filtered by that EPSS rank."
+                      ],
+                      className="text-muted mt-2",
+                      style={"textAlign": "left", "paddingLeft": "15px"}
+                  )
+              ),
+              dbc.Row(dbc.Col(html.Hr(style={"width": "100%", 'top-padding': '10px'}), width={'size': 10, 'offset': 1})),
+              dbc.Row(dcc.Loading([html.Div(id='query-1-graph', children=[])]))
             ]
         )
     ]
@@ -167,7 +179,7 @@ def register_callback_query(dm, app):
         Output("url-redirect", "pathname", allow_duplicate=True),
         Output('store-filters', 'data', allow_duplicate=True),
         
-        Input("url-redirect", "pathname"),
+        State("url-redirect", "pathname"),
         Input("query-1-table", "cellClicked"),
         Input("query-1-table", "selectedRows"),
         prevent_initial_call=True,

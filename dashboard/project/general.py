@@ -10,6 +10,7 @@ import project.query4_geo as query4_geo
 import project.query5_report as query5_report
 import project.query6_as as query6_as
 import project.query7_ports as query7_ports
+import project.guide as guide
 from project.auxiliar import logging
 
 
@@ -110,6 +111,9 @@ def register_callback_query(dm, app):
 
         elif pathname == "/dashboard/ports":
             content = query7_ports.register_layout_query(filter_modal=filters)
+
+        elif pathname == "/dashboard/guide":
+            content = guide.register_layout_query(filter_modal={})
 
         else:
             content = query1_summary.register_layout_query(filter_modal={})

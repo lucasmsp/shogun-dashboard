@@ -37,7 +37,7 @@ class DatasetManager(object):
                 elif commit.get("operation", "") == "WRITE":
                     timestamp_commit = datetime.fromtimestamp(commit['timestamp'] / 1e3)
                     if 'userMetadata' in commit:
-                        day = re.findall("\d+", os.path.basename(commit['userMetadata']))[0]
+                        day = re.findall(r"\d+", os.path.basename(commit['userMetadata']))[0]
                         date_commit = day[0:4]+"-"+day[4:6]+"-"+day[6:8]
                     else:
                         date_commit = timestamp_commit.strftime("%Y-%m-%d")

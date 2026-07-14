@@ -114,6 +114,16 @@ def register_layout_query(filter_modal={}):
                         'displayModeBar': False,
                         'scrollZoom': True
                     }
+                ),
+                dbc.Row(
+                    html.Small(
+                        [
+                            html.I(className="fas fa-info-circle me-1", style={"color": "#17a2b8"}),
+                            " Tip: Click on a region or state on the map to redirect to the General analysis per record view, filtered by that region."
+                        ],
+                        className="text-muted mt-2",
+                        style={"textAlign": "left", "paddingLeft": "15px"}
+                    )
                 )
             ]
         )
@@ -133,7 +143,7 @@ def register_layout_query(filter_modal={}):
 
 def register_callback_query(dm, app):
     
-    brazil_states_geojson =  "./assets/brazil-states.geojson"
+    brazil_states_geojson =  "./assets/brazil-states-simplified.geojson"
     with open(brazil_states_geojson) as f:
         brazil = json.load(f)
 
