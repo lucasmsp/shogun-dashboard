@@ -70,6 +70,10 @@ def register_layout_query(filter_modal={}):
             'tooltipInteraction': True,
             'tooltipShowDelay': 10,
             'tooltipHideDelay': 10000
+        },
+        csvExportParams={
+            "fileName": "query3_cve.csv",
+            "exportedRows": "filteredAndSorted",
         }
     )
 
@@ -87,18 +91,36 @@ def register_layout_query(filter_modal={}):
         ),
         dcc.Loading([aggrid]),
         dbc.Row(
-            html.Small(
-                [
-                    html.I(className="fas fa-info-circle me-1", style={"color": "#17a2b8"}),
-                    " Tip: Click on any cell under the ",
-                    html.Strong("# IPs"),
-                    " or ",
-                    html.Strong("# Orgs"),
-                    " columns to redirect to the IPs view, filtered by that CVE or its exposing organizations."
-                ],
-                className="text-muted mt-2",
-                style={"textAlign": "left", "paddingLeft": "15px"}
-            )
+            [
+                dbc.Col(
+                    html.Small(
+                        [
+                            html.I(className="fas fa-info-circle me-1", style={"color": "#17a2b8"}),
+                            " Tip: Click on any cell under the ",
+                            html.Strong("# IPs"),
+                            " or ",
+                            html.Strong("# Orgs"),
+                            " columns to redirect to the IPs view, filtered by that CVE or its exposing organizations."
+                        ],
+                        className="text-muted mt-2"
+                    ),
+                    width=9,
+                    style={"textAlign": "left", "paddingLeft": "15px"}
+                ),
+                dbc.Col(
+                    dbc.Button(
+                        [html.I(className="fas fa-download me-2"), "Export to CSV"],
+                        id="btn-export-query3-cve",
+                        color="primary",
+                        size="sm",
+                        className="mt-2",
+                        style={"float": "right"}
+                    ),
+                    width=3
+                )
+            ],
+            justify="between",
+            align="center"
         ),
         dbc.Row(dbc.Col(html.Hr(style={"width": "100%", 'top-padding': '10px'}), width={'size': 10, 'offset': 1})),
         dbc.Row([html.Div(id='query-3-graph', children=[])])
@@ -408,3 +430,14 @@ def register_callback_query(dm, app):
                 }
                 return "/dashboard/ips", filter_opt
         return no_update, no_update
+
+
+    @app.callback(
+        Output("query-3-ag", "exportDataAsCsv"),
+        Input("btn-export-query3-cve", "n_clicks"),
+        prevent_initial_call=True
+    )
+    def export_csv_query3_cve(n_clicks):
+        if n_clicks:
+            return True
+        return False

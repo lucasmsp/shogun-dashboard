@@ -49,7 +49,11 @@ def register_layout_query(filter_modal={}):
             "infiniteInitialRowCount": 1,
         },
         rowModelType="infinite",
-        getRowId="params.data.index"
+        getRowId="params.data.index",
+        csvExportParams={
+            "fileName": "query2_ips.csv",
+            "exportedRows": "filteredAndSorted",
+        }
     )
 
     elements = [
@@ -65,16 +69,34 @@ def register_layout_query(filter_modal={}):
         ),
         dcc.Loading([aggrid]),
         dbc.Row(
-            html.Small(
-                [
-                    html.I(className="fas fa-info-circle me-1", style={"color": "#17a2b8"}),
-                    " Tip: Click on any IP address under the ",
-                    html.Strong("IP"),
-                    " column to redirect to the General analysis per record view, filtered by that IP."
-                ],
-                className="text-muted mt-2",
-                style={"textAlign": "left", "paddingLeft": "15px"}
-            )
+            [
+                dbc.Col(
+                    html.Small(
+                        [
+                            html.I(className="fas fa-info-circle me-1", style={"color": "#17a2b8"}),
+                            " Tip: Click on any IP address under the ",
+                            html.Strong("IP"),
+                            " column to redirect to the General analysis per record view, filtered by that IP."
+                        ],
+                        className="text-muted mt-2"
+                    ),
+                    width=9,
+                    style={"textAlign": "left", "paddingLeft": "15px"}
+                ),
+                dbc.Col(
+                    dbc.Button(
+                        [html.I(className="fas fa-download me-2"), "Export to CSV"],
+                        id="btn-export-query2-ips",
+                        color="primary",
+                        size="sm",
+                        className="mt-2",
+                        style={"float": "right"}
+                    ),
+                    width=3
+                )
+            ],
+            justify="between",
+            align="center"
         ),
         dbc.Row(dbc.Col(html.Hr(style={"width": "100%", 'top-padding': '10px'}), width={'size': 10, 'offset': 1})),
         dbc.Row([html.Div(id='query-2a-graph', children=[])]),
@@ -280,7 +302,18 @@ def register_callback_query(dm, app):
         if cell:
             if cell.get("colId", "") == "ip":
                 value = cell.get('value', "")
-                filter_opt = {'ip': {'filterType': 'text', 'type': 'equals', 'filter': value}}
+                filter_opt = {"query-5-ag": {'ip': {'filterType': 'text', 'type': 'equals', 'filter': value}}}
                 logging.info(f"{filter_opt}")
                 return "/dashboard/report", filter_opt
         raise PreventUpdate
+
+
+    @app.callback(
+        Output("query-2a-grid", "exportDataAsCsv"),
+        Input("btn-export-query2-ips", "n_clicks"),
+        prevent_initial_call=True
+    )
+    def export_csv_query2_ips(n_clicks):
+        if n_clicks:
+            return True
+        return False

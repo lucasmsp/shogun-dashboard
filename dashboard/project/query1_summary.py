@@ -19,10 +19,14 @@ def register_layout_query(filter_modal={}):
         id='query-1-table',
         columnDefs=list(columns.values()),
         rowData=raw_data,
-        defaultColDef={"flex": 1, "resizable": False},
+        defaultColDef={"flex": 1, "resizable": False, "filter": True},
         columnSize="responsiveSizeToFit",
         columnSizeOptions={"skipHeader": False},
         dashGridOptions={"rowSelection": "single", "animateRows": False},
+        csvExportParams={
+            "fileName": "query1_epss_summary.csv",
+            "exportedRows": "filteredAndSorted",
+        },
         style={"height": 260}
     )
 
@@ -32,16 +36,34 @@ def register_layout_query(filter_modal={}):
             [
               dbc.Row(aggrid),
               dbc.Row(
-                  html.Small(
-                      [
-                          html.I(className="fas fa-info-circle me-1", style={"color": "#17a2b8"}),
-                          " Tip: Click on any cell under the ",
-                          html.Strong("# CVEs"),
-                          " column to redirect and view detailed CVE information filtered by that EPSS rank."
-                      ],
-                      className="text-muted mt-2",
-                      style={"textAlign": "left", "paddingLeft": "15px"}
-                  )
+                  [
+                      dbc.Col(
+                          html.Small(
+                              [
+                                  html.I(className="fas fa-info-circle me-1", style={"color": "#17a2b8"}),
+                                  " Tip: Click on any cell under the ",
+                                  html.Strong("# CVEs"),
+                                  " column to redirect and view detailed CVE information filtered by that EPSS rank."
+                              ],
+                              className="text-muted mt-2"
+                          ),
+                          width=9,
+                          style={"textAlign": "left", "paddingLeft": "15px"}
+                      ),
+                      dbc.Col(
+                          dbc.Button(
+                              [html.I(className="fas fa-download me-2"), "Export to CSV"],
+                              id="btn-export-query1",
+                              color="primary",
+                              size="sm",
+                              className="mt-2",
+                              style={"float": "right"}
+                          ),
+                          width=3
+                      )
+                  ],
+                  justify="between",
+                  align="center"
               ),
               dbc.Row(dbc.Col(html.Hr(style={"width": "100%", 'top-padding': '10px'}), width={'size': 10, 'offset': 1})),
               dbc.Row(dcc.Loading([html.Div(id='query-1-graph', children=[])]))
@@ -71,6 +93,17 @@ def register_callback_query(dm, app):
         logging.info(f"update_table1: {date_value}")
         df = dm.get_view_dataset(date_value, INPUT_DATA)
         return df.to_dict('records')
+
+
+    @app.callback(
+        Output('query-1-table', "exportDataAsCsv"),
+        Input('btn-export-query1', 'n_clicks'),
+        prevent_initial_call=True
+    )
+    def export_csv_query1(n_clicks):
+        if n_clicks:
+            return True
+        return False
 
 
     @app.callback(

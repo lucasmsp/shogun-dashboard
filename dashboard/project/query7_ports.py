@@ -55,6 +55,10 @@ def register_layout_query(filter_modal={}):
             'tooltipShowDelay': 10,
             'tooltipHideDelay': 10000,
             "animateRows": False,
+        },
+        csvExportParams={
+            "fileName": "query7_ports.csv",
+            "exportedRows": "filteredAndSorted",
         }
     )
 
@@ -71,16 +75,34 @@ def register_layout_query(filter_modal={}):
         ),
         dcc.Loading([aggrid]),
         dbc.Row(
-            html.Small(
-                [
-                    html.I(className="fas fa-info-circle me-1", style={"color": "#17a2b8"}),
-                    " Tip: Click on any cell under the ",
-                    html.Strong("# CVEs"),
-                    " column to redirect to the CVEs view (filtered by the CVEs on that port). You can also click on a port in the graph below to redirect to the General analysis per record view (filtered by that port)."
-                ],
-                className="text-muted mt-2",
-                style={"textAlign": "left", "paddingLeft": "15px"}
-            )
+            [
+                dbc.Col(
+                    html.Small(
+                        [
+                            html.I(className="fas fa-info-circle me-1", style={"color": "#17a2b8"}),
+                            " Tip: Click on any cell under the ",
+                            html.Strong("# CVEs"),
+                            " column to redirect to the CVEs view (filtered by the CVEs on that port). You can also click on a port in the graph below to redirect to the General analysis per record view (filtered by that port)."
+                        ],
+                        className="text-muted mt-2"
+                    ),
+                    width=9,
+                    style={"textAlign": "left", "paddingLeft": "15px"}
+                ),
+                dbc.Col(
+                    dbc.Button(
+                        [html.I(className="fas fa-download me-2"), "Export to CSV"],
+                        id="btn-export-query7-ports",
+                        color="primary",
+                        size="sm",
+                        className="mt-2",
+                        style={"float": "right"}
+                    ),
+                    width=3
+                )
+            ],
+            justify="between",
+            align="center"
         ),
         dbc.Row(dbc.Col(html.Hr(style={"width": "100%", 'top-padding': '10px'}), width={'size': 10, 'offset': 1})),
         dbc.Row([html.Div(id='query-7-graph', children=[])])
@@ -309,18 +331,17 @@ def register_callback_query(dm, app):
         prevent_initial_call=True,
     )
     def filter_by_graph_point(click_data, date_value):
-        print(f"[INFO] Point clicked: {click_data}, Date: {date_value}")
+        # print(f"[INFO] Point clicked: {click_data}, Date: {date_value}")
 
         if click_data:
             # Obter a porta clicada (eixo x)
             port = click_data["points"][0]["x"]  # O 'x' representa a porta
             print(f"[INFO] Filtering by port: {port}")
 
-            # Configurar os filtros
             filter_opt = {
-                "query-7-ag": {
+                "query-5-ag": {
                     'port': {
-                        "filterType": "text",
+                        "filterType": "number",
                         "type": "equals",
                         "filter": port
                     }
@@ -361,3 +382,14 @@ def register_callback_query(dm, app):
                 }
                 return "/dashboard/cve", filter_opt
         return no_update, no_update
+
+
+    @app.callback(
+        Output("query-7-table", "exportDataAsCsv"),
+        Input("btn-export-query7-ports", "n_clicks"),
+        prevent_initial_call=True
+    )
+    def export_csv_query7_ports(n_clicks):
+        if n_clicks:
+            return True
+        return False

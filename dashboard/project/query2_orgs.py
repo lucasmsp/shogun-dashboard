@@ -35,6 +35,10 @@ def register_layout_query(filter_modal={}):
                         'tooltipShowDelay': 0,
                         'tooltipHideDelay': 50000,
                         "animateRows": False
+                    },
+                    csvExportParams={
+                        "fileName": "query2_orgs.csv",
+                        "exportedRows": "filteredAndSorted",
                     }
                 )
 
@@ -51,16 +55,34 @@ def register_layout_query(filter_modal={}):
         ),
         dcc.Loading([aggrid]),
         dbc.Row(
-            html.Small(
-                [
-                    html.I(className="fas fa-info-circle me-1", style={"color": "#17a2b8"}),
-                    " Tip: Click on any organization under the ",
-                    html.Strong("Organization"),
-                    " column to redirect to the IPs view, filtered by that organization."
-                ],
-                className="text-muted mt-2",
-                style={"textAlign": "left", "paddingLeft": "15px"}
-            )
+            [
+                dbc.Col(
+                    html.Small(
+                        [
+                            html.I(className="fas fa-info-circle me-1", style={"color": "#17a2b8"}),
+                            " Tip: Click on any organization under the ",
+                            html.Strong("Organization"),
+                            " column to redirect to the IPs view, filtered by that organization."
+                        ],
+                        className="text-muted mt-2"
+                    ),
+                    width=9,
+                    style={"textAlign": "left", "paddingLeft": "15px"}
+                ),
+                dbc.Col(
+                    dbc.Button(
+                        [html.I(className="fas fa-download me-2"), "Export to CSV"],
+                        id="btn-export-query2-orgs",
+                        color="primary",
+                        size="sm",
+                        className="mt-2",
+                        style={"float": "right"}
+                    ),
+                    width=3
+                )
+            ],
+            justify="between",
+            align="center"
         ),
         dbc.Row(dbc.Col(html.Hr(style={"width": "100%", 'top-padding': '10px'}), width={'size': 10, 'offset': 1})),
         dbc.Row([html.Div(id='query-2b-graph', children=[])])
@@ -226,3 +248,14 @@ def register_callback_query(dm, app):
                 filter_opt = {"query-2a-grid": {'org_clean': {'filterType': 'text', 'type': 'equals', 'filter': value}}}
                 return "/dashboard/ips", filter_opt, {}
         raise PreventUpdate
+
+
+    @app.callback(
+        Output("query-2b-grid", "exportDataAsCsv"),
+        Input("btn-export-query2-orgs", "n_clicks"),
+        prevent_initial_call=True
+    )
+    def export_csv_query2_orgs(n_clicks):
+        if n_clicks:
+            return True
+        return False
