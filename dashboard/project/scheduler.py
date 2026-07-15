@@ -89,6 +89,7 @@ def external_scheduler(mode="latest"):
                 time.sleep(60)
 
 if __name__ == '__main__':
+    multiprocessing.set_start_method('spawn', force=True)
     parser = argparse.ArgumentParser(prog="tlhop-dashboard",
         description="This application is the scheduler of `tlhop-dashboard`, a dashboard with various panels for analyzing cybersecurity vulnerabilities using data from the Shodan search engine.",
         epilog="Thread-Limiting Holistic Open Platform (TLHOP) Project - DCC/UFMG - CERT.br"

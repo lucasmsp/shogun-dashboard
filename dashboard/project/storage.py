@@ -189,7 +189,7 @@ class DatasetManager(object):
 
     def remove_old_data(self):
 
-        if len(self.available_datasets) > 0:
+        if len(self.available_datasets) >= NUMBER_OF_DUMPS_TO_KEEP:
             threshold_date = self.get_date_dumps()[NUMBER_OF_DUMPS_TO_KEEP-1]
             real_processing_timestamp = self.available_datasets[threshold_date]['processing_timestamp']
             diff_seconds = (datetime.now() - real_processing_timestamp).total_seconds()
