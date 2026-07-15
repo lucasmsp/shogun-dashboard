@@ -146,9 +146,9 @@ def register_callback_query(dm, app):
         [
             Input('date-picker-single', 'value'),
             Input("query-5-ag", "getRowsRequest"),
-        ]
+            Input('store-filters', 'data')]
     )
-    def update_table5(date_value, request):
+    def update_table5(date_value, request, stored_filters):
         if not date_value:
             return {"rowData": [], "rowCount": 0}
 
@@ -164,6 +164,14 @@ def register_callback_query(dm, app):
             user_id=current_user.id,
             for_each=False
         )
+
+        if stored_filters and 'query-5-ag' in stored_filters:
+            map_filters = stored_filters['query-5-ag']
+            for col, filter_conf in map_filters.items():
+                try:
+                    df = filter_by_model(filter_conf, df, col)
+                except Exception as e:
+                    logging.error(f"[ERROR] query 5 - error applying map filter")
 
         lines = len(df.index)
         logging.info(f"[INFO] query 5 - original dataset has {lines} lines")
