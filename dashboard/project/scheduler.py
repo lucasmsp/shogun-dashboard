@@ -46,10 +46,43 @@ signal.signal(signal.SIGTERM, signal_handler)
 signal.signal(signal.SIGINT, signal_handler)
 
 
+def run_process_for_files(dm, new_files):
+    global current_proc
+    for day_fmt1 in new_files:
+        logging.info(f"Processing file {day_fmt1}")
+        proc = multiprocessing.Process(target=start_processing, args=(dm, day_fmt1), daemon=False)
+        current_proc = proc
+        proc.start()
+        
+        if proc.is_alive():
+            proc.join(timeout=10*60)
+        
+        if not proc.is_alive():
+            if proc.exitcode == 0:
+                logging.info("Processo encerrado com sucesso")
+            else:
+                logging.error(f"Processo encerrado com erro (exitcode: {proc.exitcode})")
+            current_proc = None
+        else:
+            logging.error("Falha ao encerrar o processo no tempo limite. Terminar o processo...")
+            cleanup_child_process()
+
+
 def external_scheduler(mode="latest"):
     dm = DatasetManager()
     global current_proc
     
+    is_timestamp = len(mode) == 8 and mode.isdigit()
+    
+    if is_timestamp:
+        dm.check_available_datasets()
+        new_files = dm.waiting_next_file(mode)
+        if new_files:
+            run_process_for_files(dm, new_files)
+        else:
+            logging.info(f"File for timestamp {mode} not found or already processed.")
+        return
+
     while True:
         dm.check_available_datasets()
         now = datetime.now()
@@ -64,25 +97,8 @@ def external_scheduler(mode="latest"):
         while not new_files_exists:
             new_files = dm.waiting_next_file(mode) # Check if new files exists and retriving them
             if new_files:
-                for day_fmt1 in new_files:
-                    new_files_exists = True
-                    logging.info(f"Processing file {day_fmt1}")
-                    proc = multiprocessing.Process(target=start_processing, args=(dm, day_fmt1), daemon=False)
-                    current_proc = proc
-                    proc.start()
-                    
-                    if proc.is_alive():
-                        proc.join(timeout=10*60)
-                    
-                    if not proc.is_alive():
-                        if proc.exitcode == 0:
-                            logging.info("Processo encerrado com sucesso")
-                        else:
-                            logging.error(f"Processo encerrado com erro (exitcode: {proc.exitcode})")
-                        current_proc = None
-                    else:
-                        logging.error("Falha ao encerrar o processo no tempo limite. Terminar o processo...")
-                        cleanup_child_process()
+                new_files_exists = True
+                run_process_for_files(dm, new_files)
         
             elif not new_files_exists:
                 logging.info(f"New files not found. Retrying in 60 seconds.")
