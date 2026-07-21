@@ -106,8 +106,8 @@ def external_scheduler(mode="latest"):
 
 if __name__ == '__main__':
     multiprocessing.set_start_method('spawn', force=True)
-    parser = argparse.ArgumentParser(prog="tlhop-dashboard",
-        description="This application is the scheduler of `tlhop-dashboard`, a dashboard with various panels for analyzing cybersecurity vulnerabilities using data from the Shodan search engine.",
+    parser = argparse.ArgumentParser(prog="shogun-dashboard",
+        description="This application is the scheduler of `shogun-dashboard`, a dashboard with various panels for analyzing cybersecurity vulnerabilities using data from the Shodan search engine.",
         epilog="Thread-Limiting Holistic Open Platform (TLHOP) Project - DCC/UFMG - CERT.br"
     )
     parser.add_argument('--mode', required=False, default='latest', help="Use `latest` to process only the latest dump; `all` to process all new dumps;"\
