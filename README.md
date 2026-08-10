@@ -149,7 +149,7 @@ Executing this artifact carries the following risks that reviewers should mitiga
 2. **(Optional) Configure secrets.** By default, `docker-compose.yml` still works without this step, but for anything beyond a quick local test, you should set your own password instead of relying on all default. A stronger password could be created using:
 
    ```bash
-python3 -c "import secrets; print(secrets.token_urlsafe(24))"
+    python3 -c "import secrets; print(secrets.token_urlsafe(24))"
    ```
 
 Then edit `docker-compose.yml` and replace the `FLASK_SECRET` placeholder with a freshly generated value. `ADMIN_PASSWORD` isn't listed there by default, so add a new line for it under the `dashboard` service's `environment:` block (e.g. `- ADMIN_PASSWORD=<your-strong-password>`). See [Security Concerns](#security-concerns) for why these matter.
