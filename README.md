@@ -144,15 +144,16 @@ Executing this artifact carries the following risks that reviewers should mitiga
    ```bash
    git clone https://github.com/lucasmsp/shogun-dashboard.git
    cd shogun-dashboard
-
+   ``` 
 
 2. **(Optional) Configure secrets.** By default, `docker-compose.yml` still works without this step, but for anything beyond a quick local test, you should set your own password instead of relying on all default. A stronger password could be created using:
 
    ```bash
-    python3 -c "import secrets; print(secrets.token_urlsafe(24))"
+    python3 -c 'import secrets; print(secrets.token_urlsafe(24))'
    ```
 
 Then edit `docker-compose.yml` and replace the `FLASK_SECRET` placeholder with a freshly generated value. `ADMIN_PASSWORD` isn't listed there by default, so add a new line for it under the `dashboard` service's `environment:` block (e.g. `- ADMIN_PASSWORD=<your-strong-password>`). See [Security Concerns](#security-concerns) for why these matter.
+
 
 3. **(Optional) Prepare input/output directories** so data persists across container restarts:
 
@@ -166,6 +167,7 @@ Then edit `docker-compose.yml` and replace the `FLASK_SECRET` placeholder with a
    sudo docker compose pull
    sudo docker compose up
    ```
+
 The first command fetches the pre-built image (`lucasmsp/tlhop-dashboard:latest`) referenced in `docker-compose.yml`, so you don't need to build it locally. The second one starts the three containers: `shogun_postgres`, `shogun_dashboard`, and `shogun_scheduler`. (`sudo` is only needed if your user isn't in the `docker` group; if you'd rather build the image yourself instead of pulling it, use `docker compose up --build`).
 
 At the end of this process, the dashboard should be reachable at `http://localhost:8080`.
