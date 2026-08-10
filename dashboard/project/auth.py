@@ -3,6 +3,16 @@ import pandas as pd
 import os
 
 def register_callback_query(dm, app):
+    """
+    Register the callback query for the authentication page.
+
+    Args:
+        dm (DataModule): Data module.
+        app (dash.Dash): Dash application.
+    
+    Returns:
+        None
+    """
 
     @app.callback(
         Output('url-redirect', 'href'),
@@ -35,6 +45,15 @@ def register_callback_query(dm, app):
         Input('date-picker-single', 'value')
     )
     def global_date(date_value):
+        """
+        Global date callback.
+
+        Args:
+            date_value (str): Date value.
+        
+        Returns:
+            str: Date value.
+        """
         if date_value:
             file_path = os.path.join('date', 'selected_date.csv')
             if not os.path.exists('date'):

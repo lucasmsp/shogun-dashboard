@@ -21,6 +21,13 @@ def _normalize_filters(filters):
 
 
 def register_callback_query(dm, app):
+    """
+    Register all the callbacks for the general view.
+
+    Args:
+        dm (DataManager): Data manager instance.
+        app (dash.Dash): Dash application instance.
+    """
 
     @app.callback(
         Output(component_id='username-menu', component_property='label'),
@@ -28,6 +35,15 @@ def register_callback_query(dm, app):
         Input(component_id='username-menu', component_property='children')
     )
     def cur_user(style):
+        """
+        Update the username menu and the admin menu item style.
+
+        Args:
+            style (dict): Style of the admin menu item.
+        
+        Returns:
+            tuple: Tuple of the username and the style.
+        """
         if current_user.is_authenticated:
             if current_user.username == "admin":
                 style = {'display': 'block'}
@@ -45,6 +61,18 @@ def register_callback_query(dm, app):
         Input(component_id='date-picker-single', component_property='options'),
     )
     def update_dump_message(n_intervals, value, old_opts):
+        """
+        Update the dump message and the date picker options.
+
+        Args:
+            n_intervals (int): Number of intervals.
+            value (str): Value of the date picker.
+            old_opts (list): Old options of the date picker.
+        
+        Returns:
+            tuple: Tuple of the dump message, the date picker options, and the date picker value.
+        """
+
         logging.info("Checking for new any changes.")
 
         dm.check_available_datasets()
@@ -79,6 +107,17 @@ def register_callback_query(dm, app):
 
     )
     def render_page_content(filters, pathname):
+        """
+        Render the page content based on the current pathname.
+
+        Args:
+            filters (dict): Filters to be applied to the data.
+            pathname (str): Pathname of the current view.
+        
+        Returns:
+            tuple: Tuple of the page content and the filters.
+        """
+
         pathname = pathname or "/dashboard/summary"
         filters = _normalize_filters(filters)
         logging.info(f"Pathname: {pathname} - filters: {filters}")
@@ -126,6 +165,16 @@ def register_callback_query(dm, app):
         [State("sidebar", "className")],
     )
     def toggle_classname(n, classname):
+        """
+        Toggle the sidebar class name.
+
+        Args:
+            n (int): Number of clicks on the sidebar toggle.
+            classname (str): Class name of the sidebar.
+        
+        Returns:
+            str: Class name of the sidebar.
+        """
         if n and classname == "":
             return "collapsed"
         return ""
@@ -136,7 +185,16 @@ def register_callback_query(dm, app):
         [State("collapse", "is_open")],
     )
     def toggle_collapse(n, is_open):
-        # used in submenu (Aggregated vulnerabilities)
+        """
+        Toggle the collapse state (used in Aggregated vulnerabilities).
+
+        Args:
+            n (int): Number of clicks on the navbar toggle.
+            is_open (bool): Whether the collapse is open.
+        
+        Returns:
+            bool: Whether the collapse is open.
+        """
         if n:
             return not is_open
         return is_open
@@ -148,7 +206,16 @@ def register_callback_query(dm, app):
         prevent_initial_call='initial_duplicate'
     )
     def collapse_submenu(btn, is_open):
-        # used in submenu (Aggregated vulnerabilities)
+        """
+        Toggle the collapse state (used in submenu Aggregated vulnerabilities)).
+
+        Args:
+            btn (int): Number of clicks on the navbar toggle.
+            is_open (bool): Whether the collapse is open.
+        
+        Returns:
+            bool: Whether the collapse is open.
+        """
         if "submenu-v2" == ctx.triggered_id:
             return not is_open
         return is_open
@@ -158,6 +225,15 @@ def register_callback_query(dm, app):
         [Input("submenu-v2-collapse", "is_open")],
     )
     def set_navitem_class(is_open):
+        """
+        Set the navitem class based on the collapse state (used in submenu Aggregated vulnerabilities).
+
+        Args:
+            is_open (bool): Whether the collapse is open.
+        
+        Returns:
+            str: Class name of the navitem.
+        """
         if is_open:
             return "fas fa-chevron-down me-3"
         return "fas fa-chevron-right me-3"

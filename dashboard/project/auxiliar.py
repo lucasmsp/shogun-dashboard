@@ -8,6 +8,12 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - [%
 
 
 def gen_subgraphs(n_cols, graphs):
+    """
+    Generate the Dash subgraphs for the given graphs.
+    Args:
+        n_cols (int): Number of columns.
+        graphs (list): List of graphs.
+    """
     children = []
     row = []
     size = int(12 / n_cols)
@@ -398,6 +404,14 @@ header_mapping = {
 
 
 def gen_columns_def(columns_names, special_configs=None):
+    """
+    Generate the agGrid column definitions for the given columns.
+    Args:
+        columns_names (list): List of column names.
+        special_configs (dict): Dictionary of special configurations.
+    Returns:
+        dict: Dictionary of column definitions.
+    """
     if special_configs is None:
         special_configs = {}
 

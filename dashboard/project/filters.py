@@ -2,6 +2,18 @@ import pandas as pd
 
 
 def filter_by_model(filter_modal, df, col):
+    """
+    Filter the DataFrame by a model.
+
+    Args:
+        filter_modal (dict): Filter model.
+        df (pd.DataFrame): DataFrame to filter.
+        col (str): Column to filter.
+    
+    Returns:
+        pd.DataFrame: Filtered DataFrame.
+    """
+
     if "operator" in filter_modal:
         # is a filter with multiple conditions
         if filter_modal['operator'] == "AND":
@@ -19,11 +31,32 @@ def filter_by_model(filter_modal, df, col):
         return filter_generic(filter_modal, df, col)
 
 def filter_generic(filter_modal, df, col):
+    """
+    Filter the DataFrame by a generic filter.
+
+    Args:
+        filter_modal (dict): Filter model.
+        df (pd.DataFrame): DataFrame to filter.
+        col (str): Column to filter.
+    
+    Returns:
+        pd.DataFrame: Filtered DataFrame.
+    """
     return filter_df(df, filter_modal, col)
 
 # TODO !
 def filter_text(filter_modal, df, col):
+    """
+    Filter the DataFrame by a text filter.
 
+    Args:
+        filter_modal (dict): Filter model.
+        df (pd.DataFrame): DataFrame to filter.
+        col (str): Column to filter.
+    
+    Returns:
+        pd.DataFrame: Filtered DataFrame.
+    """
     org_query = filter_modal.get(col, None)
     if org_query:
 
@@ -39,6 +72,17 @@ def filter_text(filter_modal, df, col):
     return df
 
 def filter_number(filter_modal, df, col):
+    """
+    Filter the DataFrame by a number filter.
+
+    Args:
+        filter_modal (dict): Filter model.
+        df (pd.DataFrame): DataFrame to filter.
+        col (str): Column to filter.
+    
+    Returns:
+        pd.DataFrame: Filtered DataFrame.
+    """
     opt =  filter_modal.get(col, None)
     if opt:
         type_ = opt.get("type", 'equals')
@@ -64,6 +108,18 @@ operators = {
     }
 
 def filter_df(dff, filter_model, col):
+    """
+    Filter the DataFrame by a filter model.
+
+    Args:
+        dff (pd.DataFrame): DataFrame to filter.
+        filter_model (dict): Filter model.
+        col (str): Column to filter.
+    
+    Returns:
+        pd.DataFrame: Filtered DataFrame.
+    """
+
     if "filter" in filter_model:
         if filter_model["filterType"] == "date":
             crit1 = filter_model["dateFrom"]

@@ -11,6 +11,15 @@ from project.auxiliar import gen_subgraphs, gen_columns_def, logging
 INPUT_DATA = 'summary'
 
 def register_layout_query(filter_modal={}):
+    """
+    Register the layout for the first query (EPSS summary).
+
+    Args:
+        filter_modal (dict): Filter modal configuration.
+
+    Returns:
+        dbc.Card: Layout for the first query.
+    """
 
     columns, raw_data = gen_columns_def(['vulns_epss_rank', 'n_cves', 'n_ips', 'n_orgs', 'n_as'])
     columns['n_cves']["tooltipValueGetter"] = {"function": "'Click on the cell for more details'"}
@@ -82,6 +91,14 @@ def register_layout_query(filter_modal={}):
 
 
 def register_callback_query(dm, app):
+    """
+    Register the callbacks for the first query (EPSS summary).
+
+    Args:
+        dm (DataManager): Data manager instance.
+        app (dash.Dash): Dash application instance.
+    """
+
     @app.callback(
         Output('query-1-table', "rowData"),
         Input('date-picker-single', 'value')

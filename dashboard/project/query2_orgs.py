@@ -14,6 +14,15 @@ from project.auxiliar import gen_subgraphs, gen_columns_def, logging
 INPUT_DATA_V2 = 'orgs'
 
 def register_layout_query(filter_modal={}):
+    """
+    Register the layout for the second query (list of vulnerable products for each organization).
+
+    Args:
+        filter_modal (dict): Filter modal configuration.
+
+    Returns:
+        dbc.Card: Layout for the second query.
+    """
 
     columns, raw_data = gen_columns_def(['org_clean', 'n_ips', 'n_vulns', 'n_products',
                                          'vulns_cve_id', 'vulns_epss', 'vulns_cvss', 'cpe_product' ])  # Group Fields
@@ -102,7 +111,14 @@ def register_layout_query(filter_modal={}):
 
 
 def register_callback_query(dm, app):
-    
+    """
+    Register the callbacks for the second query (list of vulnerable products for each organization).
+
+    Args:
+        dm (DataManager): Data manager instance.
+        app (dash.Dash): Dash application instance.
+    """
+
     @app.callback(
         Output("query-2b-grid", "rowData"),
         Input('date-picker-single', 'value')

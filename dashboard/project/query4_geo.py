@@ -5,12 +5,26 @@ import dash_bootstrap_components as dbc
 from dash import Dash, dcc, html, Input, Output, callback, no_update
 
 import pandas as pd
-import os
 
-from project.auxiliar import gen_subgraphs, gen_columns_def, logging
+from project.auxiliar import logging
 
 
 def build_state_choropleth(df, color_column, title, hover_label, color_label, geojson):
+    """
+    Build a choropleth map of Brazilian states.
+
+    Args:
+        df (pd.DataFrame): DataFrame containing the data.
+        color_column (str): Column to use for coloring the states.
+        title (str): Title of the choropleth map.
+        hover_label (str): Label to use for the hover text.
+        color_label (str): Label to use for the color scale.
+        geojson (dict): GeoJSON file containing the state boundaries.
+
+    Returns:
+        plotly.graph_objs._figure.Figure: Choropleth map of Brazilian states.
+    """
+
     if df.empty or color_column not in df.columns:
         fig = px.choropleth()
         fig.add_annotation(
@@ -52,6 +66,16 @@ def build_state_choropleth(df, color_column, title, hover_label, color_label, ge
 
 
 def register_layout_query(filter_modal={}):
+    """
+    Register the layout for the fourth query (choropleth map of Brazilian states).
+
+    Args:
+        filter_modal (dict): Filter modal configuration.
+
+    Returns:
+        dbc.Card: Layout for the fourth query.
+    """
+
     elements = [
         dbc.Row(
             children=[
@@ -142,7 +166,14 @@ def register_layout_query(filter_modal={}):
 
 
 def register_callback_query(dm, app):
-    
+    """
+    Register the callbacks for the fourth query (choropleth map of Brazilian states).
+
+    Args:
+        dm (DataManager): Data manager instance.
+        app (dash.Dash): Dash application instance.
+    """
+
     brazil_states_geojson =  "./assets/brazil-states-simplified.geojson"
     with open(brazil_states_geojson) as f:
         brazil = json.load(f)
@@ -320,6 +351,15 @@ def register_callback_query(dm, app):
         prevent_initial_call=True
     )
     def select_region_view4_to_report(data):
+        """
+        Callback to select a region on the choropleth map and redirect to the general analysis per record view.
+
+        Args:
+            data (dict): Click data from the choropleth map.
+
+        Returns:
+            tuple: Tuple containing the pathname and filter options.
+        """
 
         logging.info(data)
 

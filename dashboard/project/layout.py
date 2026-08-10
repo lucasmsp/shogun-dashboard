@@ -22,7 +22,12 @@ tab7_content = query7_ports.register_layout_query(filter_modal={})
 tab_guide_content = guide.register_layout_query(filter_modal={})
 
 def register_layout(dm):
+    """
+    Register the layout of the dashboard.
 
+    Args:
+        dm (DataManager): Data manager instance.
+    """
     sidebar_header = dbc.Row(
         [
             dbc.Col(html.H3("SH🎯GUN")),
@@ -242,7 +247,15 @@ def register_layout(dm):
     [Input("url-redirect", "pathname")]
 )
 def update_navlink(pathname):
+    """
+    Update the navlink based on the current pathname.
 
+    Args:
+        pathname (str): Pathname of the current view.
+    
+    Returns:
+        tuple: Tuple of the navlink states.
+    """
     is_orgs = (pathname == "/dashboard/orgs")
     is_ips = (pathname == "/dashboard/ips")
     is_cve = (pathname == "/dashboard/cve")

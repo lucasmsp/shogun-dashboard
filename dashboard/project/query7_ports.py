@@ -13,6 +13,16 @@ INPUT_DATA = 'ports'
 
 
 def register_layout_query(filter_modal={}):
+    """
+    Register the layout for the seventh query (Ports summary).
+
+    Args:
+        filter_modal (dict): Filter modal configuration.
+
+    Returns:
+        dbc.Card: Layout for the seventh query.
+    """
+
     columns, raw_data = gen_columns_def(['port', 'n_vulns', 'n_products',
                                          'vulns_epss_min', 'vulns_epss_avg', 'vulns_epss_max',
                                          'vulns_cvss_min', 'vulns_cvss_avg', 'vulns_cvss_max',
@@ -118,6 +128,14 @@ def register_layout_query(filter_modal={}):
 
 
 def register_callback_query(dm, app):
+    """
+    Register the callbacks for the seventh query (Ports summary).
+
+    Args:
+        dm (DataManager): Data manager instance.
+        app (dash.Dash): Dash application instance.
+    """
+
     @app.callback(
         Output('query-7-table', "rowData"),
         Input('date-picker-single', 'value')

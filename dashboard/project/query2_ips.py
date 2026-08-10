@@ -14,10 +14,18 @@ INPUT_DATA = 'ips'
 
 
 def register_layout_query(filter_modal={}):
+    """
+    Register the layout for the second query (list of vulnerable products for each IP).
+
+    Args:
+        filter_modal (dict): Filter modal configuration.
+
+    Returns:
+        dbc.Card: Layout for the second query.
+    """
     columns, raw_data = gen_columns_def(['ip', 'org_clean', 'vulns_cve_id',
                                          'vulns_cvss', 'vulns_epss', "cpe_product"])
 
-    # columns['ip']["maxNumConditions"] = 500
     columns['ip']["tooltipValueGetter"] = {"function": "'Click on the cell for more details'"}
     columns['ip']['pinned'] = 'left'
     columns['vulns_epss']["tooltipField"] = "vulns_epss_rank"
@@ -116,6 +124,13 @@ def register_layout_query(filter_modal={}):
 
 
 def register_callback_query(dm, app):
+    """
+    Register the callbacks for the second query (list of vulnerable products for each IP).
+
+    Args:
+        dm (DataManager): Data manager instance.
+        app (dash.Dash): Dash application instance.
+    """
 
     @app.callback(
         Output('query-2a-grid', "getRowsResponse"),
@@ -314,6 +329,15 @@ def register_callback_query(dm, app):
         prevent_initial_call=True
     )
     def export_csv_query2_ips(n_clicks):
+        """
+        Callback to export the grid data to a CSV file.
+
+        Args:
+            n_clicks (int): Number of clicks on the export button.
+
+        Returns:
+            bool: True if the export was successful, False otherwise.
+        """
         if n_clicks:
             return True
         return False

@@ -16,8 +16,16 @@ SHODAN_FOLDER = os.environ.get("SHODAN_FOLDER", "/opt/input_data/")
 NUMBER_OF_DUMPS_TO_KEEP = int(os.environ.get("NUMBER_OF_DUMPS_TO_KEEP", 7))
 
 class DatasetManager(object):
-    
+    """
+    Manages the dataset by providing methods to retrieve and process data from the Delta Lake.
+    """
+
     def __init__(self):
+        """
+        Initialize the DatasetManager.
+
+        It initializes the available datasets dictionary and the file paths for the Delta Lake.
+        """
         self.available_datasets = {}
         self.tlhop_epss_report_path = RESULT_FOLDER + "/tlhop-epss-dashboard.delta"
         self.tlhop_epss_views_path = RESULT_FOLDER + "/tlhop-epss-dashboard-{}.delta"
@@ -25,6 +33,11 @@ class DatasetManager(object):
         self.sampled_data = None
 
     def check_available_datasets(self):
+        """
+        Check for available datasets and update the available_datasets dictionary.
+
+        The dictionary is updated with the available datasets and their commit information.
+        """
         available_datasets = {}
 
         if os.path.exists(self.tlhop_epss_report_path):
@@ -64,6 +77,10 @@ class DatasetManager(object):
     
     def get_date_dumps(self):
         """
+        Get the available date dumps, sorted in descending order.
+
+        Returns:
+            list: List of date dumps.
         """
         dates = sorted(list(self.available_datasets.keys()), reverse=True)
         return dates
@@ -77,10 +94,29 @@ class DatasetManager(object):
             return dates[0]
         return "1991-06-15"
 
-    def retrive_commit(self, day):
+    def retrive_commit(self, day):  
+        """
+        Retrieve the commit version for a given day.
+
+        Args:
+            day (str): The day to retrieve the commit version for.
+
+        Returns:
+            int: The commit version for the given day.
+        """
         return self.available_datasets.get(day, {"version": -1})['version']
 
     def get_view_dataset(self, day, code):
+        """
+        Retrieve the view dataset for a given day and code.
+
+        Args:
+            day (str): The day to retrieve the view dataset for.
+            code (str): The code to retrieve the view dataset for.
+
+        Returns:
+            pd.DataFrame: The view dataset for the given day and code.
+        """
 
         commit = self.retrive_commit(day)
         if commit >= 0:
@@ -96,7 +132,26 @@ class DatasetManager(object):
     def get_report_dataset(self, day, columns=None, condition=None, single_output=False,
                            start=0, finish=-1, sort_by='score', ascending=False, compute_score=False,
                            for_each=False, user_id=None):
-        
+        """
+        Retrieve the report dataset for a given day and code.
+
+        Args:
+            day (str): The day to retrieve the report dataset for.
+            columns (list): List of columns to retrieve.
+            condition (str): Condition to filter the dataset.
+            single_output (bool): Whether to retrieve a single output.
+            start (int): Start index.
+            finish (int): Finish index.
+            sort_by (str): Column to sort by.
+            ascending (bool): Whether to sort in ascending order.
+            compute_score (bool): Whether to compute the score.
+            for_each (bool): Whether to retrieve the dataset for each user.
+            user_id (int): User ID.
+
+        Returns:
+            pd.DataFrame: The report dataset for the given day and code.
+        """
+
         commit = self.retrive_commit(day)
         df = None
 
@@ -155,7 +210,13 @@ class DatasetManager(object):
     def sample_data(self, day, random_state, entries):
         """
         Sample N random entries from the dataset and store them
+
+        Args:
+            day (str): The day to sample the dataset for.
+            random_state (int): The random state for sampling.
+            entries (int): The number of entries to sample.
         """
+
         commit = self.retrive_commit(day)
 
         if commit >= 0:
@@ -176,6 +237,17 @@ class DatasetManager(object):
             self.sampled_data = pd.DataFrame()
 
     def get_total_entries_new(self, day, condition=None):
+        """
+        Get the total number of entries in the dataset for a given day.
+
+        Args:
+            day (str): The day to get the total number of entries for.
+            condition (str): Condition to filter the dataset.
+
+        Returns:
+            int: The total number of entries in the dataset for the given day.
+        """
+
         commit = self.retrive_commit(day)
         total_entries = 0
         if commit >= 0:
@@ -188,6 +260,9 @@ class DatasetManager(object):
         return total_entries
 
     def remove_old_data(self):
+        """
+        Remove old data from the dataset.
+        """
 
         if len(self.available_datasets) >= NUMBER_OF_DUMPS_TO_KEEP:
             threshold_date = self.get_date_dumps()[NUMBER_OF_DUMPS_TO_KEEP-1]
@@ -213,6 +288,15 @@ class DatasetManager(object):
 
     @staticmethod
     def check_folder_stats(path):
+        """
+        Check the statistics of a folder.
+
+        Args:
+            path (str): The path to the folder.
+
+        Returns:
+            dict: The statistics of the folder.
+        """
         stats = {
             "number_of_files": len([name for name in os.listdir(path) if ".parquet" in name and '.crc' in name]),
             'folder_size':  sum(d.stat().st_size for d in os.scandir(path) if d.is_file())
@@ -220,6 +304,16 @@ class DatasetManager(object):
         return stats
 
     def waiting_next_file(self, mode="latest"):
+        """
+        Wait for the next file to be available.
+
+        Args:
+            mode (str): The mode to wait for the next file for.
+
+        Returns:
+            list: The list of next files.
+        """
+
         next_date = self.last_dump_date()
         filepath =  SHODAN_FOLDER + "/BR.{pattern}.json.bz2"
         available_dates = [os.path.basename(s)[3:-9] for s in sorted(glob.glob(filepath.format(pattern="*")))]
@@ -243,6 +337,15 @@ class DatasetManager(object):
 
     @staticmethod
     def compute_next_dump(last_date_commit):
+        """
+        Compute the next dump date.
+
+        Args:
+            last_date_commit (str): The last date commit.
+
+        Returns:
+            str: The next dump date.
+        """
         if last_date_commit:
             scheduler = croniter(CRON_EXPRESSION, last_date_commit)
             next_run = scheduler.get_next(datetime)

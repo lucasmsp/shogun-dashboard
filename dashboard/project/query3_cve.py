@@ -12,10 +12,16 @@ import pandas as pd
 
 INPUT_DATA = 'vulns'
 
-
-# constructs the layout for View 3
 def register_layout_query(filter_modal={}):
+    """
+    Register the layout for the third query (list of vulnerable products for each CVE).
 
+    Args:
+        filter_modal (dict): Filter modal configuration.
+
+    Returns:
+        dbc.Card: Layout for the third query.
+    """
     special_configs = {
         'vulns_cve_id': {
             'maxNumConditions': 500,
@@ -144,8 +150,15 @@ def find_expression(string):
             return i
 
 
-# register all the callbacks in one place
 def register_callback_query(dm, app):
+    """
+    Register the callbacks for the third query (list of vulnerable products for each CVE).
+
+    Args:
+        dm (DataManager): Data manager instance.
+        app (dash.Dash): Dash application instance.
+    """
+
     @app.callback(
         Output('query-3-ag', "rowData"),
         Input('date-picker-single', 'value')
@@ -438,6 +451,15 @@ def register_callback_query(dm, app):
         prevent_initial_call=True
     )
     def export_csv_query3_cve(n_clicks):
+        """
+        Callback to export the grid data to a CSV file.
+
+        Args:
+            n_clicks (int): Number of clicks on the export button.
+
+        Returns:
+            bool: True if the export was successful, False otherwise.
+        """
         if n_clicks:
             return True
         return False

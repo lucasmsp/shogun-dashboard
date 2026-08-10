@@ -25,6 +25,16 @@ active_spark_session = None
 
 
 def start_processing(dm, day_fmt1):
+    """
+    Start the processing of the data.
+
+    Args:
+        dm (DatasetManager): Data manager.
+        day_fmt1 (str): Day in format yyyy-mm-dd.
+    
+    Returns:
+        None
+    """
     
     def handle_signal(signum, frame):
         logging.info(f"Subprocess received signal {signum}. Cleaning up Spark Session and JVM...")
@@ -56,6 +66,17 @@ def start_processing(dm, day_fmt1):
     
 
 def run(day_str, first_execution=False):
+    """
+    Run the computation.
+
+    Args:
+        day_str (str): Day in format yyyy-mm-dd.
+        first_execution (bool): Whether it is the first execution.
+    
+    Returns:
+        None
+    """
+
     global active_spark_session
     from pyspark.sql import SparkSession
     from tlhop.algorithms import ShodanVulnerabilitiesBanners

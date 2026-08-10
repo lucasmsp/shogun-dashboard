@@ -10,6 +10,12 @@ import project.general as general
 import project.auth as auth
 
 def register_callbacks(dm, app):
+    """
+    Register all the callbacks for the application.
+    Args:
+        dm (DataManager): Data manager instance.
+        app (dash.Dash): Dash application instance.
+    """
     auth.register_callback_query(dm, app)
     general.register_callback_query(dm, app)
     query1_summary.register_callback_query(dm, app)

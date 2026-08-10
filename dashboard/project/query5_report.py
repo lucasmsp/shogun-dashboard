@@ -12,8 +12,15 @@ from project.filters import *
 
 
 def register_layout_query(filter_modal={}):
+    """
+    Register the layout for the fifth query (general analysis per record).
 
-    
+    Args:
+        filter_modal (dict): Filter modal configuration.
+
+    Returns:
+        dbc.Card: Layout for the fifth query.
+    """
 
     aggrid = dag.AgGrid(
                 id="query-5-ag",
@@ -140,7 +147,13 @@ def register_layout_query(filter_modal={}):
     return tab5_content
 
 def register_callback_query(dm, app):
+    """
+    Register the callbacks for the fifth query (general analysis per record).
 
+    Args:
+        dm (DataManager): Data manager instance.
+        app (dash.Dash): Dash application instance.
+    """
     @app.callback(
         Output('query-5-ag', "getRowsResponse"),
         [
@@ -149,6 +162,18 @@ def register_callback_query(dm, app):
             Input('store-filters', 'data')]
     )
     def update_table5(date_value, request, stored_filters):
+        """
+        Callback to update the table data based on the selected date and filters.
+
+        Args:
+            date_value (str): Date selected from the date picker.
+            request (dict): Request parameters from the AG Grid.
+            stored_filters (dict): Stored filters.
+
+        Returns:
+            dict: Dictionary containing the row data and row count.
+        """
+
         if not date_value:
             return {"rowData": [], "rowCount": 0}
 

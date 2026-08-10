@@ -2,7 +2,7 @@ from dash import html, dcc, dash_table, callback_context, ctx, no_update
 from dash.dependencies import Output, Input, State
 import dash_bootstrap_components as dbc
 import dash_ag_grid as dag
-from project.auxiliar import gen_subgraphs, header_mapping, gen_columns_def, logging
+from project.auxiliar import gen_subgraphs, gen_columns_def, logging
 
 import itertools
 import plotly.express as px
@@ -15,6 +15,15 @@ import heapq
 INPUT_DATA_V6 = 'as'
 
 def register_layout_query(filter_modal={}):
+    """
+    Register the layout for the sixth query (Autonomous Systems summary).
+
+    Args:
+        filter_modal (dict): Filter modal configuration.
+
+    Returns:
+        dbc.Card: Layout for the sixth query.
+    """
 
     special_config = {
         'asn': {'pinned': 'left'},
@@ -136,6 +145,13 @@ def register_layout_query(filter_modal={}):
     return tab6_content
 
 def register_callback_query(dm, app):
+    """
+    Register the callbacks for the sixth query (Autonomous Systems summary).
+
+    Args:
+        dm (DataManager): Data manager instance.
+        app (dash.Dash): Dash application instance.
+    """
 
     @app.callback(
         Output('query-6-table', "rowData"),

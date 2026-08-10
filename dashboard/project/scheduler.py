@@ -13,6 +13,9 @@ import psutil
 current_proc = None
 
 def cleanup_child_process():
+    """
+    Cleanup child process if it is still alive.
+    """
     global current_proc
     if current_proc is not None and current_proc.is_alive():
         pid = current_proc.pid
@@ -47,6 +50,14 @@ signal.signal(signal.SIGINT, signal_handler)
 
 
 def run_process_for_files(dm, new_files):
+    """
+    Run the processing for the given files.
+
+    Args:
+        dm (DatasetManager): Data manager instance.
+        new_files (list): List of files to process.
+    """
+
     global current_proc
     for day_fmt1 in new_files:
         logging.info(f"Processing file {day_fmt1}")
@@ -69,6 +80,13 @@ def run_process_for_files(dm, new_files):
 
 
 def external_scheduler(mode="latest"):
+    """
+    External scheduler to process new files.
+
+    Args:
+        mode (str): Mode to process the files. Can be "latest", "all", or a timestamp (yyyymmdd).
+    """
+
     dm = DatasetManager()
     global current_proc
     

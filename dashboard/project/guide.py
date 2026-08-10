@@ -2,7 +2,15 @@ from dash import html, dcc
 import dash_bootstrap_components as dbc
 
 def register_layout_query(filter_modal={}):
+    """
+    Register the layout of the guide page.
+
+    Args:
+        filter_modal (dict): Filter modal component.
     
+    Returns:
+        html.Div: Layout of the guide page.
+    """
     views_info = [
         {
             "title": "1. EPSS Summary",
