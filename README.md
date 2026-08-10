@@ -2,6 +2,10 @@
 
 SHOGUN is an interactive dashboard for the multidimensional, longitudinal analysis of internet-wide vulnerability data. It ingests daily dumps from search engines such as Shodan, enriches them with external vulnerability-intelligence sources (NIST/NVD, FIRST EPSS, CISA KEV), and exposes eight analytical views, from macro-level views (organizations, Autonomous Systems, ports) down to per-asset forensic detail, through a reactive Dash/Flask web interface, with cross-view drill-down navigation between them. The architecture is split into Front-end/Back-end/Data-Store: a PySpark pipeline (built on the [TLHOP-Library](https://github.com/lucasmsp/tlhop-library)) periodically transforms raw JSON dumps into versioned, compressed Delta Lake tables, which are served to the web interface, backed by PostgreSQL for user/authentication data.
 
+**Article Abstract:**
+
+_The increasing exposure of digital assets on the Internet demands efficient solutions for identifying and continuously monitoring vulnerabilities. While search engines like Shodan provide a targeted retrieval of exposure data, longitudinal risk assessment requires extensive data preparation. To bridge this gap, we present SHOGUN, an interactive dashboard engineered for the multidimensional analysis of internet-wide vulnerability data. Built upon a decoupled architecture, our tool abstracts raw search engine dumps into structured analytical datasets. The tool features a reactive web interface that combines geospatial and statistical visualizations with a cross-view drill-down navigation model, allowing security analysts to  transition from macro-level network overviews to granular, asset-level forensic investigations._
+
 
 ## Readme Structure
 
@@ -18,23 +22,28 @@ This document is organized as follows:
 
 ## Badges Claimed
 
-We are claiming the **Available Artifacts**, **Sustainable Artifacts**, and **Functional Artifacts** badges.
+The authors apply for the evaluation of the following badges:
 
-We are not claiming Reproducible Experiments. The evaluation in Section 4 of the paper was performed over real Shodan data for the Brazilian IPv4 space, which was made available to us by CERT.br. SHOGUN itself, however, is a visualization and analysis layer built on top of Shodan data, it doesn't ship with any pre-collected dataset, so to test the tool end to end (and reproduce the exact numbers from Section 4), reviewers need to obtain their own daily Shodan dump on their own, through a Shodan account/API. Since we can't guarantee everyone has that kind of access, the Experiments section below focuses on what any reviewer can check directly: the eight analytical views, the drill-down navigation between them, and the overall interactivity of the dashboard.
+- Available Artifacts (SeloD)
+- Functional Artifacts (SeloF)
+- Sustainable Artifacts (SeloS)
+- Reproducible Experiments (SeloR)
+
+Based on the code and documentation made available in this and related repositories.
 
 ## Basic Information
 
 ### Hardware requirements
 
-- A Linux host with Docker support (the tool was evaluated on Debian 12).
-- **CPU:** at least 2 cores for the minimal test (interface only, no processing). To reproduce the performance figures from the paper (Section 4), a machine with several cores is recommended; the original evaluation constrained Spark to **10 cores**, on a 48-core Intel Xeon Gold 5318N with 503 GiB of RAM.
+- A Linux host with Docker support (the tool was tested on Debian 12, but is compatible with any operating system that supports Docker.).
+- **CPU:** at least 2 cores for the minimal test (interface only, no processing). To reproduce the performance figures from the paper (Section 4), a machine with several cores is recommended; the original evaluation constrained Spark to 10 cores, on a 48-core Intel Xeon Gold 5318N.
 - **RAM:** at least 4 GB for the dashboard/PostgreSQL services alone. The data-processing (`scheduler`) service additionally requires the amount configured in `SPARK_MEMORY` (default `4g` in `docker-compose.yml`; the paper's evaluation used 20 GiB).
 - **Disk:** at least 5 GB free for the Docker images and dependencies.
 - **Network access** is required during the Docker build (to clone `tlhop-library` from GitHub and download Spark/Delta Lake JARs from Maven Central) and at runtime (to download the NIST/NVD, EPSS, and CISA KEV feeds).
 
 ### Software requirements
 
-- Docker Engine and Docker Compose (v2 syntax, `docker compose ...`).
+- Docker Engine and Docker Compose.
 - Git (to clone the repository).
 - No local Python/Spark installation is required when using Docker; if running outside containers (developer mode), Python 3.10+ and the TLHOP-Library available on `PYTHONPATH` are required (see [Dependencies](#dependencies)).
 
@@ -44,10 +53,6 @@ We are not claiming Reproducible Experiments. The evaluation in Section 4 of the
 shogun-dashboard/
 ├── Dockerfile                 # Builds the Spark + TLHOP-Library + dashboard image
 ├── docker-compose.yml         # Orchestrates the dashboard, scheduler, and postgres services
-├── start-dev.sh               # Runs the dashboard locally (developer mode)
-├── start-dev-wgsi.sh          # Runs the dashboard locally via WSGI/gunicorn
-├── local/
-│   └── env                    # Local secrets used by docker-compose (POSTGRES_PASSWORD, etc.)
 ├── output_data/
 │   └── tlhop_datasets/
 │       └── auxiliar/          # Auxiliary datasets downloaded by TLHOP-Library (NVD, EPSS, CISA KEV)
@@ -84,7 +89,7 @@ The eight analytical views described in the paper map to the code as follows:
 | 4 | CVE — Report of Common Vulnerabilities and Exposures | CVEs | `query3_cve.py` |
 | 5 | AS Summary | ASes | `query6_as.py` |
 | 6 | Vulnerable Ports Summary | Port | `query7_ports.py` |
-| 7 | Geoanalysis | — | `query4_geo.py` |
+| 7 | Geoanalysis | General Records | `query4_geo.py` |
 | 8 | General Analysis per Record | General Records | `query5_report.py` |
 
 ## Dependencies
@@ -121,6 +126,7 @@ Getting a dump requires a Shodan account with API/export access; how to query an
 | `FLASK_SECRET` | dashboard | placeholder in `docker-compose.yml` | Flask session-signing secret — **must** be replaced (see below) |
 | `ADMIN_PASSWORD` | dashboard | `admin` | Password of the auto-created `admin` user on first boot |
 
+
 ## Security Concerns
 
 Executing this artifact carries the following risks that reviewers should mitigate before running it:
@@ -128,8 +134,7 @@ Executing this artifact carries the following risks that reviewers should mitiga
 - **Exposed ports.** By default, `docker-compose.yml` publishes the dashboard on host port **8080**, the Spark UI on **4040**, and PostgreSQL on **5432**. These will be reachable from any host that can reach the reviewer's machine unless a firewall/NAT restricts access. Reviewers running this on a shared or internet-facing machine should either bind these ports to `127.0.0.1` or block them at the firewall.
 - **Default administrative credentials.** The dashboard automatically creates an `admin` user with password `admin` on first boot if `ADMIN_PASSWORD` is not set. **Always set `ADMIN_PASSWORD` to a strong value** before first startup, especially if the dashboard port is reachable from outside `localhost`.
 - **Session secret.** `FLASK_SECRET` ships as a placeholder string (`XXXXXXXXXXXXXXXX`) in `docker-compose.yml`. This **must** be replaced with a random value (e.g., the output of `python3 -c "import os; print(os.urandom(24).hex())"`) before any non-local use; otherwise session cookies can be forged.
-- **Database credentials.** `POSTGRES_PASSWORD` is provided via the `local/env` file (excluded from version control via `.gitignore`, and referenced by `env_file:` in `docker-compose.yml`). Reviewers must generate their own value and must not reuse any example value from the documentation.
-- **Third-party data during build.** The Docker build clones `tlhop-library` directly from GitHub and downloads JARs from Maven Central at build time; this requires trusting those sources' current content, since no specific commit/tag or checksum is pinned.
+- **Database credentials.** `POSTGRES_PASSWORD` is provided in `docker-compose.yml`. Reviewers must generate their own value and must not reuse any example value from the documentation.
 - **Input data privacy.** If you provide your own Shodan dump to exercise the processing pipeline, keep in mind that Shodan banners can contain sensitive information (IP addresses, organization names, service banners). Treat any such file as sensitive and remove it from the evaluation machine after use.
 
 ## Installation
@@ -141,11 +146,10 @@ Executing this artifact carries the following risks that reviewers should mitiga
    cd shogun-dashboard
 
 
-2. **(Optional) Configure secrets.** By default, `docker-compose.yml` still works without this step, but for anything beyond a quick local test, you should set your own PostgreSQL password instead of relying on whatever default the `postgres` image falls back to, and replace the placeholder session secret. Create `local/env` with a PostgreSQL password:
+2. **(Optional) Configure secrets.** By default, `docker-compose.yml` still works without this step, but for anything beyond a quick local test, you should set your own password instead of relying on all default. A stronger password could be created using:
 
    ```bash
-   mkdir -p local
-   echo "POSTGRES_PASSWORD='$(python3 -c "import secrets; print(secrets.token_urlsafe(24))")'" > local/env
+python3 -c "import secrets; print(secrets.token_urlsafe(24))"
    ```
 
 Then edit `docker-compose.yml` and replace the `FLASK_SECRET` placeholder with a freshly generated value. `ADMIN_PASSWORD` isn't listed there by default, so add a new line for it under the `dashboard` service's `environment:` block (e.g. `- ADMIN_PASSWORD=<your-strong-password>`). See [Security Concerns](#security-concerns) for why these matter.
@@ -166,14 +170,6 @@ The first command fetches the pre-built image (`lucasmsp/tlhop-dashboard:latest`
 
 At the end of this process, the dashboard should be reachable at `http://localhost:8080`.
 
-### Developer mode (without Docker for the dashboard)
-
-For active development, only PostgreSQL needs to run in a container:
-
-```bash
-docker compose up postgres
-bash start-dev.sh
-```
 
 ## Minimal Test
 
