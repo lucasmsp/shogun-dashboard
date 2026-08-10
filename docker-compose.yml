@@ -4,7 +4,7 @@ services:
   dashboard:
     build: .
     container_name: shogun_dashboard
-    image: lucasmsp/tlhop-dashboard:latest
+    image: lucasmsp/shogun-dashboard:latest
     volumes:
       - ./input_data:/opt/input_data/
       - ./output_data:/opt/output_data/
@@ -12,18 +12,18 @@ services:
       - default
     ports:
       - 8080:8080
-      - 4040:4040
     command: python3 app.py --host 0.0.0.0 --port 8080
     environment:
+      - ADMIN_PASSWORD=admin  # replace this password
       - CRON_EXPRESSION=*/1 * * * *
       - SHODAN_FOLDER=/opt/input_data/
       - RESULT_FOLDER=/opt/output_data/
       - POSTGRES_URL=postgres:5432
       - POSTGRES_USER=postgres
       - POSTGRES_DB=postgres
-      - FLASK_SECRET=XXXXXXXXXXXXXXXX
+      - POSTGRES_PASSWORD=StrongPassword.123  # replace this password
+      - FLASK_SECRET=XXXXXXXXXXXXXXXX  # replace this password
       # A good recipe to generate FLASK_SECRET is copy the content of `import os; os.urandom(24)`
-    env_file: local/env
     depends_on:
       postgres:
         condition: service_healthy
@@ -31,17 +31,19 @@ services:
   scheduler:
     build: .
     container_name: shogun_scheduler
-    image: lucasmsp/tlhop-dashboard:latest
+    image: lucasmsp/shogun-dashboard:latest
     volumes:
       - ./input_data:/opt/input_data/
       - ./output_data:/opt/output_data/
     networks:
       - default
+    ports:
+     - 4040:4040
     command: python3 -m project.scheduler --mode latest
     environment:
       - CRON_EXPRESSION=*/1 * * * *
       - SPARK_UI_PORT=4040
-      - SPARK_VCORES=6
+      - SPARK_VCORES=4
       - SPARK_MEMORY=4g  
       - SHODAN_FOLDER=/opt/input_data/
       - RESULT_FOLDER=/opt/output_data/
@@ -49,14 +51,15 @@ services:
 
   postgres:
     container_name: shogun_postgres
-    image: postgres:latest
+    image: postgres:18.4
     volumes:
       - postgres_data:/var/lib/postgresql
     ports:
       - 5432:5432
     networks:
       - default
-    env_file: local/env
+    environment:
+      - POSTGRES_PASSWORD=StrongPassword.123  # replace this password
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "postgres", "-d", "postgres"]
       interval: 3s
