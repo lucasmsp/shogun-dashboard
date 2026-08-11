@@ -231,7 +231,7 @@ For reference, here's the **ORG** view from the paper, populated with real (anon
 
    ![IP Details view — geolocation, CVE list, and raw HTTP/banner data for a single host](images/shogun-ip-details.png)
 
-**Verification**: each click should take you to the next view without needing to reconfigure filters manually, carrying the filtering context forward through EPSS Summary, CVE Report, IP, General Analysis per Record, and IP Details, that's the flow shown in the screenshots above. Tables will be empty on the reviewer's instance, but the navigation itself (clickable columns, /details/<meta_id> routes) should work regardless.
+**Verification**: each click should take you to the next view without needing to reconfigure filters manually, carrying the filtering context forward through EPSS Summary, CVE Report, IP, General Analysis per Record, and IP Details; the screenshots above illustrate part of this flow. Tables will be empty on the reviewer's instance, but the navigation itself (clickable columns, /details/<meta_id> routes) should work regardless.
 
 **Expected time/resources:** a few minutes; nothing computationally relevant.
 
