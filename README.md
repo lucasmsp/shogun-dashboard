@@ -195,7 +195,7 @@ The full performance evaluation in Section 4 of the paper was run over 15 days o
 
 The screenshots below are taken from the paper's own case study, so you can compare the *structure* of what you see (titles, filters, columns, chart placeholders, clickable fields) against a populated example, even if the numbers won't match.
 
-### Claim #1 — "The dashboard exposes eight complementary analytical views, from macro level down to individual-asset level"
+### Claim #1 — The dashboard exposes eight complementary analytical views, from macro level down to individual-asset level
 
 **Objective:** confirm that the eight views described in Table 1 of the paper are implemented and reachable from the sidebar.
 
@@ -213,7 +213,7 @@ For reference, here's the **ORG** view from the paper, populated with real (anon
 
 **Expected time/resources:** a few minutes; nothing beyond what the minimal test already used.
 
-### Claim #2 — "Cross-view drill-down navigation (macro → micro)"
+### Claim #2 — Cross-view drill-down navigation (macro → micro)
 
 **Objective:** confirm the interactive navigation flow, from aggregate to individual-asset level, described in Section 5/Figures 5–7 of the paper.
 
@@ -238,7 +238,7 @@ For reference, here's the **ORG** view from the paper, populated with real (anon
 
 ---
 
-Together, these three claims cover the structure, navigation, and interactivity of SHOGUN's visualizations, which is really the core contribution the paper is making on the interface side. The performance numbers from Section 4 aren't something we ask reviewers to reproduce here, since that would require access to a Shodan dump of comparable scale; those results are reported and discussed in the paper itself.
+Together, these two claims cover the structure, navigation, and interactivity of SHOGUN's visualizations, which is really the core contribution the paper is making on the interface side. The performance numbers from Section 4 aren't something we ask reviewers to reproduce here, since that would require access to a Shodan dump of comparable scale; those results are reported and discussed in the paper itself.
 
 ## LICENSE
 
