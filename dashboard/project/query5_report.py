@@ -132,6 +132,14 @@ def register_layout_query(filter_modal={}):
                       ),
             style={'fontSize': '20px', 'padding': 20}
         ),
+        html.Div(
+            html.Span(
+                id="query-5-row-count",
+                className="text-muted",
+                style={"fontSize": "14px", "fontWeight": "500"}
+            ),
+            style={'paddingLeft': 20, 'paddingBottom': 15}
+        ),
         dbc.Row(dcc.Loading([aggrid]))
     ]
 
@@ -156,6 +164,7 @@ def register_callback_query(dm, app):
     """
     @app.callback(
         Output('query-5-ag', "getRowsResponse"),
+        Output('query-5-row-count', 'children'),
         [
             Input('date-picker-single', 'value'),
             Input("query-5-ag", "getRowsRequest"),
@@ -163,7 +172,7 @@ def register_callback_query(dm, app):
     )
     def update_table5(date_value, request, stored_filters):
         """
-        Callback to update the table data based on the selected date and filters.
+        Callback to update the table data and row count text based on the selected date and filters.
 
         Args:
             date_value (str): Date selected from the date picker.
@@ -171,11 +180,11 @@ def register_callback_query(dm, app):
             stored_filters (dict): Stored filters.
 
         Returns:
-            dict: Dictionary containing the row data and row count.
+            tuple: (dict getRowsResponse, str count_text)
         """
 
         if not date_value:
-            return {"rowData": [], "rowCount": 0}
+            return {"rowData": [], "rowCount": 0}, ""
 
         logging.info(f"[INFO][query5] - update_table5: {date_value}")
 
@@ -190,28 +199,38 @@ def register_callback_query(dm, app):
             for_each=False
         )
 
+        if df.empty:
+            return {"rowData": [], "rowCount": 0}, "0 de 0 registros"
+
+        total_lines = len(df.index)
+        is_filtered = False
+
         if stored_filters and 'query-5-ag' in stored_filters:
             map_filters = stored_filters['query-5-ag']
-            for col, filter_conf in map_filters.items():
-                try:
-                    df = filter_by_model(filter_conf, df, col)
-                except Exception as e:
-                    logging.error(f"[ERROR] query 5 - error applying map filter")
+            if map_filters:
+                is_filtered = True
+                for col, filter_conf in map_filters.items():
+                    try:
+                        df = filter_by_model(filter_conf, df, col)
+                    except Exception as e:
+                        logging.error(f"[ERROR] query 5 - error applying map filter")
 
         lines = len(df.index)
         logging.info(f"[INFO] query 5 - original dataset has {lines} lines")
 
         if request:
-            if request["filterModel"]:
+            if request.get("filterModel"):
                 filters = request["filterModel"]
-                for col, filter_conf in filters.items():
-                    try:
-                        df = filter_by_model(filter_conf, df, col)
-                        lines = len(df.index)
-                    except:
-                        logging.error("[ERROR] query 5 - error filter grid5")
+                if filters:
+                    is_filtered = True
+                    for col, filter_conf in filters.items():
+                        try:
+                            df = filter_by_model(filter_conf, df, col)
+                            lines = len(df.index)
+                        except:
+                            logging.error("[ERROR] query 5 - error filter grid5")
 
-            if request["sortModel"]:
+            if request.get("sortModel"):
                 sorting = []
                 asc = []
                 for sort in request["sortModel"]:
@@ -222,16 +241,20 @@ def register_callback_query(dm, app):
                         asc.append(False)
                 df = df.sort_values(by=sorting, ascending=asc)
 
-            start_row = request["startRow"]
-            end_row = request["endRow"]
+            start_row = request.get("startRow", 0)
+            end_row = request.get("endRow", 100)
 
             partial = df.iloc[start_row:end_row]
             logging.info("[INFO] query 5 - finishing output")
 
-            if lines == 0:
-                lines = 1
+            lines_for_grid = 1 if lines == 0 else lines
 
-            return {"rowData": partial.to_dict("records"), "rowCount": lines}
+            if is_filtered:
+                count_text = f"Exibindo {lines:,} de {total_lines:,} registros".replace(",", ".")
+            else:
+                count_text = f"Total: {total_lines:,} registros".replace(",", ".")
+
+            return {"rowData": partial.to_dict("records"), "rowCount": lines_for_grid}, count_text
 
         raise PreventUpdate
 

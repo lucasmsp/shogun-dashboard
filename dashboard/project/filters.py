@@ -57,17 +57,27 @@ def filter_text(filter_modal, df, col):
     Returns:
         pd.DataFrame: Filtered DataFrame.
     """
-    org_query = filter_modal.get(col, None)
-    if org_query:
+    col_query = filter_modal.get(col, None)
+    if col_query:
 
-        type_ = org_query.get("type", 'contains')
-        value = org_query.get("filter", '')
+        type_ = col_query.get("type", 'contains')
+        value = col_query.get("filter", '')
         if type_ == "contains":
-            df = df[df[col].str.contains(value, case=False)]
+            df = df[df[col].astype(str).str.contains(str(value), case=False, na=False)]
+        elif type_ == "notContains":
+            df = df[~df[col].astype(str).str.contains(str(value), case=False, na=False)]
+        elif type_ == "startsWith":
+            df = df[df[col].astype(str).str.lower().str.startswith(str(value).lower(), na=False)]
+        elif type_ == "notStartsWith":
+            df = df[~df[col].astype(str).str.lower().str.startswith(str(value).lower(), na=False)]
+        elif type_ == "endsWith":
+            df = df[df[col].astype(str).str.lower().str.endswith(str(value).lower(), na=False)]
+        elif type_ == "notEndsWith":
+            df = df[~df[col].astype(str).str.lower().str.endswith(str(value).lower(), na=False)]
         elif type_ == "equals":
-            df = df[df[col] == value]
+            df = df[df[col].astype(str).str.lower() == str(value).lower()]
         elif type_ == "notEqual":
-            df = df[df[col] != value]
+            df = df[df[col].astype(str).str.lower() != str(value).lower()]
 
     return df
 
@@ -129,23 +139,35 @@ def filter_df(dff, filter_model, col):
                 crit2 = pd.Series(crit2).astype(dff[col].dtype)[0]
         else:
             crit1 = filter_model["filter"]
-            crit1 = pd.Series(crit1).astype(dff[col].dtype)[0]
+            if filter_model.get("filterType") != "text":
+                try:
+                    crit1 = pd.Series(crit1).astype(dff[col].dtype)[0]
+                except Exception:
+                    pass
             if "filterTo" in filter_model:
                 crit2 = filter_model["filterTo"]
-                crit2 = pd.Series(crit2).astype(dff[col].dtype)[0]
+                if filter_model.get("filterType") != "text":
+                    try:
+                        crit2 = pd.Series(crit2).astype(dff[col].dtype)[0]
+                    except Exception:
+                        pass
     if "type" in filter_model:
         if filter_model["type"] == "contains":
-            dff = dff.loc[dff[col].str.contains(crit1)]
+            dff = dff.loc[dff[col].astype(str).str.contains(str(crit1), case=False, na=False)]
         elif filter_model["type"] == "notContains":
-            dff = dff.loc[~dff[col].str.contains(crit1)]
+            dff = dff.loc[~dff[col].astype(str).str.contains(str(crit1), case=False, na=False)]
         elif filter_model["type"] == "startsWith":
-            dff = dff.loc[dff[col].str.startswith(crit1)]
+            dff = dff.loc[dff[col].astype(str).str.lower().str.startswith(str(crit1).lower(), na=False)]
         elif filter_model["type"] == "notStartsWith":
-            dff = dff.loc[~dff[col].str.startswith(crit1)]
+            dff = dff.loc[~dff[col].astype(str).str.lower().str.startswith(str(crit1).lower(), na=False)]
         elif filter_model["type"] == "endsWith":
-            dff = dff.loc[dff[col].str.endswith(crit1)]
+            dff = dff.loc[dff[col].astype(str).str.lower().str.endswith(str(crit1).lower(), na=False)]
         elif filter_model["type"] == "notEndsWith":
-            dff = dff.loc[~dff[col].str.endswith(crit1)]
+            dff = dff.loc[~dff[col].astype(str).str.lower().str.endswith(str(crit1).lower(), na=False)]
+        elif filter_model["type"] == "equals" and (filter_model.get("filterType") == "text" or isinstance(crit1, str) or dff[col].dtype == "object"):
+            dff = dff.loc[dff[col].astype(str).str.lower() == str(crit1).lower()]
+        elif filter_model["type"] == "notEqual" and (filter_model.get("filterType") == "text" or isinstance(crit1, str) or dff[col].dtype == "object"):
+            dff = dff.loc[dff[col].astype(str).str.lower() != str(crit1).lower()]
         elif filter_model["type"] == "inRange":
             if filter_model["filterType"] == "date":
                 dff = dff.loc[  dff[col].astype("datetime64[ns]").between_time(crit1, crit2) ]
@@ -158,5 +180,6 @@ def filter_df(dff, filter_model, col):
         else:
             dff = dff.loc[getattr(dff[col], operators[filter_model["type"]])(crit1)]
     elif filter_model["filterType"] == "set":
-        dff = dff.loc[dff[col].astype("string").isin(filter_model["values"])]
+        values_lower = [str(v).lower() for v in filter_model["values"]]
+        dff = dff.loc[dff[col].astype(str).str.lower().isin(values_lower)]
     return dff

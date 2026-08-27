@@ -5,7 +5,7 @@ from dash import Dash, dcc, html, Input, Output, State, no_update
 import dash_ag_grid as dag
 import plotly.express as px
 import plotly.figure_factory as ff
-
+from project.filters import *
 from project.auxiliar import gen_subgraphs, header_mapping, gen_columns_def, logging
 
 import pandas as pd
@@ -110,19 +110,27 @@ def register_layout_query(filter_modal={}):
                         ],
                         className="text-muted mt-2"
                     ),
-                    width=9,
+                    width=7,
                     style={"textAlign": "left", "paddingLeft": "15px"}
                 ),
                 dbc.Col(
-                    dbc.Button(
-                        [html.I(className="fas fa-download me-2"), "Export to CSV"],
-                        id="btn-export-query3-cve",
-                        color="primary",
-                        size="sm",
-                        className="mt-2",
-                        style={"float": "right"}
+                    html.Div(
+                        [
+                            html.Span(
+                                id="query-3-row-count",
+                                className="me-3 text-muted align-middle",
+                                style={"fontSize": "14px", "fontWeight": "500"}
+                            ),
+                            dbc.Button(
+                                [html.I(className="fas fa-download me-2"), "Export to CSV"],
+                                id="btn-export-query3-cve",
+                                color="primary",
+                                size="sm",
+                            )
+                        ],
+                        className="d-flex align-items-center justify-content-end mt-2"
                     ),
-                    width=3
+                    width=5
                 )
             ],
             justify="between",
@@ -193,9 +201,10 @@ def register_callback_query(dm, app):
     # TODO: Atualizar gráficos para usar o filtermodal
     @app.callback(
         Output('query-3-graph', "children"),
-        Input('date-picker-single', 'value')
+        Input('date-picker-single', 'value'),
+        Input('query-3-ag', 'filterModel')
     )
-    def update_graphs(date_value):
+    def update_graphs(date_value, filter_model):
         if not date_value:
             return []
 
@@ -204,6 +213,18 @@ def register_callback_query(dm, app):
 
         if df.empty:
             return []
+        
+        if filter_model:
+            df = filter_text(filter_model, df, 'vulns_cve_id')
+            df = filter_number(filter_model, df, 'vulns_cvss')
+            df = filter_number(filter_model, df, 'vulns_epss')
+            df = filter_text(filter_model, df, 'vulns_cwe')
+            df = filter_number(filter_model, df, 'n_as')
+            df = filter_number(filter_model, df, 'n_ips')
+            df = filter_number(filter_model, df, 'n_orgs')
+            df = filter_number(filter_model, df, 'n_port')
+            df = filter_text(filter_model, df, 'vulns_cisa_product_vendor')
+            
 
         graphs = []
 
@@ -224,38 +245,31 @@ def register_callback_query(dm, app):
         graphs.append(graph)
 
         # fig 2
-        tmp1 = df.groupby(["vulns_cvss_rank", "vulns_epss_rank"]).count() \
-            .reset_index() \
-            .pivot(index="vulns_cvss_rank", columns="vulns_epss_rank", values=["vulns_cve_id"]) \
-            .fillna(0) \
-            .reset_index()
-        tmp1.columns = ['vulns_epss_rank', '< 0.2', '< 0.4', '< 0.6', '< 0.8', '>= 0.8']
+        if not df.empty and 'vulns_cvss_rank' in df.columns and 'vulns_epss_rank' in df.columns:
+            ct = pd.crosstab(df['vulns_epss_rank'], df['vulns_cvss_rank'])
+            if not ct.empty:
+                severity_order = ["low", "medium", "high", "critical"]
+                cols_in_order = [c for c in severity_order if c in ct.columns] + [c for c in ct.columns if c not in severity_order]
+                rows_in_order = list(ct.index)
 
-        severity_mapping = {
-            "low": 1,
-            "medium": 2,
-            "high": 3,
-            "critical": 4
-        }
-        tmp1['severity'] = tmp1['vulns_epss_rank'].map(severity_mapping)
-        tmp1 = tmp1.sort_values(by='severity', ascending=True)
+                ct = ct.reindex(index=rows_in_order, columns=cols_in_order, fill_value=0)
 
-        x = ["low", "medium", "high", "critical"]
-        y = ['< 0.2', '< 0.4', '< 0.6', '< 0.8', '>= 0.8']
-        tmp1 = tmp1[y].T.values.tolist()
-        z_text = [[str(y) for y in x] for x in tmp1]
+                x = list(ct.columns)
+                y = list(ct.index)
+                z = ct.values.tolist()
+                z_text = [[str(val) for val in row] for row in z]
 
-        fig = ff.create_annotated_heatmap(tmp1, x=x, y=y, annotation_text=z_text, colorscale='Viridis')
-        fig['data'][0]['showscale'] = True
+                fig = ff.create_annotated_heatmap(z, x=x, y=y, annotation_text=z_text, colorscale='Viridis')
+                fig['data'][0]['showscale'] = True
 
-        fig.update_layout(
-            title_text='Confusion Matrix - EPSS Rank by CVSS Rank',
-            xaxis_title="CVSS Rank",
-            yaxis_title="EPSS Rank",
-            xaxis={'side': 'bottom'},
-        )
-        graph = dcc.Graph(figure=fig, config={'displayModeBar': False, 'scrollZoom': False})
-        graphs.append(graph)
+                fig.update_layout(
+                    title_text='Confusion Matrix - EPSS Rank by CVSS Rank',
+                    xaxis_title="CVSS Rank",
+                    yaxis_title="EPSS Rank",
+                    xaxis={'side': 'bottom'},
+                )
+                graph = dcc.Graph(figure=fig, config={'displayModeBar': False, 'scrollZoom': False})
+                graphs.append(graph)
 
         # fig 3
         tmp2 = df.groupby("vulns_cvss", as_index=False)["n_ips"].sum()
@@ -417,31 +431,33 @@ def register_callback_query(dm, app):
         prevent_initial_call=True,
     )
     def select_orgs(cell, date_value):
+        if not cell or not date_value:
+            return no_update, no_update
 
-        df_q2 = dm.get_view_dataset(date_value, 'orgs')
-        # TODO: Não esta filtrando todos os elementos da lista, no maximo 2, e existem
-        if cell:
-            if cell.get("colId", "") == "n_orgs":
-                row_id = int(cell.get("rowId", 0))
-                cve_value = df_q2.at[row_id, "vulns_cve_id"]
-                org_list = df_q2.loc[df_q2["vulns_cve_id"] == cve_value, "org_clean"].drop_duplicates()
+        if cell.get("colId") == "n_orgs":
+            cve_value = None
+            if isinstance(cell.get("data"), dict):
+                cve_value = cell["data"].get("vulns_cve_id")
 
+            if not cve_value:
+                df_cve = dm.get_view_dataset(date_value, INPUT_DATA)
+                if not df_cve.empty:
+                    row_id = int(cell.get("rowId", 0))
+                    if row_id in df_cve.index:
+                        cve_value = df_cve.at[row_id, "vulns_cve_id"]
+
+            if cve_value:
                 filter_opt = {
                     "query-2a-grid": {
-                        'org_clean': {
-                            "filterType": "text",
-                            "operator": "OR",
-                            "conditions": [
-                                {
-                                    "filter": org,
-                                    "filterType": "text",
-                                    "type": "equals"
-                                } for org in org_list.tolist()[0:50]
-                            ]
+                        'vulns_cve_id': {
+                            'filterType': 'text',
+                            'type': 'contains',
+                            'filter': cve_value
                         }
                     }
                 }
                 return "/dashboard/ips", filter_opt
+
         return no_update, no_update
 
 
@@ -463,3 +479,53 @@ def register_callback_query(dm, app):
         if n_clicks:
             return True
         return False
+
+    @app.callback(
+        Output('query-3-row-count', 'children'),
+        [
+            Input('date-picker-single', 'value'),
+            Input('query-3-ag', 'filterModel')
+        ]
+    )
+    def update_row_count_3(date_value, filter_modal):
+        """
+        Callback to display total and filtered row counts for query 3 (cve).
+        """
+        if not date_value:
+            return ""
+
+        df = dm.get_view_dataset(date_value, INPUT_DATA)
+        if df.empty:
+            return "0 de 0 registros"
+
+        df_exploded = df.explode('vulns_cwe')
+
+        df_exploded['vulns_cisa_ransomware'] = df_exploded[
+            'vulns_cisa_ransomware'].apply(
+            lambda x: (x == 'Known' and '✅') or
+                      (x == 'Unknown' and '❌') or '➖')
+
+        df_exploded['vulns_cisa_product_vendor'] = df_exploded[['vulns_cisa_vendor', 'vulns_cisa_product']] \
+            .fillna('').agg('/'.join, axis=1)
+
+        df_exploded['vulns_cisa_product_vendor'] = df_exploded['vulns_cisa_product_vendor'].apply(
+            lambda x: "" if x == '-/-' else x)
+
+        df_exploded['vulns_cisa_date_added'] = df_exploded['vulns_cisa_date_added'].apply(
+            lambda x: "" if x == '-' else x)
+
+        total_rows = len(df_exploded.index)
+
+        if filter_modal:
+            for col, filter_conf in filter_modal.items():
+                try:
+                    df_exploded = filter_by_model(filter_conf, df_exploded, col)
+                except Exception:
+                    logging.error("error filter row count grid3")
+
+        filtered_rows = len(df_exploded.index)
+
+        if filter_modal:
+            return f"Exibindo {filtered_rows:,} de {total_rows:,} registros".replace(",", ".")
+        else:
+            return f"Total: {total_rows:,} registros".replace(",", ".")

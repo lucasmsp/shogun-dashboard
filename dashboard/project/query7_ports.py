@@ -8,6 +8,7 @@ import plotly.graph_objects as go
 import pandas as pd
 
 from project.auxiliar import gen_subgraphs, gen_columns_def, header_mapping, logging
+from project.filters import *
 
 INPUT_DATA = 'ports'
 
@@ -96,19 +97,27 @@ def register_layout_query(filter_modal={}):
                         ],
                         className="text-muted mt-2"
                     ),
-                    width=9,
+                    width=7,
                     style={"textAlign": "left", "paddingLeft": "15px"}
                 ),
                 dbc.Col(
-                    dbc.Button(
-                        [html.I(className="fas fa-download me-2"), "Export to CSV"],
-                        id="btn-export-query7-ports",
-                        color="primary",
-                        size="sm",
-                        className="mt-2",
-                        style={"float": "right"}
+                    html.Div(
+                        [
+                            html.Span(
+                                id="query-7-row-count",
+                                className="me-3 text-muted align-middle",
+                                style={"fontSize": "14px", "fontWeight": "500"}
+                            ),
+                            dbc.Button(
+                                [html.I(className="fas fa-download me-2"), "Export to CSV"],
+                                id="btn-export-query7-ports",
+                                color="primary",
+                                size="sm",
+                            )
+                        ],
+                        className="d-flex align-items-center justify-content-end mt-2"
                     ),
-                    width=3
+                    width=5
                 )
             ],
             justify="between",
@@ -151,12 +160,25 @@ def register_callback_query(dm, app):
     
     @app.callback(
         Output("query-7-graph", "children"),
-        Input('date-picker-single', 'value')
+        [
+            Input('date-picker-single', 'value'),
+            Input('query-7-table', 'filterModel')
+        ]
     )
-    def update_vulnerability_charts(date_value):
+    def update_vulnerability_charts(date_value, filter_modal):
         logging.info(date_value)
 
         df = dm.get_view_dataset(date_value, INPUT_DATA)
+
+        if df.empty:
+            return []
+
+        if filter_modal:
+            for col, filter_conf in filter_modal.items():
+                try:
+                    df = filter_by_model(filter_conf, df, col)
+                except Exception as e:
+                    logging.error(f"error filter query-7-graph: {e}")
 
         if df.empty:
             return []
@@ -293,54 +315,6 @@ def register_callback_query(dm, app):
         children = gen_subgraphs(n_cols=2, graphs=graphs)
         return children
 
-
-    # @app.callback(
-    #     Output("url-redirect", "pathname", allow_duplicate=True),
-    #     Output('store-filters', 'data', allow_duplicate=True),
-    #     Input("query-7-table", "cellClicked"),
-    #     Input('date-picker-single', 'value'),
-    #     prevent_initial_call=True,
-    # )
-    # def filter_by_port(cell, date_value):
-    #     print(f"[INFO] Cell clicked: {cell}, Date: {date_value}")
-
-    #     # Obter o dataset com base na data selecionada
-    #     df = dm.get_view_dataset(date_value, INPUT_DATA)
-
-    #     if cell:
-    #         col_id = cell.get("colId", "")
-    #         row_id = int(cell.get("rowId", 0)) if "rowId" in cell else None
-            
-    #         if col_id == "port" and row_id is not None:
-    #             # Obter a porta clicada
-    #             port = df.at[row_id, "port"]
-    #             print(f"[INFO] Filtering by port: {port}")
-                
-    #             # Configurar o filtro
-    #             filter_opt = {
-    #                 "query-7-ag": {
-    #                     'port': {
-    #                         "filterType": "text",
-    #                         "type": "equals",
-    #                         "filter": port
-    #                     },
-    #                     'epss': {
-    #                         "filterType": "text",
-    #                         "type": "contains",  # Ajuste conforme a lógica do filtro desejado
-    #                         "filter": str(port)
-    #                     },
-    #                     'cvss': {
-    #                         "filterType": "text",
-    #                         "type": "contains",  # Ajuste conforme a lógica do filtro desejado
-    #                         "filter": str(port)
-    #                     }
-    #                 }
-    #             }
-    #             print(filter_opt)
-    #             return "/dashboard/report", filter_opt
-
-    #     return no_update, no_update
-
     @app.callback(
         Output("url-redirect", "pathname", allow_duplicate=True),
         Output("store-filters", "data", allow_duplicate=True),
@@ -411,3 +385,37 @@ def register_callback_query(dm, app):
         if n_clicks:
             return True
         return False
+
+    @app.callback(
+        Output('query-7-row-count', 'children'),
+        [
+            Input('date-picker-single', 'value'),
+            Input('query-7-table', 'filterModel')
+        ]
+    )
+    def update_row_count_7(date_value, filter_modal):
+        """
+        Callback to display total and filtered row counts for query 7 (ports).
+        """
+        if not date_value:
+            return ""
+
+        df = dm.get_view_dataset(date_value, INPUT_DATA)
+        if df.empty:
+            return "0 de 0 registros"
+
+        total_rows = len(df.index)
+
+        if filter_modal:
+            for col, filter_conf in filter_modal.items():
+                try:
+                    df = filter_by_model(filter_conf, df, col)
+                except Exception:
+                    logging.error("error filter row count grid7")
+
+        filtered_rows = len(df.index)
+
+        if filter_modal:
+            return f"Exibindo {filtered_rows:,} de {total_rows:,} registros".replace(",", ".")
+        else:
+            return f"Total: {total_rows:,} registros".replace(",", ".")

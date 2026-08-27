@@ -3,6 +3,7 @@ from dash.dependencies import Output, Input, State
 import dash_bootstrap_components as dbc
 import dash_ag_grid as dag
 from project.auxiliar import gen_subgraphs, gen_columns_def, logging
+from project.filters import *
 
 import itertools
 import plotly.express as px
@@ -112,19 +113,27 @@ def register_layout_query(filter_modal={}):
                         ],
                         className="text-muted mt-2"
                     ),
-                    width=9,
+                    width=7,
                     style={"textAlign": "left", "paddingLeft": "15px"}
                 ),
                 dbc.Col(
-                    dbc.Button(
-                        [html.I(className="fas fa-download me-2"), "Export to CSV"],
-                        id="btn-export-query6-as",
-                        color="primary",
-                        size="sm",
-                        className="mt-2",
-                        style={"float": "right"}
+                    html.Div(
+                        [
+                            html.Span(
+                                id="query-6-row-count",
+                                className="me-3 text-muted align-middle",
+                                style={"fontSize": "14px", "fontWeight": "500"}
+                            ),
+                            dbc.Button(
+                                [html.I(className="fas fa-download me-2"), "Export to CSV"],
+                                id="btn-export-query6-as",
+                                color="primary",
+                                size="sm",
+                            )
+                        ],
+                        className="d-flex align-items-center justify-content-end mt-2"
                     ),
-                    width=3
+                    width=5
                 )
             ],
             justify="between",
@@ -169,9 +178,11 @@ def register_callback_query(dm, app):
             return []
 
         # Conversão de tipos
-        df['as_announcing_prefixes'] = df['as_announcing_prefixes'].fillna(-1).astype(int)
-        df['as_announcing_addresses'] = df['as_announcing_addresses'].fillna(-1).astype(int)
-
+        df['as_announcing_prefixes'] = df['as_announcing_prefixes'].dropna().astype(int)
+        df['as_announcing_addresses'] = df['as_announcing_addresses'].dropna().astype(int)
+        df = df.dropna(subset=['asn'])
+        
+        
         # Filtrar apenas as colunas relevantes
         df_filtered = df[['asn', 'as_org_name', 'as_country_name', 'as_announcing_prefixes',
                           'vulns_cvss_avg', 'vulns_cvss_min', 'vulns_cvss_max',
@@ -331,3 +342,43 @@ def register_callback_query(dm, app):
         if n_clicks:
             return True
         return False
+
+    @app.callback(
+        Output('query-6-row-count', 'children'),
+        [
+            Input('date-picker-single', 'value'),
+            Input('query-6-table', 'filterModel')
+        ]
+    )
+    def update_row_count_6(date_value, filter_modal):
+        """
+        Callback to display total and filtered row counts for query 6 (as).
+        """
+        if not date_value:
+            return ""
+
+        df = dm.get_view_dataset(date_value, INPUT_DATA_V6)
+        if df.empty:
+            return "0 de 0 registros"
+
+        df_filtered = df[['asn', 'as_org_name', 'as_country_name', 'as_announcing_prefixes',
+                          'vulns_cvss_avg', 'vulns_cvss_min', 'vulns_cvss_max',
+                          'vulns_epss_avg', 'vulns_epss_min', 'vulns_epss_max',
+                          'as_rank', 'n_orgs', 'as_org_country_name', 'as_announcing_addresses',
+                          'as_seen', 'n_cities', 'n_ips', 'n_vulns_cisa', 'n_vulns']]
+
+        total_rows = len(df_filtered.index)
+
+        if filter_modal:
+            for col, filter_conf in filter_modal.items():
+                try:
+                    df_filtered = filter_by_model(filter_conf, df_filtered, col)
+                except Exception:
+                    logging.error("error filter row count grid6")
+
+        filtered_rows = len(df_filtered.index)
+
+        if filter_modal:
+            return f"Exibindo {filtered_rows:,} de {total_rows:,} registros".replace(",", ".")
+        else:
+            return f"Total: {total_rows:,} registros".replace(",", ".")

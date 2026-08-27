@@ -88,19 +88,27 @@ def register_layout_query(filter_modal={}):
                         ],
                         className="text-muted mt-2"
                     ),
-                    width=9,
+                    width=7,
                     style={"textAlign": "left", "paddingLeft": "15px"}
                 ),
                 dbc.Col(
-                    dbc.Button(
-                        [html.I(className="fas fa-download me-2"), "Export to CSV"],
-                        id="btn-export-query2-ips",
-                        color="primary",
-                        size="sm",
-                        className="mt-2",
-                        style={"float": "right"}
+                    html.Div(
+                        [
+                            html.Span(
+                                id="query-2a-row-count",
+                                className="me-3 text-muted align-middle",
+                                style={"fontSize": "14px", "fontWeight": "500"}
+                            ),
+                            dbc.Button(
+                                [html.I(className="fas fa-download me-2"), "Export to CSV"],
+                                id="btn-export-query2-ips",
+                                color="primary",
+                                size="sm",
+                            )
+                        ],
+                        className="d-flex align-items-center justify-content-end mt-2"
                     ),
-                    width=3
+                    width=5
                 )
             ],
             justify="between",
@@ -196,6 +204,7 @@ def register_callback_query(dm, app):
         if filter_modal:
             df = filter_text(filter_modal, df, "org_clean")
             df = filter_text(filter_modal, df, "ip")
+            df = filter_text(filter_modal, df, "vulns_cve_id")
             df = filter_number(filter_modal, df, "vulns_epss")
             df = filter_text(filter_modal, df, "vulns_cvss_rank")
             df = filter_text(filter_modal, df, "cpe_product")
@@ -341,3 +350,37 @@ def register_callback_query(dm, app):
         if n_clicks:
             return True
         return False
+
+    @app.callback(
+        Output('query-2a-row-count', 'children'),
+        [
+            Input('date-picker-single', 'value'),
+            Input('query-2a-grid', 'filterModel')
+        ]
+    )
+    def update_row_count_2a(date_value, filter_modal):
+        """
+        Callback to display total and filtered row counts for query 2a.
+        """
+        if not date_value:
+            return ""
+
+        df = dm.get_view_dataset(date_value, INPUT_DATA)
+        if df.empty:
+            return "0 de 0 registros"
+
+        total_rows = len(df.index)
+
+        if filter_modal:
+            for col, filter_conf in filter_modal.items():
+                try:
+                    df = filter_by_model(filter_conf, df, col)
+                except Exception:
+                    logging.error("error filter row count grid2a")
+
+        filtered_rows = len(df.index)
+
+        if filter_modal:
+            return f"Exibindo {filtered_rows:,} de {total_rows:,} registros".replace(",", ".")
+        else:
+            return f"Total: {total_rows:,} registros".replace(",", ".")
