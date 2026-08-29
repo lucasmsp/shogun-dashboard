@@ -13,12 +13,100 @@ from project.auxiliar import gen_subgraphs, gen_columns_def, logging
 INPUT_DATA = 'ips'
 
 
+import ast
+
+
+def format_cve_tooltip(x):
+    if x is None or (isinstance(x, float) and pd.isna(x)):
+        return "Total: 0 CVEs"
+
+    # If x is numpy array, list, tuple, set, etc.
+    if hasattr(x, '__len__') and not isinstance(x, (str, bytes, dict)):
+        try:
+            items = [str(item).strip() for item in x if item and str(item).strip() and str(item) != 'nan']
+            if items:
+                total = len(items)
+                top15 = items[:15]
+                return f"Total: {total} CVEs | Top 15: {', '.join(top15)}"
+        except Exception:
+            pass
+
+    # If x is a string
+    if isinstance(x, str):
+        s = x.strip()
+        if not s or s in ['[]', 'None', 'nan']:
+            return "Total: 0 CVEs"
+
+        if s.startswith('[') and s.endswith(']'):
+            try:
+                parsed = ast.literal_eval(s)
+                if isinstance(parsed, (list, tuple, set)):
+                    items = [str(item).strip() for item in parsed if item and str(item).strip()]
+                    if items:
+                        total = len(items)
+                        top15 = items[:15]
+                        return f"Total: {total} CVEs | Top 15: {', '.join(top15)}"
+            except Exception:
+                pass
+            s_clean = s.strip('[]').replace("'", "").replace('"', "")
+            items = [item.strip() for item in s_clean.split(',') if item.strip()]
+            if items:
+                total = len(items)
+                top15 = items[:15]
+                return f"Total: {total} CVEs | Top 15: {', '.join(top15)}"
+
+        if ',' in s:
+            items = [item.strip() for item in s.split(',') if item.strip()]
+            if items:
+                total = len(items)
+                top15 = items[:15]
+                return f"Total: {total} CVEs | Top 15: {', '.join(top15)}"
+
+    return "Total: 0 CVEs"
+
+
+def include_cve_id_in_list(df):
+    if 'vulns_cve_id' not in df.columns:
+        return df
+
+    target_list_col = 'vulns_cve_list' if 'vulns_cve_list' in df.columns else ('cve_list' if 'cve_list' in df.columns else 'vulns_cve_list')
+
+    if target_list_col not in df.columns:
+        df[target_list_col] = df['vulns_cve_id'].apply(lambda x: [str(x)] if pd.notna(x) and str(x).strip() and str(x) != 'nan' else [])
+        return df
+
+    def combine(row):
+        cve_id = row.get('vulns_cve_id')
+        cve_list = row.get(target_list_col)
+
+        res = []
+        if isinstance(cve_list, (list, tuple, set)):
+            res = list(cve_list)
+        elif hasattr(cve_list, 'tolist'):
+            res = cve_list.tolist()
+        elif isinstance(cve_list, str) and cve_list.startswith('[') and cve_list.endswith(']'):
+            try:
+                parsed = ast.literal_eval(cve_list)
+                res = list(parsed) if isinstance(parsed, (list, tuple, set)) else []
+            except Exception:
+                res = [item.strip() for item in cve_list.strip('[]').replace("'", "").replace('"', "").split(',') if item.strip()]
+
+        if pd.notna(cve_id) and str(cve_id).strip() and str(cve_id) != 'nan':
+            cve_id_str = str(cve_id).strip()
+            if cve_id_str not in res:
+                res.append(cve_id_str)
+
+        return res
+
+    df[target_list_col] = df.apply(combine, axis=1)
+    return df
+
 def register_layout_query(filter_modal={}):
     """
     Register the layout for the second query (list of vulnerable products for each IP).
 
     Args:
-        filter_modal (dict): Filter modal configuration.
+        filter_modal (dict): Filter configuration.
 
     Returns:
         dbc.Card: Layout for the second query.
@@ -30,9 +118,11 @@ def register_layout_query(filter_modal={}):
     columns['ip']['pinned'] = 'left'
     columns['vulns_epss']["tooltipField"] = "vulns_epss_rank"
     columns['vulns_cvss']["tooltipField"] = "vulns_cvss_version"
+    columns['vulns_cve_id']["tooltipField"] = "cve_list_tooltip"
 
     aggrid = dag.AgGrid(
         id="query-2a-grid",
+        rowData=raw_data,
         columnDefs=list(columns.values()),
         defaultColDef={"flex": 1, "filter": True},
         columnSize="sizeToFit",
@@ -150,22 +240,39 @@ def register_callback_query(dm, app):
     def update_grid2a(date_value, request):
 
         df = dm.get_view_dataset(date_value, INPUT_DATA)
-        df = df[['ip', 'org_clean', 'vulns_cve_id', 'vulns_cvss', 'vulns_epss',
-                 "cpe_product", "vulns_epss_rank", "vulns_cvss_version"]]
+        cols_to_keep = ['ip', 'org_clean', 'vulns_cve_id', 'vulns_cvss', 'vulns_epss',
+                        "cpe_product", "vulns_epss_rank", "vulns_cvss_version"]
+        for possible_cve_col in ['vulns_cve_list', 'cve_list']:
+            if possible_cve_col in df.columns and possible_cve_col not in cols_to_keep:
+                cols_to_keep.append(possible_cve_col)
+        df = df[[c for c in cols_to_keep if c in df.columns]]
         lines = len(df.index)
         logging.info(f"original dataset ({date_value}) has {lines} lines")
         if request is None:
             raise PreventUpdate
        
+        df = include_cve_id_in_list(df)
+        cve_list_col = 'vulns_cve_list' if 'vulns_cve_list' in df.columns else ('cve_list' if 'cve_list' in df.columns else None)
+
         if request["filterModel"]:
             filters = request["filterModel"]
             for col, filter_conf in filters.items():
                 try:
-                    df = filter_by_model(filter_conf, df, col)
+                    target_col = cve_list_col if col == "vulns_cve_id" and cve_list_col else col
+                    df = filter_by_model(filter_conf, df, target_col)
                     lines = len(df.index)
-                except:
-                    logging.error("error filter grid2a")
+                except Exception as e:
+                    logging.error(f"error filter grid2a: {e}")
 
+        if cve_list_col:
+            df['cve_list_tooltip'] = df[cve_list_col].apply(format_cve_tooltip)
+        elif 'vulns_cve_id' in df.columns:
+            df['cve_list_tooltip'] = df['vulns_cve_id'].apply(format_cve_tooltip)
+        else:
+            df['cve_list_tooltip'] = "Total: 0 CVEs"
+
+        df = df[['ip', 'org_clean', 'vulns_cve_id', 'vulns_cvss', 'vulns_epss',
+                 "cpe_product", "vulns_epss_rank", "vulns_cvss_version", "cve_list_tooltip"]]
         if request["sortModel"]:
             sorting = []
             asc = []
@@ -201,13 +308,15 @@ def register_callback_query(dm, app):
         if df.empty:
             return {}
 
+        df = include_cve_id_in_list(df)
+
         if filter_modal:
-            df = filter_text(filter_modal, df, "org_clean")
-            df = filter_text(filter_modal, df, "ip")
-            df = filter_text(filter_modal, df, "vulns_cve_id")
-            df = filter_number(filter_modal, df, "vulns_epss")
-            df = filter_text(filter_modal, df, "vulns_cvss_rank")
-            df = filter_text(filter_modal, df, "cpe_product")
+            for col, filter_conf in filter_modal.items():
+                try:
+                    target_col = "vulns_cve_list" if col == "vulns_cve_id" and "vulns_cve_list" in df.columns else col
+                    df = filter_by_model(filter_conf, df, target_col)
+                except Exception as e:
+                    logging.error(f"error filter update_graph2a: {e}")
 
         graphs = []
 
@@ -314,6 +423,7 @@ def register_callback_query(dm, app):
     @app.callback(
         Output("url-redirect", "pathname", allow_duplicate=True),
         Output('store-filters', 'data', allow_duplicate=True),
+        Output('dummy-redirect-q2a', 'children', allow_duplicate=True),
         Input("query-2a-grid", "cellClicked"),
         prevent_initial_call=True
     )
@@ -328,7 +438,7 @@ def register_callback_query(dm, app):
                 value = cell.get('value', "")
                 filter_opt = {"query-5-ag": {'ip': {'filterType': 'text', 'type': 'equals', 'filter': value}}}
                 logging.info(f"{filter_opt}")
-                return "/dashboard/report", filter_opt
+                return "/dashboard/report", filter_opt, ""
         raise PreventUpdate
 
 
@@ -369,14 +479,17 @@ def register_callback_query(dm, app):
         if df.empty:
             return "0 de 0 registros"
 
+        df = include_cve_id_in_list(df)
+
         total_rows = len(df.index)
 
         if filter_modal:
             for col, filter_conf in filter_modal.items():
                 try:
-                    df = filter_by_model(filter_conf, df, col)
-                except Exception:
-                    logging.error("error filter row count grid2a")
+                    target_col = "vulns_cve_list" if col == "vulns_cve_id" and "vulns_cve_list" in df.columns else col
+                    df = filter_by_model(filter_conf, df, target_col)
+                except Exception as e:
+                    logging.error(f"error filter row count grid2a: {e}")
 
         filtered_rows = len(df.index)
 

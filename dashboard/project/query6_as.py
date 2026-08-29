@@ -76,6 +76,7 @@ def register_layout_query(filter_modal={}):
         defaultColDef={"flex": 1, "filter": True, "resizable": True},
         columnSize="sizeToFit",
         filterModel=filter_modal,
+        getRowId="params.data.asn",
         dashGridOptions={
             "rowSelection": "single",
             'tooltipShowDelay': 0,
@@ -295,6 +296,7 @@ def register_callback_query(dm, app):
     @app.callback(
         Output("url-redirect", "pathname", allow_duplicate=True),
         Output('store-filters', 'data', allow_duplicate=True),
+        Output('dummy-redirect-q6', 'children', allow_duplicate=True),
         Input("query-6-table", "cellClicked"),
         State('date-picker-single', 'value'),
         prevent_initial_call=True,
@@ -304,33 +306,48 @@ def register_callback_query(dm, app):
         df = dm.get_view_dataset(date_value, INPUT_DATA_V6)
 
         if cell:
-            if cell.get("colId", "") == "asn":
-                filter_opt = {
-                    "query-5-ag": {'asn': {'filterType': 'text', 'type': 'equals', 'filter': cell.get("value", "")}}}
-                return "/dashboard/report", filter_opt
+            col_id = cell.get("colId", "")
+            asn_val = None
 
-            elif cell.get("colId", "") == "n_vulns":
-                row_id = int(cell.get("rowId", 0))
-                cve_list = df.at[row_id, "cve_list"]
-                top_100_cves = heapq.nlargest(100, cve_list)
-                filter_opt = {
-                    "query-3-ag": {
-                        'vulns_cve_id': {
-                            "filterType": "text",
-                            "operator": "OR",
-                            "conditions":[
-                                {
-                                    "filter": cve,
+            if isinstance(cell.get("data"), dict):
+                asn_val = cell["data"].get("asn")
+
+            if asn_val is None and cell.get("rowId") is not None:
+                asn_val = cell.get("rowId")
+
+            if col_id == "asn":
+                filter_val = cell.get("value") or asn_val
+                if filter_val is not None:
+                    filter_opt = {
+                        "query-5-ag": {'asn': {'filterType': 'text', 'type': 'equals', 'filter': str(filter_val)}}}
+                    return "/dashboard/report", filter_opt, ""
+
+            elif col_id == "n_vulns":
+                if asn_val is not None:
+                    matched = df[df["asn"].astype(str) == str(asn_val)]
+                    if not matched.empty:
+                        cve_col = "vulns_cve_list" if "vulns_cve_list" in df.columns else "cve_list"
+                        cve_list = matched.iloc[0][cve_col]
+                        top_50_cves = heapq.nlargest(50, cve_list)
+                        filter_opt = {
+                            "query-3-ag": {
+                                'vulns_cve_id': {
                                     "filterType": "text",
-                                    "type": "equals"
-                                } for cve in top_100_cves
-                            ]
+                                    "operator": "OR",
+                                    "conditions":[
+                                        {
+                                            "filter": cve,
+                                            "filterType": "text",
+                                            "type": "equals"
+                                        } for cve in top_50_cves
+                                    ]
+                                }
+                            }
                         }
-                    }
-                }
-                return "/dashboard/cve", filter_opt
+                        print(filter_opt)
+                        return "/dashboard/cve", filter_opt, ""
 
-        return no_update, no_update
+        return no_update, no_update, no_update
 
 
     @app.callback(

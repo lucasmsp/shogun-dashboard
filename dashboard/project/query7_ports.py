@@ -60,6 +60,7 @@ def register_layout_query(filter_modal={}):
         defaultColDef={"flex": 1, "filter": True, 'resizable': False},
         columnSize="responsiveSizeToFit",
         columnSizeOptions={"skipHeader": False},
+        getRowId="params.data.port",
         dashGridOptions={
             "rowSelection": "single",
             'tooltipInteraction': True,
@@ -318,6 +319,7 @@ def register_callback_query(dm, app):
     @app.callback(
         Output("url-redirect", "pathname", allow_duplicate=True),
         Output("store-filters", "data", allow_duplicate=True),
+        Output('dummy-redirect-q7', 'children', allow_duplicate=True),
         Input("query-7-graph", "clickData"),
         State('date-picker-single', 'value'),
         prevent_initial_call=True,
@@ -340,13 +342,14 @@ def register_callback_query(dm, app):
                 }
             }
 
-            return "/dashboard/report", filter_opt
+            return "/dashboard/report", filter_opt, ""
 
-        return no_update, no_update
+        return no_update, no_update, no_update
 
     @app.callback(
         Output("url-redirect", "pathname", allow_duplicate=True),
         Output('store-filters', 'data', allow_duplicate=True),
+        Output('dummy-redirect-q7b', 'children', allow_duplicate=True),
         Input("query-7-table", "cellClicked"),
         State('date-picker-single', 'value'),
         prevent_initial_call=True,
@@ -354,26 +357,44 @@ def register_callback_query(dm, app):
     def filter_asn(cell, date_value):
         df = dm.get_view_dataset(date_value, INPUT_DATA)
         if cell:
-            if cell.get("colId", "") == "n_vulns":
-                row_id = int(cell.get("rowId", 0))
-                cve_list = df.at[row_id, "cve_list"].tolist()[0:50]
-                filter_opt = {
-                    "query-3-ag": {
-                        'vulns_cve_id': {
-                            "filterType": "text",
-                            "operator": "OR",
-                            "conditions": [
-                                {
-                                    "filter": cve,
+            col_id = cell.get("colId", "")
+            if col_id == "n_vulns":
+                port_val = None
+                if isinstance(cell.get("data"), dict):
+                    port_val = cell["data"].get("port")
+                if port_val is None and cell.get("rowId") is not None:
+                    port_val = cell.get("rowId")
+
+                if port_val is not None:
+                    matched = df[df["port"].astype(str) == str(port_val)]
+                    if not matched.empty:
+                        cve_col = "vulns_cve_list" if "vulns_cve_list" in df.columns else ("cve_list" if "cve_list" in df.columns else "vulns_cve_id")
+                        cve_data = matched.iloc[0][cve_col]
+                        if hasattr(cve_data, 'tolist'):
+                            cve_list = cve_data.tolist()
+                        elif isinstance(cve_data, (list, tuple)):
+                            cve_list = list(cve_data)
+                        else:
+                            cve_list = [cve_data]
+
+                        top_50_cves = cve_list[:50]
+                        filter_opt = {
+                            "query-3-ag": {
+                                'vulns_cve_id': {
                                     "filterType": "text",
-                                    "type": "equals"
-                                } for cve in cve_list
-                            ]
+                                    "operator": "OR",
+                                    "conditions": [
+                                        {
+                                            "filter": cve,
+                                            "filterType": "text",
+                                            "type": "equals"
+                                        } for cve in top_50_cves
+                                    ]
+                                }
+                            }
                         }
-                    }
-                }
-                return "/dashboard/cve", filter_opt
-        return no_update, no_update
+                        return "/dashboard/cve", filter_opt, ""
+        return no_update, no_update, no_update
 
 
     @app.callback(

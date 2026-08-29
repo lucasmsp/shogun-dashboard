@@ -229,7 +229,15 @@ def register_layout(dm):
             html.Div(id="page-content", children=tab1_content, style={'min-height': '1300px'}),
             footer,
             dcc.Store(id='store-date'),
-            dcc.Store(id='store-filters', storage_type="session", data={})
+            dcc.Store(id='store-filters', storage_type="session", data={}),
+            html.Div(id='dummy-redirect-q1', style={'display': 'none'}),
+            html.Div(id='dummy-redirect-q2a', style={'display': 'none'}),
+            html.Div(id='dummy-redirect-q2b', style={'display': 'none'}),
+            html.Div(id='dummy-redirect-q3', style={'display': 'none'}),
+            html.Div(id='dummy-redirect-q4', style={'display': 'none'}),
+            html.Div(id='dummy-redirect-q6', style={'display': 'none'}),
+            html.Div(id='dummy-redirect-q7', style={'display': 'none'}),
+            html.Div(id='dummy-redirect-q7b', style={'display': 'none'}),
         ])
 
     return layout

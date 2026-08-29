@@ -228,17 +228,46 @@ def register_callback_query(dm, app):
     @app.callback(
         Output("url-redirect", "pathname", allow_duplicate=True),
         Output('store-filters', 'data', allow_duplicate=True),
+        Output('dummy-redirect-q1', 'children', allow_duplicate=True),
         
         State("url-redirect", "pathname"),
         Input("query-1-table", "cellClicked"),
-        Input("query-1-table", "selectedRows"),
+        State("query-1-table", "selectedRows"),
+        State("query-1-table", "rowData"),
+        State('date-picker-single', 'value'),
         prevent_initial_call=True,
     )
-    def go_to_queries(pathname, cell, row):
+    def go_to_queries(pathname, cell, row, row_data, date_value):
         if cell and pathname == "/dashboard/summary":
             if cell.get("colId", "") == "n_cves":
-                logging.info(f"Cicked cell {cell} and row {row}")
-                epss_rank = row[0]['vulns_epss_rank']
+                logging.info(f"Clicked cell {cell} and row {row}")
+                epss_rank = None
+                if isinstance(cell.get("data"), dict):
+                    epss_rank = cell["data"].get("vulns_epss_rank")
+
+                if not epss_rank and row and isinstance(row, list) and len(row) > 0 and isinstance(row[0], dict):
+                    epss_rank = row[0].get("vulns_epss_rank")
+
+                if not epss_rank and row_data and isinstance(row_data, list):
+                    try:
+                        row_idx = int(cell.get("rowIndex", cell.get("rowId", 0)))
+                        if 0 <= row_idx < len(row_data):
+                            epss_rank = row_data[row_idx].get("vulns_epss_rank")
+                    except (ValueError, TypeError):
+                        pass
+
+                if not epss_rank and date_value:
+                    try:
+                        df = dm.get_view_dataset(date_value, INPUT_DATA)
+                        row_idx = int(cell.get("rowId", cell.get("rowIndex", 0)))
+                        if not df.empty and row_idx in df.index:
+                            epss_rank = df.at[row_idx, "vulns_epss_rank"]
+                    except Exception:
+                        pass
+
+                if not epss_rank:
+                    raise PreventUpdate
+
                 if epss_rank == "< 20":
                     filter_opt = {
                         "query-3-ag": {'vulns_epss': {'filterType': 'number', 'type': 'lessThan', 'filter': 20}}}
@@ -249,7 +278,7 @@ def register_callback_query(dm, app):
                                                       "conditions": [
                                                           {"filter": 20, "filterType": "number",
                                                            "type": "greaterThanOrEqual"},
-                                                          {"filter": 40, "filterType": "text", "type": "lessThan"}
+                                                          {"filter": 40, "filterType": "number", "type": "lessThan"}
                                                       ]}}}
                 elif epss_rank == "< 60":
                     filter_opt = {
@@ -272,7 +301,5 @@ def register_callback_query(dm, app):
                         "query-3-ag": {
                             'vulns_epss': {'filterType': 'number', 'type': 'greaterThanOrEqual', 'filter': 80}}}
 
-
-
-                return "/dashboard/cve", filter_opt
+                return "/dashboard/cve", filter_opt, ""
         raise PreventUpdate

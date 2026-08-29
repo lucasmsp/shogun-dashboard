@@ -13,16 +13,25 @@ def filter_by_model(filter_modal, df, col):
     Returns:
         pd.DataFrame: Filtered DataFrame.
     """
+    if not isinstance(filter_modal, dict):
+        return df
 
     if "operator" in filter_modal:
         # is a filter with multiple conditions
+        conditions = filter_modal.get("conditions", [])
+        if not conditions:
+            c1 = filter_modal.get("condition1")
+            c2 = filter_modal.get("condition2")
+            if c1: conditions.append(c1)
+            if c2: conditions.append(c2)
+
         if filter_modal['operator'] == "AND":
-            # we support up to 2 conditions
-            df = filter_generic(filter_modal["condition1"], df, col)
-            df = filter_generic(filter_modal["condition2"], df, col)
+            for cond in conditions:
+                df = filter_generic(cond, df, col)
         elif filter_modal['operator'] == "OR":
-            # TODO
-            pass
+            df_list = [filter_generic(cond, df, col) for cond in conditions]
+            if df_list:
+                df = pd.concat(df_list).drop_duplicates()
         else:
             print("[ERROR] Filter operator type not supported yet.")
         return df
@@ -95,16 +104,7 @@ def filter_number(filter_modal, df, col):
     """
     opt =  filter_modal.get(col, None)
     if opt:
-        type_ = opt.get("type", 'equals')
-        value = opt.get("filter", '')
-        if type_ == "equals":
-            df = df[df[col] == value]
-        elif type_ == "lessThan":
-            df = df[df[col] <= value]
-        elif type_ == "greaterThan":
-            df = df[df[col] >= value]
-        elif type_ == "notEqual":
-            df = df[df[col] != value]
+        return filter_by_model(opt, df, col)
     return df
 
 
@@ -116,6 +116,23 @@ operators = {
         "notEqual": "ne",
         "equals": "eq",
     }
+
+def normalize_epss_crit(crit, series):
+    if not isinstance(crit, (int, float)) or series.empty:
+        return crit
+    try:
+        s_valid = pd.to_numeric(series, errors='coerce').dropna()
+        if s_valid.empty:
+            return crit
+        max_val = float(s_valid.max())
+        if max_val <= 1.0 and crit > 1.0:
+            return float(crit) / 100.0
+        elif max_val > 1.0 and 0 < crit <= 1.0:
+            return float(crit) * 100.0
+    except Exception:
+        pass
+    return crit
+
 
 def filter_df(dff, filter_model, col):
     """
@@ -131,7 +148,7 @@ def filter_df(dff, filter_model, col):
     """
 
     if "filter" in filter_model:
-        if filter_model["filterType"] == "date":
+        if filter_model.get("filterType") == "date":
             crit1 = filter_model["dateFrom"]
             crit1 = pd.Series(crit1).astype(dff[col].dtype)[0]
             if "dateTo" in filter_model:
@@ -144,6 +161,9 @@ def filter_df(dff, filter_model, col):
                     crit1 = pd.Series(crit1).astype(dff[col].dtype)[0]
                 except Exception:
                     pass
+                if "epss" in col.lower() and col in dff.columns:
+                    crit1 = normalize_epss_crit(crit1, dff[col])
+
             if "filterTo" in filter_model:
                 crit2 = filter_model["filterTo"]
                 if filter_model.get("filterType") != "text":
@@ -151,6 +171,8 @@ def filter_df(dff, filter_model, col):
                         crit2 = pd.Series(crit2).astype(dff[col].dtype)[0]
                     except Exception:
                         pass
+                    if "epss" in col.lower() and col in dff.columns:
+                        crit2 = normalize_epss_crit(crit2, dff[col])
     if "type" in filter_model:
         if filter_model["type"] == "contains":
             dff = dff.loc[dff[col].astype(str).str.contains(str(crit1), case=False, na=False)]
@@ -165,9 +187,17 @@ def filter_df(dff, filter_model, col):
         elif filter_model["type"] == "notEndsWith":
             dff = dff.loc[~dff[col].astype(str).str.lower().str.endswith(str(crit1).lower(), na=False)]
         elif filter_model["type"] == "equals" and (filter_model.get("filterType") == "text" or isinstance(crit1, str) or dff[col].dtype == "object"):
-            dff = dff.loc[dff[col].astype(str).str.lower() == str(crit1).lower()]
+            if dff[col].apply(lambda x: isinstance(x, (list, tuple, set))).any():
+                crit1_str = str(crit1).lower()
+                dff = dff.loc[dff[col].apply(lambda lst: any(crit1_str == str(item).lower() for item in lst) if isinstance(lst, (list, tuple, set)) else str(lst).lower() == crit1_str)]
+            else:
+                dff = dff.loc[dff[col].astype(str).str.lower() == str(crit1).lower()]
         elif filter_model["type"] == "notEqual" and (filter_model.get("filterType") == "text" or isinstance(crit1, str) or dff[col].dtype == "object"):
-            dff = dff.loc[dff[col].astype(str).str.lower() != str(crit1).lower()]
+            if dff[col].apply(lambda x: isinstance(x, (list, tuple, set))).any():
+                crit1_str = str(crit1).lower()
+                dff = dff.loc[~dff[col].apply(lambda lst: any(crit1_str == str(item).lower() for item in lst) if isinstance(lst, (list, tuple, set)) else str(lst).lower() == crit1_str)]
+            else:
+                dff = dff.loc[dff[col].astype(str).str.lower() != str(crit1).lower()]
         elif filter_model["type"] == "inRange":
             if filter_model["filterType"] == "date":
                 dff = dff.loc[  dff[col].astype("datetime64[ns]").between_time(crit1, crit2) ]

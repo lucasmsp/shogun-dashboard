@@ -11,7 +11,59 @@ from project.filters import *
 from project.auxiliar import gen_subgraphs, gen_columns_def, logging
 
 
+import ast
+
 INPUT_DATA_V2 = 'orgs'
+
+
+def format_cve_tooltip(x):
+    if x is None or (isinstance(x, float) and pd.isna(x)):
+        return "Total: 0 CVEs"
+
+    if hasattr(x, '__len__') and not isinstance(x, (str, bytes, dict)):
+        try:
+            items = [str(item).strip() for item in x if item and str(item).strip() and str(item) != 'nan']
+            if items:
+                total = len(items)
+                top10 = items[:10]
+                return f"Total: {total} CVEs | Top 10: {', '.join(top10)}"
+        except Exception:
+            pass
+
+    if isinstance(x, str):
+        s = x.strip()
+        if not s or s in ['[]', 'None', 'nan']:
+            return "Total: 0 CVEs"
+
+        if s.startswith('[') and s.endswith(']'):
+            try:
+                parsed = ast.literal_eval(s)
+                if isinstance(parsed, (list, tuple, set)):
+                    items = [str(item).strip() for item in parsed if item and str(item).strip()]
+                    if items:
+                        total = len(items)
+                        top10 = items[:10]
+                        return f"Total: {total} CVEs | Top 10: {', '.join(top10)}"
+            except Exception:
+                pass
+            s_clean = s.strip('[]').replace("'", "").replace('"', "")
+            items = [item.strip() for item in s_clean.split(',') if item.strip()]
+            if items:
+                total = len(items)
+                top10 = items[:10]
+                return f"Total: {total} CVEs | Top 10: {', '.join(top10)}"
+
+        if ',' in s:
+            items = [item.strip() for item in s.split(',') if item.strip()]
+            if items:
+                total = len(items)
+                top10 = items[:10]
+                return f"Total: {total} CVEs | Top 10: {', '.join(top10)}"
+
+        return f"Total: 1 CVE | {s}"
+
+    return "Total: 0 CVEs"
+
 
 def register_layout_query(filter_modal={}):
     """
@@ -30,6 +82,7 @@ def register_layout_query(filter_modal={}):
     columns['vulns_cvss']["tooltipField"] = "vulns_cvss_version"
     columns['org_clean']["maxNumConditions"] = 500
     columns['org_clean']['pinned'] = 'left'
+    columns['vulns_cve_id']["tooltipField"] = "cve_list_tooltip"
 
     aggrid = dag.AgGrid(
                     id="query-2b-grid",
@@ -140,6 +193,13 @@ def register_callback_query(dm, app):
         df = dm.get_view_dataset(date_value, INPUT_DATA_V2)
         if df.empty:
             return []
+        cve_list_col = 'vulns_cve_list' if 'vulns_cve_list' in df.columns else ('cve_list' if 'cve_list' in df.columns else None)
+        if cve_list_col:
+            df['cve_list_tooltip'] = df[cve_list_col].apply(format_cve_tooltip)
+        elif 'vulns_cve_id' in df.columns:
+            df['cve_list_tooltip'] = df['vulns_cve_id'].apply(format_cve_tooltip)
+        else:
+            df['cve_list_tooltip'] = "Total: 0 CVEs"
 
         return df.to_dict('records')
 
@@ -162,8 +222,13 @@ def register_callback_query(dm, app):
         df = df.sort_values("n_ips")
 
         if filter_modal:
-            df = filter_text(filter_modal, df, "org_clean")
-            df = filter_number(filter_modal, df, "vulns_epss")
+            for col, filter_conf in filter_modal.items():
+                try:
+                    cve_list_col = 'vulns_cve_list' if 'vulns_cve_list' in df.columns else ('cve_list' if 'cve_list' in df.columns else None)
+                    target_col = cve_list_col if col == "vulns_cve_id" and cve_list_col else col
+                    df = filter_by_model(filter_conf, df, target_col)
+                except Exception as e:
+                    logging.error(f"error filter graph2b: {e}")
 
         graphs = []
 
@@ -256,6 +321,7 @@ def register_callback_query(dm, app):
         Output("url-redirect", "pathname", allow_duplicate=True),
         Output('store-filters', 'data', allow_duplicate=True),
         Output("query-2b-grid", "cellClicked"),
+        Output('dummy-redirect-q2b', 'children', allow_duplicate=True),
 
         State("url-redirect", "pathname"),
         Input("query-2b-grid", "cellClicked"),
@@ -270,7 +336,7 @@ def register_callback_query(dm, app):
             if cell.get("colId", "") == "org_clean":
                 value = cell.get('value', "")
                 filter_opt = {"query-2a-grid": {'org_clean': {'filterType': 'text', 'type': 'equals', 'filter': value}}}
-                return "/dashboard/ips", filter_opt, {}
+                return "/dashboard/ips", filter_opt, {}, ""
         raise PreventUpdate
 
 
@@ -307,7 +373,9 @@ def register_callback_query(dm, app):
         if filter_modal:
             for col, filter_conf in filter_modal.items():
                 try:
-                    df = filter_by_model(filter_conf, df, col)
+                    cve_list_col = 'vulns_cve_list' if 'vulns_cve_list' in df.columns else ('cve_list' if 'cve_list' in df.columns else None)
+                    target_col = cve_list_col if col == "vulns_cve_id" and cve_list_col else col
+                    df = filter_by_model(filter_conf, df, target_col)
                 except Exception:
                     logging.error("error filter row count grid2b")
 

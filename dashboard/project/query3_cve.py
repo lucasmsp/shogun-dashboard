@@ -71,6 +71,7 @@ def register_layout_query(filter_modal={}):
         defaultColDef={"flex": 1, "filter": True, 'resizable': False},
         columnSize="sizeToFit",
         filterModel=filter_modal,
+        getRowId="params.data.vulns_cve_id",
         columnSizeOptions={"skipHeader": False},
         dashGridOptions={
             'tooltipInteraction': True,
@@ -215,21 +216,19 @@ def register_callback_query(dm, app):
             return []
         
         if filter_model:
-            df = filter_text(filter_model, df, 'vulns_cve_id')
-            df = filter_number(filter_model, df, 'vulns_cvss')
-            df = filter_number(filter_model, df, 'vulns_epss')
-            df = filter_text(filter_model, df, 'vulns_cwe')
-            df = filter_number(filter_model, df, 'n_as')
-            df = filter_number(filter_model, df, 'n_ips')
-            df = filter_number(filter_model, df, 'n_orgs')
-            df = filter_number(filter_model, df, 'n_port')
-            df = filter_text(filter_model, df, 'vulns_cisa_product_vendor')
+            for col, filter_conf in filter_model.items():
+                try:
+                    df = filter_by_model(filter_conf, df, col)
+                except Exception as e:
+                    logging.error(f"error filter update_graphs grid3: {e}")
+            if df.empty:
+                return []
             
 
         graphs = []
 
         # fig 1
-        fig = px.scatter(df, x=df["vulns_cvss"], y=df['vulns_epss'],
+        fig = px.scatter(df, x="vulns_cvss", y="vulns_epss",
                          title="Scatter plot - EPSS by CVSS score",
                          color='vulns_epss_rank')
         fig.update_layout(
@@ -273,7 +272,7 @@ def register_callback_query(dm, app):
 
         # fig 3
         tmp2 = df.groupby("vulns_cvss", as_index=False)["n_ips"].sum()
-        fig = px.line(tmp2, x=tmp2['vulns_cvss'], y=tmp2['n_ips'], title="Line plot - # IPs by CVSS")
+        fig = px.line(tmp2, x="vulns_cvss", y="n_ips", title="Line plot - # IPs by CVSS")
         fig.update_layout(
             xaxis_title="CVSS Score",
             yaxis_title="# IPs",
@@ -288,7 +287,7 @@ def register_callback_query(dm, app):
 
         # fig 4
         tmp3 = df.groupby("vulns_cvss", as_index=False)["n_orgs"].sum()
-        fig = px.line(tmp3, x=tmp3['vulns_cvss'], y=tmp3['n_orgs'], title="Line plot - # Organizations by CVSS")
+        fig = px.line(tmp3, x="vulns_cvss", y="n_orgs", title="Line plot - # Organizations by CVSS")
         fig.update_layout(
             xaxis_title="CVSS Score",
             yaxis_title="# Organizations",
@@ -303,7 +302,7 @@ def register_callback_query(dm, app):
 
         # fig 5
         tmp4 = df.groupby("vulns_epss", as_index=False)["n_orgs"].sum()
-        fig = px.line(tmp4, x=tmp4['vulns_epss'], y=tmp4['n_orgs'], title="Line plot - # Organizations by EPSS")
+        fig = px.line(tmp4, x="vulns_epss", y="n_orgs", title="Line plot - # Organizations by EPSS")
         fig.update_layout(
             xaxis_title="EPSS score (%)",
             yaxis_title="# Organizations",
@@ -318,7 +317,7 @@ def register_callback_query(dm, app):
 
         # fig 6
         tmp5 = df.groupby("vulns_epss", as_index=False)["n_ips"].sum()
-        fig = px.line(tmp5, x=tmp5['vulns_epss'], y=tmp5['n_ips'], title="Line plot - # IPs by EPSS")
+        fig = px.line(tmp5, x="vulns_epss", y="n_ips", title="Line plot - # IPs by EPSS")
         fig.update_layout(
             xaxis_title="EPSS score (%)",
             yaxis_title="# IPs",
@@ -405,60 +404,61 @@ def register_callback_query(dm, app):
     @app.callback(
         Output("url-redirect", "pathname", allow_duplicate=True),
         Output('store-filters', 'data', allow_duplicate=True),
-        Input("query-3-ag", "cellClicked"),
-        Input("query-3-ag", "selectedRows"),
-        State('date-picker-single', 'value'),
-        prevent_initial_call=True
-    )
-    def select_ips(cell, row, date_value):
-
-        df = dm.get_view_dataset(date_value, INPUT_DATA)
-        if cell:
-            if cell.get("colId", "") == "n_ips":
-                row_id = int(cell.get("rowId", 0))
-                cve = df.at[row_id, "vulns_cve_id"]
-                filter_opt = {
-                    "query-2a-grid": {'vulns_cve_id': {'filterType': 'text', 'type': 'contains', 'filter': cve}}}
-                return "/dashboard/ips", filter_opt
-
-        return no_update, no_update
-
-    @app.callback(
-        Output("url-redirect", "pathname", allow_duplicate=True),
-        Output('store-filters', 'data', allow_duplicate=True),
+        Output('dummy-redirect-q3', 'children', allow_duplicate=True),
         Input("query-3-ag", "cellClicked"),
         State('date-picker-single', 'value'),
         prevent_initial_call=True,
     )
-    def select_orgs(cell, date_value):
+    def select_cve_cell(cell, date_value):
         if not cell or not date_value:
-            return no_update, no_update
+            return no_update, no_update, no_update
 
-        if cell.get("colId") == "n_orgs":
+        col_id = cell.get("colId", "")
+        if col_id in ["n_ips", "n_orgs"]:
             cve_value = None
+
             if isinstance(cell.get("data"), dict):
                 cve_value = cell["data"].get("vulns_cve_id")
 
+            if not cve_value and cell.get("rowId"):
+                row_id_str = str(cell.get("rowId"))
+                if "_" in row_id_str:
+                    cve_value = row_id_str.split("_")[0]
+                else:
+                    cve_value = row_id_str
+
             if not cve_value:
-                df_cve = dm.get_view_dataset(date_value, INPUT_DATA)
-                if not df_cve.empty:
-                    row_id = int(cell.get("rowId", 0))
-                    if row_id in df_cve.index:
-                        cve_value = df_cve.at[row_id, "vulns_cve_id"]
+                df = dm.get_view_dataset(date_value, INPUT_DATA)
+                if not df.empty:
+                    row_id = int(cell.get("rowId", cell.get("rowIndex", 0)))
+                    if row_id in df.index:
+                        cve_value = df.at[row_id, "vulns_cve_id"]
 
             if cve_value:
-                filter_opt = {
-                    "query-2a-grid": {
-                        'vulns_cve_id': {
-                            'filterType': 'text',
-                            'type': 'contains',
-                            'filter': cve_value
+                if col_id == "n_ips":
+                    filter_opt = {
+                        "query-2a-grid": {
+                            'vulns_cve_id': {
+                                'filterType': 'text',
+                                'type': 'equals',
+                                'filter': cve_value
+                            }
                         }
                     }
-                }
-                return "/dashboard/ips", filter_opt
+                    return "/dashboard/ips", filter_opt, ""
+                elif col_id == "n_orgs":
+                    filter_opt = {
+                        "query-2b-grid": {
+                            'vulns_cve_id': {
+                                'filterType': 'text',
+                                'type': 'equals',
+                                'filter': cve_value
+                            }
+                        }
+                    }
+                    return "/dashboard/orgs", filter_opt, ""
 
-        return no_update, no_update
+        return no_update, no_update, no_update
 
 
     @app.callback(
